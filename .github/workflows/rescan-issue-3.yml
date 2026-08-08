@@ -1,0 +1,48 @@
+name: Rescan Issue 3
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: GitHub issue to rescan
+        required: true
+        default: "3"
+        type: string
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  rescan:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ISSUE_NUMBER: ${{ inputs.issue_number }}
+    steps:
+      - name: Fetch authoritative issue
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
+            > artifact/issue-${ISSUE_NUMBER}.json
+
+      - name: Validate issue response
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["number"])' "artifact/issue-${ISSUE_NUMBER}.json")" = "${ISSUE_NUMBER}"
+          python -m json.tool "artifact/issue-${ISSUE_NUMBER}.json" > artifact/issue-${ISSUE_NUMBER}.pretty.json
+
+      - name: Upload issue snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-${{ inputs.issue_number }}-snapshot
+          path: artifact/
+          if-no-files-found: error
