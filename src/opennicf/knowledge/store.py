@@ -333,6 +333,7 @@ class PostgresKnowledgeStore:
                 rows = cur.fetchall()
         candidates: list[SearchCandidate] = []
         for row in rows:
+            row = tuple(value.decode("utf-8") if isinstance(value, bytes) else value for value in row)
             chunk = ChunkRecord(
                 chunk_id=row[0],
                 source_id=row[1],
@@ -866,6 +867,8 @@ def _vector_literal(vector: Sequence[float]) -> str:
 def _parse_vector_value(value: Any) -> tuple[float, ...]:
     if value is None:
         return ()
+    if isinstance(value, bytes):
+        value = value.decode("utf-8")
     if isinstance(value, tuple):
         return tuple(float(item) for item in value)
     if isinstance(value, list):
