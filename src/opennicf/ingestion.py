@@ -858,6 +858,83 @@ class IngestionService:
         self.queue.enqueue(job)
         return [job]
 
+    def _submit_conversation_message(
+        self,
+        *,
+        channel: str,
+        conversation_kind: str,
+        conversation_id: str,
+        message_id: str,
+        message_text: str,
+        attachments: Sequence[tuple[str, bytes]] = (),
+        thread_id: str | None = None,
+        source_uri: str | None = None,
+        domain: str = "communications",
+        system: str = "unknown",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
+        environment: str = "prod",
+        acl_scope: str = "internal",
+        metadata: dict[str, Any] | None = None,
+    ) -> list[IngestionJob]:
+        base_uri = source_uri or f"{channel}://{conversation_kind}s/{conversation_id}/messages/{message_id}"
+        conversation_key = f"{conversation_kind}_id"
+        jobs = [
+            self.submit_manual(
+                source_uri=f"{base_uri}#message",
+                source_id=_stable_source_id(channel, f"{conversation_id}:{message_id}:message"),
+                content=message_text,
+                mime_type="text/plain",
+                channel=channel,
+                source_kind="document",
+                source_type="document",
+                domain=domain,
+                system=system,
+                domain_id=domain_id,
+                system_id=system_id,
+                component_id=component_id,
+                evidence_type=evidence_type,
+                environment=environment,
+                acl_scope=acl_scope,
+                parser_hint=f"{channel}-message",
+                metadata={conversation_key: conversation_id, "message_id": message_id, "thread_id": thread_id, **dict(metadata or {})},
+            )
+        ]
+        for attachment_name, attachment_bytes in attachments:
+            attachment_uri = f"{base_uri}/attachments/{attachment_name}"
+            attachment_path = Path(attachment_name)
+            mime_type = _canonical_mime(attachment_path, None)
+            jobs.append(
+                self.submit_manual(
+                    source_uri=attachment_uri,
+                    source_id=_stable_source_id(channel, f"{conversation_id}:{message_id}:{attachment_name}"),
+                    content=attachment_bytes,
+                    mime_type=mime_type,
+                    channel=channel,
+                    source_kind="document",
+                    source_type=_classify_suffix(attachment_path)[0],
+                    domain=domain,
+                    system=system,
+                    domain_id=domain_id,
+                    system_id=system_id,
+                    component_id=component_id,
+                    evidence_type=evidence_type,
+                    environment=environment,
+                    acl_scope=acl_scope,
+                    parser_hint=f"{channel}-attachment",
+                    metadata={
+                        conversation_key: conversation_id,
+                        "message_id": message_id,
+                        "attachment_name": attachment_name,
+                        "thread_id": thread_id,
+                        **dict(metadata or {}),
+                    },
+                )
+            )
+        return jobs
+
     def submit_webex_message(
         self,
         *,
@@ -877,54 +954,64 @@ class IngestionService:
         acl_scope: str = "internal",
         metadata: dict[str, Any] | None = None,
     ) -> list[IngestionJob]:
-        base_uri = source_uri or f"webex://rooms/{room_id}/messages/{message_id}"
-        jobs = [
-            self.submit_manual(
-                source_uri=f"{base_uri}#message",
-                source_id=_stable_source_id("webex", f"{room_id}:{message_id}:message"),
-                content=message_text,
-                mime_type="text/plain",
-                channel="webex",
-                source_kind="document",
-                source_type="document",
-                domain=domain,
-                system=system,
-                domain_id=domain_id,
-                system_id=system_id,
-                component_id=component_id,
-                evidence_type=evidence_type,
-                environment=environment,
-                acl_scope=acl_scope,
-                parser_hint="webex-message",
-                metadata={"room_id": room_id, "message_id": message_id, "thread_id": thread_id, **dict(metadata or {})},
-            )
-        ]
-        for attachment_name, attachment_bytes in attachments:
-            attachment_uri = f"{base_uri}/attachments/{attachment_name}"
-            attachment_path = Path(attachment_name)
-            mime_type = _canonical_mime(attachment_path, None)
-            jobs.append(
-                self.submit_manual(
-                    source_uri=attachment_uri,
-                    source_id=_stable_source_id("webex", f"{room_id}:{message_id}:{attachment_name}"),
-                    content=attachment_bytes,
-                    mime_type=mime_type,
-                    channel="webex",
-                    source_kind="document",
-                    source_type=_classify_suffix(attachment_path)[0],
-                    domain=domain,
-                    system=system,
-                    domain_id=domain_id,
-                    system_id=system_id,
-                    component_id=component_id,
-                    evidence_type=evidence_type,
-                    environment=environment,
-                    acl_scope=acl_scope,
-                    parser_hint="webex-attachment",
-                    metadata={"room_id": room_id, "message_id": message_id, "attachment_name": attachment_name, "thread_id": thread_id, **dict(metadata or {})},
-                )
-            )
-        return jobs
+        return self._submit_conversation_message(
+            channel="webex",
+            conversation_kind="room",
+            conversation_id=room_id,
+            message_id=message_id,
+            message_text=message_text,
+            attachments=attachments,
+            thread_id=thread_id,
+            source_uri=source_uri,
+            domain=domain,
+            system=system,
+            domain_id=domain_id,
+            system_id=system_id,
+            component_id=component_id,
+            evidence_type=evidence_type,
+            environment=environment,
+            acl_scope=acl_scope,
+            metadata=metadata,
+        )
+
+    def submit_telegram_message(
+        self,
+        *,
+        chat_id: str,
+        message_id: str,
+        message_text: str,
+        attachments: Sequence[tuple[str, bytes]] = (),
+        thread_id: str | None = None,
+        source_uri: str | None = None,
+        domain: str = "communications",
+        system: str = "telegram",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
+        environment: str = "prod",
+        acl_scope: str = "internal",
+        metadata: dict[str, Any] | None = None,
+    ) -> list[IngestionJob]:
+        return self._submit_conversation_message(
+            channel="telegram",
+            conversation_kind="chat",
+            conversation_id=chat_id,
+            message_id=message_id,
+            message_text=message_text,
+            attachments=attachments,
+            thread_id=thread_id,
+            source_uri=source_uri,
+            domain=domain,
+            system=system,
+            domain_id=domain_id,
+            system_id=system_id,
+            component_id=component_id,
+            evidence_type=evidence_type,
+            environment=environment,
+            acl_scope=acl_scope,
+            metadata=metadata,
+        )
 
     def submit_mail_drop(
         self,
@@ -1143,9 +1230,9 @@ class IngestionService:
 
     def _parse_job(self, job: IngestionJob, path: Path) -> tuple[list[ParsedBlock], str, str, str]:
         suffix = _archive_suffix(path)
-        if job.parser_hint == "webex-message":
-            return _line_blocks(_decode_text(job.raw_bytes), prefix=path.name), "webex-message-parser", "1", "document"
-        if job.parser_hint == "webex-attachment":
+        if job.parser_hint in {"webex-message", "telegram-message"}:
+            return _line_blocks(_decode_text(job.raw_bytes), prefix=path.name), f"{job.parser_hint}-parser", "1", "document"
+        if job.parser_hint in {"webex-attachment", "telegram-attachment"}:
             if suffix == ".pdf":
                 return _pdf_blocks(job.raw_bytes, prefix=path.name), "pdf-parser", "1", "document"
             if suffix == ".docx":
