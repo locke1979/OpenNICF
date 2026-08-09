@@ -42,6 +42,14 @@ from .knowledge import (
     SourceKind,
 )
 from .ingestion import DeadLetterEntry, IngestionJob, IngestionLimits, IngestionOutcome, IngestionQueue, IngestionService
+from .domain_agent import (
+    DEFAULT_DOMAIN_IDS,
+    DEFAULT_DOMAIN_PROFILES,
+    DomainAgent,
+    DomainAgentFactory,
+    DomainProfile,
+    create_domain_agent_factory,
+)
 from .qwen_adapter import OpenNICFChatModel
 
 __all__ = [
@@ -89,4 +97,10 @@ __all__ = [
     "IngestionOutcome",
     "IngestionQueue",
     "IngestionService",
+    "DEFAULT_DOMAIN_IDS",
+    "DEFAULT_DOMAIN_PROFILES",
+    "DomainAgent",
+    "DomainAgentFactory",
+    "DomainProfile",
+    "create_domain_agent_factory",
 ]
