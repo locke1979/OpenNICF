@@ -1,0 +1,4 @@
+source_id | locator | status
+doc-1     | document.md:L1-L4 | ok
+log-1     | logs.txt:L1-L2    | warning
+query-1   | schema.sql:L1-L5  | ok

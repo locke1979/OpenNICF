@@ -1,0 +1,4 @@
+2026-08-08T10:15:00Z web gateway timeout while querying the database
+2026-08-08T10:15:01Z retry succeeded after cached connection reset
+
+2026-08-08T10:17:00Z ACL denied evidence export for tenant beta

@@ -9,8 +9,7 @@ application is orchestrated exclusively by QwenAgent.
 python -m pytest
 ```
 
-Production wiring must install `opennicf[qwen]`, configure the OpenNICF model
+Production wiring must install `opennicf[qwen,knowledge]`, configure the OpenNICF model
 router with `LMSTUDIO_*` and `LITELLM_*` variables, and register only validated
 OpenNICF tools with QwenAgent. See `docs/architecture.md`, the ADR, and
 `AGENTS.md`.
-
