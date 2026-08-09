@@ -1,0 +1,6 @@
+2026-08-08T12:01:02Z billing-api request_id=req-7a correlation_id=trace-91 ERROR Payment finalization failed
+Traceback (most recent call last):
+  File "tests/fixtures/audit/payment_service.py", line 7, in finalize_invoice
+    raise RuntimeError("invoice_rows missing")
+RuntimeError: invoice_rows missing
+2026-08-08T12:01:03Z billing-api request_id=req-7a ledger-db connection refused SQLSTATE 08001

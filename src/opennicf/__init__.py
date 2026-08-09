@@ -18,7 +18,10 @@ from .model_gateway import (
 )
 from .knowledge import (
     ArtifactRecord,
+    AuditEvidenceRefRecord,
     AuditFindingRecord,
+    AuditReportRecord,
+    AuditTimelineEventRecord,
     ChunkRecord,
     EmbeddingRecord,
     EvidenceHit,
@@ -40,6 +43,14 @@ from .knowledge import (
     RetrievalFilters,
     SearchCandidate,
     SourceKind,
+    VerificationRequestRecord,
+)
+from .audit import (
+    AuditRequest,
+    AuditReport,
+    FailureAuditBroker,
+    FailureAuditEngine,
+    LocalFailureAuditBroker,
 )
 from .ingestion import DeadLetterEntry, IngestionJob, IngestionLimits, IngestionOutcome, IngestionQueue, IngestionService
 from .domain_agent import (
@@ -51,6 +62,8 @@ from .domain_agent import (
     create_domain_agent_factory,
 )
 from .qwen_adapter import OpenNICFChatModel
+from .rag import Evidence, EvidenceIndex
+from .tools import OpenNICFTools
 
 __all__ = [
     "AuditEvent",
@@ -68,8 +81,13 @@ __all__ = [
     "ToolCall",
     "Usage",
     "OpenNICFChatModel",
+    "Evidence",
+    "EvidenceIndex",
     "ArtifactRecord",
+    "AuditEvidenceRefRecord",
     "AuditFindingRecord",
+    "AuditReportRecord",
+    "AuditTimelineEventRecord",
     "ChunkRecord",
     "EmbeddingRecord",
     "EvidenceHit",
@@ -91,6 +109,12 @@ __all__ = [
     "RetrievalFilters",
     "SearchCandidate",
     "SourceKind",
+    "VerificationRequestRecord",
+    "AuditRequest",
+    "AuditReport",
+    "FailureAuditBroker",
+    "FailureAuditEngine",
+    "LocalFailureAuditBroker",
     "DeadLetterEntry",
     "IngestionJob",
     "IngestionLimits",
@@ -103,4 +127,5 @@ __all__ = [
     "DomainAgentFactory",
     "DomainProfile",
     "create_domain_agent_factory",
+    "OpenNICFTools",
 ]
