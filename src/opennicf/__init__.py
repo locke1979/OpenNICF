@@ -56,11 +56,13 @@ from .audit import (
 )
 from .ingestion import DeadLetterEntry, IngestionJob, IngestionLimits, IngestionOutcome, IngestionQueue, IngestionService
 from .domain_agent import (
+    CRIMINAL_DOMAIN_ALIASES,
     DEFAULT_DOMAIN_IDS,
     DEFAULT_DOMAIN_PROFILES,
     CONTENCIOSO_ADMINISTRATIVO_SYSTEMS,
     CONTENCIOSO_ADMINISTRATIVO_DELEGATION_TARGETS,
     GENERIC_RETRIEVAL_TOOL_NAMES,
+    CriminalDomainAgent,
     DomainAgent,
     ContenciosoAdministrativoDomainAgent,
     DomainAgentFactory,
@@ -182,7 +184,9 @@ __all__ = [
     "DEFAULT_DOMAIN_PROFILES",
     "CONTENCIOSO_ADMINISTRATIVO_SYSTEMS",
     "CONTENCIOSO_ADMINISTRATIVO_DELEGATION_TARGETS",
+    "CRIMINAL_DOMAIN_ALIASES",
     "GENERIC_RETRIEVAL_TOOL_NAMES",
+    "CriminalDomainAgent",
     "DomainAgent",
     "ContenciosoAdministrativoDomainAgent",
     "DomainAgentFactory",
