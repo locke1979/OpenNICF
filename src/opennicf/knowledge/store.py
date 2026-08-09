@@ -521,7 +521,8 @@ class KnowledgePlatform:
 
     @staticmethod
     def _source_version_id(source_id: str, content_hash: str) -> str:
-        return _uuid(f"srcver_{source_id}_{content_hash[:8]}")
+        digest = sha256(f"source-version:{source_id}:{content_hash}".encode("utf-8")).hexdigest()
+        return f"srcver_{digest}"
 
     @staticmethod
     def _artifact_hash(content_hash: str, parser_version: str) -> str:
@@ -605,7 +606,8 @@ class KnowledgePlatform:
         chunks: list[ChunkRecord] = []
         embeddings: list[EmbeddingRecord] = []
         for ordinal, (block_text, line_start, line_end) in enumerate(blocks):
-            chunk_id = _uuid(f"chunk_{source_id}_{ordinal}")
+            chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode("utf-8")).hexdigest()
+            chunk_id = f"chunk_{chunk_digest}"
             chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block_text}".encode("utf-8")).hexdigest()
             locator = explicit_locator or _chunk_locator(source_uri, ordinal, line_start, line_end)
             chunk = ChunkRecord(

@@ -138,6 +138,21 @@ def test_memory_platform_import_versioning_acl_and_provenance_roundtrip(tmp_path
     assert [hit.chunk_id for hit in restored_hits] == [hit.chunk_id for hit in hits]
 
 
+def test_reimport_identifiers_are_stable_for_database_upserts():
+    first = KnowledgePlatform.in_memory().ingest(
+        source_id="stable-source",
+        source_uri="fixture.txt",
+        content="stable evidence",
+    )
+    second = KnowledgePlatform.in_memory().ingest(
+        source_id="stable-source",
+        source_uri="fixture.txt",
+        content="stable evidence",
+    )
+    assert first.version.source_version_id == second.version.source_version_id
+    assert [chunk.chunk_id for chunk in first.chunks] == [chunk.chunk_id for chunk in second.chunks]
+
+
 def test_fixture_queries_import_and_search_grounded_chunks():
     platform = KnowledgePlatform(MemoryKnowledgeStore(), MemoryObjectStore(), LocalFirstEmbeddingService(cpu_backend=HashingEmbeddingBackend(dimensions=64)))
     platform.ingest(
