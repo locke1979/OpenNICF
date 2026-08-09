@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from hashlib import sha256
 import importlib.resources as resources
@@ -292,6 +292,13 @@ class PostgresKnowledgeStore:
     def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
         with self._connect() as conn:
             with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM knowledge_source_versions WHERE source_id = %s AND content_hash = %s",
+                    (bundle.source.source_id, bundle.source.content_hash),
+                )
+                if cur.fetchone() is not None:
+                    conn.commit()
+                    return replace(bundle, created=False)
                 _upsert_source(cur, bundle.source)
                 _upsert_version(cur, bundle.version)
                 _upsert_artifact(cur, bundle.artifact)
