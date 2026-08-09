@@ -58,6 +58,7 @@ from .ingestion import DeadLetterEntry, IngestionJob, IngestionLimits, Ingestion
 from .domain_agent import (
     DEFAULT_DOMAIN_IDS,
     DEFAULT_DOMAIN_PROFILES,
+    GENERIC_RETRIEVAL_TOOL_NAMES,
     DomainAgent,
     DomainAgentFactory,
     DomainProfile,
@@ -127,6 +128,7 @@ __all__ = [
     "IngestionService",
     "DEFAULT_DOMAIN_IDS",
     "DEFAULT_DOMAIN_PROFILES",
+    "GENERIC_RETRIEVAL_TOOL_NAMES",
     "DomainAgent",
     "DomainAgentFactory",
     "DomainProfile",
