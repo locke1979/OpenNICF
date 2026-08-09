@@ -22,6 +22,7 @@ from .models import (
     IngestBundle,
     KnowledgeSource,
     KnowledgeSourceVersion,
+    ParsedBlock,
     RetrievalEventRecord,
     RetrievalFilters,
     SearchCandidate,
@@ -545,7 +546,8 @@ class KnowledgePlatform:
         source_id: str,
         source_uri: str,
         explicit_locator: str | None = None,
-        content: str,
+        content: str | bytes,
+        blocks: Sequence[ParsedBlock] | None = None,
         mime_type: str = "text/plain",
         source_kind: str = "document",
         channel: str = "manual",
@@ -560,7 +562,7 @@ class KnowledgePlatform:
         available_memory_bytes: int | None = None,
         available_vram_bytes: int | None = None,
     ) -> IngestBundle:
-        content_bytes = content.encode("utf-8")
+        content_bytes = content.encode("utf-8") if isinstance(content, str) else bytes(content)
         content_hash = sha256(content_bytes).hexdigest()
         object_reference = self.object_store.put_bytes(content_bytes, mime_type=mime_type, metadata=metadata or {})
         source = KnowledgeSource(
@@ -606,8 +608,13 @@ class KnowledgePlatform:
             parser_version=parser_version,
             metadata=dict(metadata or {}),
         )
-        blocks = _split_blocks(content)
-        chunk_texts = [block_text for block_text, _, _ in blocks]
+        parsed_blocks = tuple(blocks) if blocks is not None else tuple(
+            ParsedBlock(text=block_text, line_start=line_start, line_end=line_end)
+            for block_text, line_start, line_end in _split_blocks(
+                content if isinstance(content, str) else content_bytes.decode("utf-8", errors="surrogateescape")
+            )
+        )
+        chunk_texts = [block.text for block in parsed_blocks]
         embedding_result = self.embeddings.embed(
             chunk_texts,
             prefer_gpu=True,
@@ -616,18 +623,20 @@ class KnowledgePlatform:
         ) if chunk_texts else EmbeddingResult(model=self.embeddings.info().model, dimensions=self.embeddings.info().dimensions, device=self.embeddings.info().device, vectors=())
         chunks: list[ChunkRecord] = []
         embeddings: list[EmbeddingRecord] = []
-        for ordinal, (block_text, line_start, line_end) in enumerate(blocks):
+        for ordinal, block in enumerate(parsed_blocks):
             chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode("utf-8")).hexdigest()
             chunk_id = f"chunk_{chunk_digest}"
-            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block_text}".encode("utf-8")).hexdigest()
-            locator = explicit_locator or _chunk_locator(source_uri, ordinal, line_start, line_end)
+            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block.text}".encode("utf-8")).hexdigest()
+            locator = block.locator or explicit_locator or _chunk_locator(source_uri, ordinal, block.line_start, block.line_end)
+            chunk_metadata = dict(metadata or {})
+            chunk_metadata.update(block.metadata)
             chunk = ChunkRecord(
                 chunk_id=chunk_id,
                 source_id=source_id,
                 source_version_id=version.source_version_id,
                 artifact_hash=artifact.artifact_hash,
                 ordinal=ordinal,
-                text=block_text,
+                text=block.text,
                 locator=locator,
                 chunk_hash=chunk_hash,
                 parser_version=parser_version,
@@ -636,9 +645,10 @@ class KnowledgePlatform:
                 system=system,
                 environment=environment,
                 source_type=source_type,
-                line_start=line_start,
-                line_end=line_end,
-                metadata=dict(metadata or {}),
+                page=block.page,
+                line_start=block.line_start,
+                line_end=block.line_end,
+                metadata=chunk_metadata,
             )
             chunks.append(chunk)
             embeddings.append(
