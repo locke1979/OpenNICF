@@ -20,7 +20,21 @@ class OpenNICFTools:
         )
 
     def search_evidence(self, query: str):
-        return [{"source_id": e.source_id, "locator": e.locator, "text": e.text} for e in self.evidence.search(query)]
+        return [
+            {
+                "source_id": e.source_id,
+                "locator": e.locator,
+                "text": e.text,
+                "namespace_id": e.namespace_id,
+                "domain_id": e.domain_id,
+                "system_id": e.system_id,
+                "component_id": e.component_id,
+                "environment": e.environment,
+                "evidence_type": e.evidence_type,
+                "acl_scope": e.acl_scope,
+            }
+            for e in self.evidence.search(query)
+        ]
 
     def create_diagnostic_job(self, request: dict):
         if request.get("operation_class") not in {"read_select", "describe"}:

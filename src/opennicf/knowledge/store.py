@@ -13,6 +13,14 @@ from typing import Any, Callable, Iterable, Protocol, Sequence
 import uuid
 
 from .embeddings import EmbeddingResult, LocalFirstEmbeddingService
+from .namespaces import (
+    IntegrationEdgeRecord,
+    KnowledgeNamespaceRecord,
+    build_integration_records,
+    build_namespace_record,
+    sanitize_metadata,
+    sanitize_text,
+)
 from .models import (
     ArtifactRecord,
     AuditEvidenceRefRecord,
@@ -80,6 +88,40 @@ def _split_blocks(text: str, *, max_chars: int = 900, overlap: int = 0) -> list[
     return blocks
 
 
+def _coerce_source_record(data: dict[str, Any]) -> KnowledgeSource:
+    payload = dict(data)
+    payload.setdefault("namespace_id", payload.get("namespace_id") or f"ns_{payload.get('source_id', '')}")
+    payload.setdefault("domain_id", payload.get("domain_id") or payload.get("domain") or "general")
+    payload.setdefault("system_id", payload.get("system_id") or payload.get("system") or "unknown")
+    payload.setdefault("component_id", payload.get("component_id") or payload.get("system_id") or "unknown-component")
+    payload.setdefault("evidence_type", payload.get("evidence_type") or payload.get("source_type") or "document")
+    payload.setdefault("domain", payload.get("domain") or payload["domain_id"])
+    payload.setdefault("system", payload.get("system") or payload["system_id"])
+    payload.setdefault("source_type", payload.get("source_type") or payload["evidence_type"])
+    return KnowledgeSource(**payload)
+
+
+def _coerce_chunk_record(data: dict[str, Any]) -> ChunkRecord:
+    payload = dict(data)
+    payload.setdefault("namespace_id", payload.get("namespace_id") or f"ns_{payload.get('source_id', '')}")
+    payload.setdefault("domain_id", payload.get("domain_id") or payload.get("domain") or "general")
+    payload.setdefault("system_id", payload.get("system_id") or payload.get("system") or "unknown")
+    payload.setdefault("component_id", payload.get("component_id") or payload.get("system_id") or "unknown-component")
+    payload.setdefault("evidence_type", payload.get("evidence_type") or payload.get("source_type") or "document")
+    payload.setdefault("domain", payload.get("domain") or payload["domain_id"])
+    payload.setdefault("system", payload.get("system") or payload["system_id"])
+    payload.setdefault("source_type", payload.get("source_type") or payload["evidence_type"])
+    return ChunkRecord(**payload)
+
+
+def _coerce_namespace_record(data: dict[str, Any]) -> KnowledgeNamespaceRecord:
+    return KnowledgeNamespaceRecord(**dict(data))
+
+
+def _coerce_edge_record(data: dict[str, Any]) -> IntegrationEdgeRecord:
+    return IntegrationEdgeRecord(**dict(data))
+
+
 class KnowledgeStore(Protocol):
     def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
         raise NotImplementedError
@@ -113,6 +155,8 @@ class MemoryKnowledgeStore:
         self.sources: dict[str, KnowledgeSource] = {}
         self.source_versions: dict[str, KnowledgeSourceVersion] = {}
         self.artifacts: dict[str, ArtifactRecord] = {}
+        self.namespaces: dict[str, KnowledgeNamespaceRecord] = {}
+        self.integration_edges: dict[str, IntegrationEdgeRecord] = {}
         self.chunks: dict[str, ChunkRecord] = {}
         self.embeddings: dict[str, EmbeddingRecord] = {}
         self.retrieval_events: list[RetrievalEventRecord] = []
@@ -122,12 +166,28 @@ class MemoryKnowledgeStore:
         self._latest_version_by_source_hash: dict[tuple[str, str], str] = {}
         self._versions_by_source: dict[str, list[str]] = {}
         self._artifact_chunk_ids: dict[str, list[str]] = {}
+        self._artifact_namespace_ids: dict[str, list[str]] = {}
+        self._artifact_edge_ids: dict[str, list[str]] = {}
 
     def _store_chunk(self, chunk: ChunkRecord, embedding: EmbeddingRecord | None = None) -> None:
         self.chunks[chunk.chunk_id] = chunk
         self._artifact_chunk_ids.setdefault(chunk.artifact_hash, []).append(chunk.chunk_id)
         if embedding is not None:
             self.embeddings[chunk.chunk_id] = embedding
+
+    def _store_namespace(self, namespace: KnowledgeNamespaceRecord, *, artifact_hash: str) -> None:
+        metadata = dict(namespace.metadata)
+        metadata.setdefault("artifact_hash", artifact_hash)
+        self.namespaces[namespace.namespace_id] = replace(namespace, metadata=metadata)
+        self._artifact_namespace_ids.setdefault(artifact_hash, []).append(namespace.namespace_id)
+
+    def _store_edge(self, edge: IntegrationEdgeRecord, *, artifact_hash: str | None = None) -> None:
+        metadata = dict(edge.metadata)
+        if artifact_hash:
+            metadata.setdefault("artifact_hash", artifact_hash)
+        self.integration_edges[edge.edge_id] = replace(edge, metadata=metadata)
+        key = artifact_hash or edge.source_namespace_id
+        self._artifact_edge_ids.setdefault(key, []).append(edge.edge_id)
 
     def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
         key = (bundle.source.source_id, bundle.source.content_hash)
@@ -144,6 +204,16 @@ class MemoryKnowledgeStore:
                 for chunk in existing_chunks
                 if chunk.chunk_id in self.embeddings
             )
+            existing_namespaces = tuple(
+                self.namespaces[namespace_id]
+                for namespace_id in self._artifact_namespace_ids.get(existing_artifact.artifact_hash, [])
+                if namespace_id in self.namespaces
+            )
+            existing_edges = tuple(
+                self.integration_edges[edge_id]
+                for edge_id in self._artifact_edge_ids.get(existing_artifact.artifact_hash, [])
+                if edge_id in self.integration_edges
+            )
             return IngestBundle(
                 source=bundle.source,
                 version=existing_version,
@@ -152,6 +222,8 @@ class MemoryKnowledgeStore:
                 embeddings=existing_embeddings,
                 object_reference=bundle.object_reference,
                 created=False,
+                namespaces=existing_namespaces,
+                integration_edges=existing_edges,
             )
 
         self.sources[bundle.source.source_id] = bundle.source
@@ -159,6 +231,10 @@ class MemoryKnowledgeStore:
         self.artifacts[bundle.artifact.artifact_hash] = bundle.artifact
         self._latest_version_by_source_hash[key] = bundle.version.source_version_id
         self._versions_by_source.setdefault(bundle.source.source_id, []).append(bundle.version.source_version_id)
+        for namespace in bundle.namespaces:
+            self._store_namespace(namespace, artifact_hash=bundle.artifact.artifact_hash)
+        for edge in bundle.integration_edges:
+            self._store_edge(edge, artifact_hash=bundle.artifact.artifact_hash)
         for chunk, embedding in zip(bundle.chunks, bundle.embeddings):
             self._store_chunk(chunk, embedding)
         return bundle
@@ -171,13 +247,24 @@ class MemoryKnowledgeStore:
 
     def search_candidates(self, filters: RetrievalFilters) -> list[SearchCandidate]:
         filters = filters.normalized()
+        allowed_domains = filters.effective_domain_ids()
+        allowed_systems = filters.effective_system_ids()
+        allowed_components = filters.effective_component_ids()
+        allowed_evidence_types = filters.effective_evidence_types()
+        allowed_namespaces = filters.effective_namespace_ids()
         candidates: list[SearchCandidate] = []
         for chunk_id, chunk in self.chunks.items():
             if filters.principal_acl_scopes and chunk.acl_scope not in filters.principal_acl_scopes:
                 continue
-            if filters.domains and chunk.domain not in filters.domains:
+            if allowed_namespaces and chunk.namespace_id not in allowed_namespaces:
                 continue
-            if filters.systems and chunk.system not in filters.systems:
+            if allowed_domains and chunk.domain_id not in allowed_domains:
+                continue
+            if allowed_systems and chunk.system_id not in allowed_systems:
+                continue
+            if allowed_components and chunk.component_id not in allowed_components:
+                continue
+            if allowed_evidence_types and chunk.evidence_type not in allowed_evidence_types:
                 continue
             if filters.environments and chunk.environment not in filters.environments:
                 continue
@@ -221,6 +308,8 @@ class MemoryKnowledgeStore:
             "sources": [asdict(item) for item in self.sources.values()],
             "source_versions": [asdict(item) for item in self.source_versions.values()],
             "artifacts": [asdict(item) for item in self.artifacts.values()],
+            "namespaces": [asdict(item) for item in self.namespaces.values()],
+            "integration_edges": [asdict(item) for item in self.integration_edges.values()],
             "chunks": [asdict(item) for item in self.chunks.values()],
             "embeddings": [asdict(item) for item in self.embeddings.values()],
             "retrieval_events": [asdict(item) for item in self.retrieval_events],
@@ -232,7 +321,8 @@ class MemoryKnowledgeStore:
     def restore(self, snapshot: dict[str, Any]) -> None:
         self.__init__()
         for source in snapshot.get("sources", []):
-            self.sources[source["source_id"]] = KnowledgeSource(**source)
+            record = _coerce_source_record(source)
+            self.sources[record.source_id] = record
         for version in snapshot.get("source_versions", []):
             record = KnowledgeSourceVersion(**version)
             self.source_versions[record.source_version_id] = record
@@ -240,8 +330,20 @@ class MemoryKnowledgeStore:
             self._latest_version_by_source_hash[(record.source_id, record.content_hash)] = record.source_version_id
         for artifact in snapshot.get("artifacts", []):
             self.artifacts[artifact["artifact_hash"]] = ArtifactRecord(**artifact)
+        for namespace in snapshot.get("namespaces", []):
+            record = _coerce_namespace_record(namespace)
+            self.namespaces[record.namespace_id] = record
+            artifact_hash = record.metadata.get("artifact_hash")
+            if isinstance(artifact_hash, str) and artifact_hash:
+                self._artifact_namespace_ids.setdefault(artifact_hash, []).append(record.namespace_id)
+        for edge in snapshot.get("integration_edges", []):
+            record = _coerce_edge_record(edge)
+            self.integration_edges[record.edge_id] = record
+            artifact_hash = record.metadata.get("artifact_hash")
+            if isinstance(artifact_hash, str) and artifact_hash:
+                self._artifact_edge_ids.setdefault(artifact_hash, []).append(record.edge_id)
         for chunk in snapshot.get("chunks", []):
-            record = ChunkRecord(**chunk)
+            record = _coerce_chunk_record(chunk)
             self.chunks[record.chunk_id] = record
             self._artifact_chunk_ids.setdefault(record.artifact_hash, []).append(record.chunk_id)
         for embedding in snapshot.get("embeddings", []):
@@ -326,6 +428,10 @@ class PostgresKnowledgeStore:
                 _upsert_source(cur, bundle.source)
                 _upsert_version(cur, bundle.version)
                 _upsert_artifact(cur, bundle.artifact)
+                for namespace in bundle.namespaces:
+                    _upsert_namespace(cur, namespace)
+                for edge in bundle.integration_edges:
+                    _upsert_integration_edge(cur, edge)
                 for chunk, embedding in zip(bundle.chunks, bundle.embeddings):
                     _upsert_chunk(cur, chunk)
                     _upsert_embedding(cur, embedding)
@@ -363,70 +469,81 @@ class PostgresKnowledgeStore:
                 source_id=row[1],
                 source_version_id=row[2],
                 artifact_hash=row[3],
-                ordinal=row[4],
-                text=row[5],
-                locator=row[6],
-                chunk_hash=row[7],
-                parser_version=row[8],
-                acl_scope=row[9],
-                domain=row[10],
-                system=row[11],
-                environment=row[12],
-                source_type=row[13],
-                page=row[14],
-                line_start=row[15],
-                line_end=row[16],
-                metadata=row[17] or {},
+                namespace_id=row[4],
+                domain_id=row[5],
+                system_id=row[6],
+                component_id=row[7],
+                environment=row[8],
+                evidence_type=row[9],
+                acl_scope=row[10],
+                ordinal=row[11],
+                text=row[12],
+                locator=row[13],
+                chunk_hash=row[14],
+                parser_version=row[15],
+                domain=row[16],
+                system=row[17],
+                source_type=row[18],
+                page=row[19],
+                line_start=row[20],
+                line_end=row[21],
+                metadata=row[22] or {},
             )
             source = KnowledgeSource(
-                source_id=row[18],
-                source_uri=row[19],
-                source_kind=row[20],
-                channel=row[21],
-                domain=row[22],
-                system=row[23],
-                environment=row[24],
-                acl_scope=row[25],
-                mime_type=row[26],
-                size_bytes=row[27],
-                content_hash=row[28],
-                created_at=row[29],
-                updated_at=row[30],
-                metadata=row[31] or {},
-            )
-            version = KnowledgeSourceVersion(
-                source_version_id=row[32],
-                source_id=row[33],
-                source_uri=row[34],
-                version_number=row[35],
+                source_id=row[23],
+                source_uri=row[24],
+                source_kind=row[25],
+                channel=row[26],
+                namespace_id=row[27],
+                domain_id=row[28],
+                system_id=row[29],
+                component_id=row[30],
+                environment=row[31],
+                evidence_type=row[32],
+                acl_scope=row[33],
+                mime_type=row[34],
+                size_bytes=row[35],
                 content_hash=row[36],
-                artifact_hash=row[37],
-                ingest_timestamp=row[38],
-                parser_version=row[39],
-                storage_backend=row[40],
-                object_key=row[41],
+                created_at=row[37],
+                updated_at=row[38],
+                domain=row[39],
+                system=row[40],
+                source_type=row[41],
                 metadata=row[42] or {},
             )
-            artifact = ArtifactRecord(
-                artifact_hash=row[43],
-                source_version_id=row[44],
-                object_key=row[45],
-                storage_backend=row[46],
-                mime_type=row[47],
-                size_bytes=row[48],
-                parser_name=row[49],
+            version = KnowledgeSourceVersion(
+                source_version_id=row[43],
+                source_id=row[44],
+                source_uri=row[45],
+                version_number=row[46],
+                content_hash=row[47],
+                artifact_hash=row[48],
+                ingest_timestamp=row[49],
                 parser_version=row[50],
-                created_at=row[51],
-                metadata=row[52] or {},
+                storage_backend=row[51],
+                object_key=row[52],
+                metadata=row[53] or {},
+            )
+            artifact = ArtifactRecord(
+                artifact_hash=row[54],
+                source_version_id=row[55],
+                object_key=row[56],
+                storage_backend=row[57],
+                mime_type=row[58],
+                size_bytes=row[59],
+                parser_name=row[60],
+                parser_version=row[61],
+                created_at=row[62],
+                metadata=row[63] or {},
             )
             embedding = EmbeddingRecord(
                 chunk_id=row[0],
-                model=row[53],
-                dimensions=row[54],
-                device=row[55],
-                vector=_parse_vector_value(row[56]),
-                created_at=row[57],
-                metadata=row[58] or {},
+                model=row[64],
+                dimensions=row[65],
+                device=row[66],
+                vector=_parse_vector_value(row[67]),
+                created_at=row[68],
+                metadata=row[69] or {},
             )
             candidates.append(SearchCandidate(chunk=chunk, source=source, version=version, artifact=artifact, embedding=embedding))
         return candidates
@@ -744,31 +861,87 @@ class KnowledgePlatform:
         channel: str = "manual",
         domain: str = "general",
         system: str = "unknown",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
         environment: str = "unknown",
         acl_scope: str = "internal",
         source_type: str = "document",
         parser_name: str = "identity",
         parser_version: str = "1",
         metadata: dict[str, Any] | None = None,
+        namespace_label: str | None = None,
+        namespace_summary: str | None = None,
+        integration_edges: Sequence[Mapping[str, Any]] | None = None,
         available_memory_bytes: int | None = None,
         available_vram_bytes: int | None = None,
     ) -> IngestBundle:
         content_bytes = content.encode("utf-8") if isinstance(content, str) else bytes(content)
         content_hash = sha256(content_bytes).hexdigest()
-        object_reference = self.object_store.put_bytes(content_bytes, mime_type=mime_type, metadata=metadata or {})
+        sanitized_metadata, redacted_values = sanitize_metadata(metadata)
+        sanitized_source_uri = sanitize_text(source_uri, redacted_values)
+        effective_domain_id = domain_id or domain
+        effective_system_id = system_id or system
+        effective_source_type = source_type or evidence_type or source_kind
+        effective_evidence_type = evidence_type or source_type or source_kind
+        namespace = build_namespace_record(
+            domain_id=effective_domain_id,
+            system_id=effective_system_id,
+            component_id=component_id or sanitized_metadata.get("component_id"),
+            environment=environment,
+            evidence_type=effective_evidence_type,
+            acl_scope=acl_scope,
+            asset_name=namespace_label or sanitized_metadata.get("asset_name"),
+            component_name=sanitized_metadata.get("component_name"),
+            summary=namespace_summary,
+            metadata={
+                **sanitized_metadata,
+                "source_id": source_id,
+                "source_uri": sanitized_source_uri,
+                "source_kind": source_kind,
+                "source_type": effective_source_type,
+                "domain_id": effective_domain_id,
+                "system_id": effective_system_id,
+                "component_id": component_id or sanitized_metadata.get("component_id"),
+                "environment": environment,
+                "evidence_type": effective_evidence_type,
+                "acl_scope": acl_scope,
+            },
+            source_uri=sanitized_source_uri,
+            source_kind=source_kind,
+            source_type=effective_source_type,
+        )
+        integration_payload = {"integration_edges": list(integration_edges or sanitized_metadata.get("integration_edges", []) or [])}
+        sanitized_integration_payload, _ = sanitize_metadata(integration_payload)
+        extra_namespaces, integration_edge_records = build_integration_records(
+            namespace,
+            {**sanitized_metadata, **sanitized_integration_payload},
+        )
+        object_reference = self.object_store.put_bytes(
+            content_bytes,
+            mime_type=mime_type,
+            metadata={**sanitized_metadata, "source_uri": sanitized_source_uri, "redacted_fields": list(redacted_values)},
+        )
         source = KnowledgeSource(
             source_id=source_id,
-            source_uri=source_uri,
+            source_uri=sanitized_source_uri,
             source_kind=source_kind,
             channel=channel,
-            domain=domain,
-            system=system,
+            namespace_id=namespace.namespace_id,
+            domain_id=namespace.domain_id,
+            system_id=namespace.system_id,
+            component_id=namespace.component_id,
             environment=environment,
+            evidence_type=namespace.evidence_type,
             acl_scope=acl_scope,
             mime_type=mime_type,
             size_bytes=len(content_bytes),
             content_hash=content_hash,
-            metadata=dict(metadata or {}),
+            domain=namespace.domain_id,
+            system=namespace.system_id,
+            source_type=effective_source_type,
+            metadata={**sanitized_metadata, "source_uri": sanitized_source_uri, "namespace_id": namespace.namespace_id, "redacted_fields": list(redacted_values)},
         )
         version_number = 1
         if hasattr(self.store, "next_version_number"):
@@ -778,7 +951,7 @@ class KnowledgePlatform:
         version = KnowledgeSourceVersion(
             source_version_id=self._source_version_id(source_id, content_hash),
             source_id=source_id,
-            source_uri=source_uri,
+            source_uri=sanitized_source_uri,
             version_number=version_number,
             content_hash=content_hash,
             artifact_hash=self._artifact_hash(content_hash, parser_version),
@@ -786,7 +959,7 @@ class KnowledgePlatform:
             parser_version=parser_version,
             storage_backend=object_reference.backend,
             object_key=object_reference.object_key,
-            metadata=dict(metadata or {}),
+            metadata={**sanitized_metadata, "source_uri": sanitized_source_uri, "namespace_id": namespace.namespace_id, "redacted_fields": list(redacted_values)},
         )
         artifact = ArtifactRecord(
             artifact_hash=version.artifact_hash,
@@ -797,7 +970,7 @@ class KnowledgePlatform:
             size_bytes=len(content_bytes),
             parser_name=parser_name,
             parser_version=parser_version,
-            metadata=dict(metadata or {}),
+            metadata={**sanitized_metadata, "source_uri": sanitized_source_uri, "namespace_id": namespace.namespace_id, "redacted_fields": list(redacted_values)},
         )
         parsed_blocks = tuple(blocks) if blocks is not None else tuple(
             ParsedBlock(text=block_text, line_start=line_start, line_end=line_end)
@@ -805,7 +978,18 @@ class KnowledgePlatform:
                 content if isinstance(content, str) else content_bytes.decode("utf-8", errors="surrogateescape")
             )
         )
-        chunk_texts = [block.text for block in parsed_blocks]
+        sanitized_blocks: list[ParsedBlock] = []
+        for block in parsed_blocks:
+            block_metadata, block_redactions = sanitize_metadata(block.metadata)
+            all_redactions = list(dict.fromkeys([*redacted_values, *block_redactions]))
+            sanitized_blocks.append(
+                replace(
+                    block,
+                    text=sanitize_text(block.text, all_redactions),
+                    metadata={**block_metadata, "redacted_fields": all_redactions} if all_redactions else block_metadata,
+                )
+            )
+        chunk_texts = [block.text for block in sanitized_blocks]
         embedding_result = self.embeddings.embed(
             chunk_texts,
             prefer_gpu=True,
@@ -814,28 +998,42 @@ class KnowledgePlatform:
         ) if chunk_texts else EmbeddingResult(model=self.embeddings.info().model, dimensions=self.embeddings.info().dimensions, device=self.embeddings.info().device, vectors=())
         chunks: list[ChunkRecord] = []
         embeddings: list[EmbeddingRecord] = []
-        for ordinal, block in enumerate(parsed_blocks):
+        for ordinal, block in enumerate(sanitized_blocks):
             chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode("utf-8")).hexdigest()
             chunk_id = f"chunk_{chunk_digest}"
             chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block.text}".encode("utf-8")).hexdigest()
-            locator = block.locator or explicit_locator or _chunk_locator(source_uri, ordinal, block.line_start, block.line_end)
-            chunk_metadata = dict(metadata or {})
-            chunk_metadata.update(block.metadata)
+            if block.locator:
+                locator = sanitize_text(block.locator, redacted_values)
+            elif explicit_locator:
+                locator = sanitize_text(explicit_locator, redacted_values)
+            else:
+                locator = _chunk_locator(sanitized_source_uri, ordinal, block.line_start, block.line_end)
+            chunk_metadata = {
+                **sanitized_metadata,
+                **block.metadata,
+                "source_uri": sanitized_source_uri,
+                "namespace_id": namespace.namespace_id,
+            }
             chunk = ChunkRecord(
                 chunk_id=chunk_id,
                 source_id=source_id,
                 source_version_id=version.source_version_id,
                 artifact_hash=artifact.artifact_hash,
+                namespace_id=namespace.namespace_id,
+                domain_id=namespace.domain_id,
+                system_id=namespace.system_id,
+                component_id=namespace.component_id,
+                environment=namespace.environment,
+                evidence_type=namespace.evidence_type,
+                acl_scope=acl_scope,
                 ordinal=ordinal,
                 text=block.text,
                 locator=locator,
                 chunk_hash=chunk_hash,
                 parser_version=parser_version,
-                acl_scope=acl_scope,
-                domain=domain,
-                system=system,
-                environment=environment,
-                source_type=source_type,
+                domain=namespace.domain_id,
+                system=namespace.system_id,
+                source_type=effective_source_type,
                 page=block.page,
                 line_start=block.line_start,
                 line_end=block.line_end,
@@ -849,7 +1047,7 @@ class KnowledgePlatform:
                     dimensions=embedding_result.dimensions,
                     device=embedding_result.device,
                     vector=embedding_result.vectors[ordinal] if ordinal < len(embedding_result.vectors) else (),
-                    metadata={"fallback": embedding_result.fallback, **dict(metadata or {})},
+                    metadata={"fallback": embedding_result.fallback, **sanitized_metadata},
                 )
             )
         bundle = IngestBundle(
@@ -860,6 +1058,8 @@ class KnowledgePlatform:
             embeddings=tuple(embeddings),
             object_reference=object_reference,
             created=True,
+            namespaces=(namespace, *extra_namespaces),
+            integration_edges=integration_edge_records,
         )
         return self.store.save_bundle(bundle)
 
@@ -909,21 +1109,28 @@ def _upsert_source(cur, source: KnowledgeSource) -> None:
     cur.execute(
         """
         INSERT INTO knowledge_sources (
-            source_id, source_uri, source_kind, channel, domain, system, environment, acl_scope,
-            mime_type, size_bytes, content_hash, created_at, updated_at, metadata
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+            source_id, source_uri, source_kind, channel, namespace_id, domain_id, system_id, component_id,
+            environment, evidence_type, acl_scope, mime_type, size_bytes, content_hash, created_at, updated_at,
+            domain, system, source_type, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
         ON CONFLICT (source_id) DO UPDATE SET
             source_uri = EXCLUDED.source_uri,
             source_kind = EXCLUDED.source_kind,
             channel = EXCLUDED.channel,
-            domain = EXCLUDED.domain,
-            system = EXCLUDED.system,
+            namespace_id = EXCLUDED.namespace_id,
+            domain_id = EXCLUDED.domain_id,
+            system_id = EXCLUDED.system_id,
+            component_id = EXCLUDED.component_id,
             environment = EXCLUDED.environment,
+            evidence_type = EXCLUDED.evidence_type,
             acl_scope = EXCLUDED.acl_scope,
             mime_type = EXCLUDED.mime_type,
             size_bytes = EXCLUDED.size_bytes,
             content_hash = EXCLUDED.content_hash,
             updated_at = EXCLUDED.updated_at,
+            domain = EXCLUDED.domain,
+            system = EXCLUDED.system,
+            source_type = EXCLUDED.source_type,
             metadata = EXCLUDED.metadata
         """,
         (
@@ -931,15 +1138,21 @@ def _upsert_source(cur, source: KnowledgeSource) -> None:
             source.source_uri,
             source.source_kind,
             source.channel,
-            source.domain,
-            source.system,
+            source.namespace_id,
+            source.domain_id,
+            source.system_id,
+            source.component_id,
             source.environment,
+            source.evidence_type,
             source.acl_scope,
             source.mime_type,
             source.size_bytes,
             source.content_hash,
             source.created_at,
             source.updated_at,
+            source.domain,
+            source.system,
+            source.source_type,
             json.dumps(source.metadata, sort_keys=True),
         ),
     )
@@ -1011,18 +1224,98 @@ def _upsert_artifact(cur, artifact: ArtifactRecord) -> None:
     )
 
 
+def _upsert_namespace(cur, namespace: KnowledgeNamespaceRecord) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_namespaces (
+            namespace_id, domain_id, system_id, component_id, environment, evidence_type, acl_scope,
+            asset_name, component_name, sanitized_summary, metadata, created_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+        ON CONFLICT (namespace_id) DO UPDATE SET
+            domain_id = EXCLUDED.domain_id,
+            system_id = EXCLUDED.system_id,
+            component_id = EXCLUDED.component_id,
+            environment = EXCLUDED.environment,
+            evidence_type = EXCLUDED.evidence_type,
+            acl_scope = EXCLUDED.acl_scope,
+            asset_name = EXCLUDED.asset_name,
+            component_name = EXCLUDED.component_name,
+            sanitized_summary = EXCLUDED.sanitized_summary,
+            metadata = EXCLUDED.metadata,
+            created_at = EXCLUDED.created_at
+        """,
+        (
+            namespace.namespace_id,
+            namespace.domain_id,
+            namespace.system_id,
+            namespace.component_id,
+            namespace.environment,
+            namespace.evidence_type,
+            namespace.acl_scope,
+            namespace.asset_name,
+            namespace.component_name,
+            namespace.sanitized_summary,
+            json.dumps(namespace.metadata, sort_keys=True),
+            namespace.created_at,
+        ),
+    )
+
+
+def _upsert_integration_edge(cur, edge: IntegrationEdgeRecord) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_integration_edges (
+            edge_id, source_namespace_id, target_namespace_id, relation_type, domain_id, system_id,
+            component_id, environment, evidence_type, acl_scope, metadata, created_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+        ON CONFLICT (edge_id) DO UPDATE SET
+            source_namespace_id = EXCLUDED.source_namespace_id,
+            target_namespace_id = EXCLUDED.target_namespace_id,
+            relation_type = EXCLUDED.relation_type,
+            domain_id = EXCLUDED.domain_id,
+            system_id = EXCLUDED.system_id,
+            component_id = EXCLUDED.component_id,
+            environment = EXCLUDED.environment,
+            evidence_type = EXCLUDED.evidence_type,
+            acl_scope = EXCLUDED.acl_scope,
+            metadata = EXCLUDED.metadata,
+            created_at = EXCLUDED.created_at
+        """,
+        (
+            edge.edge_id,
+            edge.source_namespace_id,
+            edge.target_namespace_id,
+            edge.relation_type,
+            edge.domain_id,
+            edge.system_id,
+            edge.component_id,
+            edge.environment,
+            edge.evidence_type,
+            edge.acl_scope,
+            json.dumps(edge.metadata, sort_keys=True),
+            edge.created_at,
+        ),
+    )
+
+
 def _upsert_chunk(cur, chunk: ChunkRecord) -> None:
     cur.execute(
         """
         INSERT INTO knowledge_chunks (
-            chunk_id, source_id, source_version_id, artifact_hash, ordinal, text, locator,
-            chunk_hash, parser_version, acl_scope, domain, system, environment, source_type,
-            page, line_start, line_end, metadata
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+            chunk_id, source_id, source_version_id, artifact_hash, namespace_id, domain_id, system_id,
+            component_id, environment, evidence_type, acl_scope, ordinal, text, locator,
+            chunk_hash, parser_version, domain, system, source_type, page, line_start, line_end, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
         ON CONFLICT (chunk_id) DO UPDATE SET
             source_id = EXCLUDED.source_id,
             source_version_id = EXCLUDED.source_version_id,
             artifact_hash = EXCLUDED.artifact_hash,
+            namespace_id = EXCLUDED.namespace_id,
+            domain_id = EXCLUDED.domain_id,
+            system_id = EXCLUDED.system_id,
+            component_id = EXCLUDED.component_id,
+            environment = EXCLUDED.environment,
+            evidence_type = EXCLUDED.evidence_type,
             ordinal = EXCLUDED.ordinal,
             text = EXCLUDED.text,
             locator = EXCLUDED.locator,
@@ -1031,7 +1324,6 @@ def _upsert_chunk(cur, chunk: ChunkRecord) -> None:
             acl_scope = EXCLUDED.acl_scope,
             domain = EXCLUDED.domain,
             system = EXCLUDED.system,
-            environment = EXCLUDED.environment,
             source_type = EXCLUDED.source_type,
             page = EXCLUDED.page,
             line_start = EXCLUDED.line_start,
@@ -1043,15 +1335,20 @@ def _upsert_chunk(cur, chunk: ChunkRecord) -> None:
             chunk.source_id,
             chunk.source_version_id,
             chunk.artifact_hash,
+            chunk.namespace_id,
+            chunk.domain_id,
+            chunk.system_id,
+            chunk.component_id,
+            chunk.environment,
+            chunk.evidence_type,
+            chunk.acl_scope,
             chunk.ordinal,
             chunk.text,
             chunk.locator,
             chunk.chunk_hash,
             chunk.parser_version,
-            chunk.acl_scope,
             chunk.domain,
             chunk.system,
-            chunk.environment,
             chunk.source_type,
             chunk.page,
             chunk.line_start,
@@ -1111,15 +1408,29 @@ def _upsert_embedding(cur, embedding: EmbeddingRecord) -> None:
 def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
     clauses = ["1 = 1"]
     params: list[Any] = []
+    allowed_namespaces = filters.effective_namespace_ids()
+    allowed_domains = filters.effective_domain_ids()
+    allowed_systems = filters.effective_system_ids()
+    allowed_components = filters.effective_component_ids()
+    allowed_evidence_types = filters.effective_evidence_types()
     if filters.principal_acl_scopes:
         clauses.append("c.acl_scope = ANY(%s)")
         params.append(list(filters.principal_acl_scopes))
-    if filters.domains:
-        clauses.append("c.domain = ANY(%s)")
-        params.append(list(filters.domains))
-    if filters.systems:
-        clauses.append("c.system = ANY(%s)")
-        params.append(list(filters.systems))
+    if allowed_namespaces:
+        clauses.append("c.namespace_id = ANY(%s)")
+        params.append(list(allowed_namespaces))
+    if allowed_domains:
+        clauses.append("c.domain_id = ANY(%s)")
+        params.append(list(allowed_domains))
+    if allowed_systems:
+        clauses.append("c.system_id = ANY(%s)")
+        params.append(list(allowed_systems))
+    if allowed_components:
+        clauses.append("c.component_id = ANY(%s)")
+        params.append(list(allowed_components))
+    if allowed_evidence_types:
+        clauses.append("c.evidence_type = ANY(%s)")
+        params.append(list(allowed_evidence_types))
     if filters.environments:
         clauses.append("c.environment = ANY(%s)")
         params.append(list(filters.environments))
@@ -1138,11 +1449,13 @@ def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
 
     sql = f"""
         SELECT
-            c.chunk_id, c.source_id, c.source_version_id, c.artifact_hash, c.ordinal, c.text, c.locator,
-            c.chunk_hash, c.parser_version, c.acl_scope, c.domain, c.system, c.environment, c.source_type,
-            c.page, c.line_start, c.line_end, c.metadata,
-            s.source_id, s.source_uri, s.source_kind, s.channel, s.domain, s.system, s.environment,
-            s.acl_scope, s.mime_type, s.size_bytes, s.content_hash, s.created_at, s.updated_at, s.metadata,
+            c.chunk_id, c.source_id, c.source_version_id, c.artifact_hash, c.namespace_id, c.domain_id,
+            c.system_id, c.component_id, c.environment, c.evidence_type, c.acl_scope, c.ordinal, c.text,
+            c.locator, c.chunk_hash, c.parser_version, c.domain, c.system, c.source_type, c.page,
+            c.line_start, c.line_end, c.metadata,
+            s.source_id, s.source_uri, s.source_kind, s.channel, s.namespace_id, s.domain_id, s.system_id,
+            s.component_id, s.environment, s.evidence_type, s.acl_scope, s.mime_type, s.size_bytes,
+            s.content_hash, s.created_at, s.updated_at, s.domain, s.system, s.source_type, s.metadata,
             v.source_version_id, v.source_id, v.source_uri, v.version_number, v.content_hash, v.artifact_hash,
             v.ingest_timestamp, v.parser_version, v.storage_backend, v.object_key, v.metadata,
             a.artifact_hash, a.source_version_id, a.object_key, a.storage_backend, a.mime_type, a.size_bytes,

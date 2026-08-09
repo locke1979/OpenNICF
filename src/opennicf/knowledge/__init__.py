@@ -8,6 +8,7 @@ from .embeddings import (
     HashingEmbeddingBackend,
     LocalFirstEmbeddingService,
 )
+from .namespaces import IntegrationEdgeRecord, KnowledgeNamespaceRecord, build_namespace_record
 from .models import (
     ArtifactRecord,
     AuditEvidenceRefRecord,
@@ -48,6 +49,7 @@ __all__ = [
     "EmbeddingModelInfo",
     "EmbeddingRecord",
     "EmbeddingResult",
+    "IntegrationEdgeRecord",
     "EvidenceHit",
     "FilesystemObjectStore",
     "HashingEmbeddingBackend",
@@ -56,6 +58,7 @@ __all__ = [
     "KnowledgePlatform",
     "KnowledgeSource",
     "KnowledgeSourceVersion",
+    "KnowledgeNamespaceRecord",
     "ParsedBlock",
     "LocalFirstEmbeddingService",
     "MemoryKnowledgeStore",
@@ -68,5 +71,6 @@ __all__ = [
     "SearchCandidate",
     "SourceKind",
     "VerificationRequestRecord",
+    "build_namespace_record",
     "cosine_similarity",
 ]

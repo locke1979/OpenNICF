@@ -129,7 +129,7 @@ class DomainTools:
     def _filters(self, *, limit: int | None = None) -> RetrievalFilters:
         filters = self.profile.default_retrieval_filters
         if self.profile.domain_id:
-            filters = replace(filters, domains=(self.profile.domain_id,))
+            filters = replace(filters, principal_domain_id=self.profile.domain_id, domain_ids=(self.profile.domain_id,))
         if not filters.source_types and self.profile.permitted_evidence_classes:
             filters = replace(filters, source_types=self.profile.permitted_evidence_classes)
         if limit is not None:
@@ -143,9 +143,15 @@ class DomainTools:
                 "source_id": hit.source_id,
                 "locator": hit.locator,
                 "text": hit.text,
+                "namespace_id": hit.namespace_id,
+                "domain_id": hit.domain_id,
+                "system_id": hit.system_id,
+                "component_id": hit.component_id,
+                "environment": hit.environment,
+                "evidence_type": hit.evidence_type,
+                "acl_scope": hit.acl_scope,
                 "domain": hit.domain,
                 "system": hit.system,
-                "environment": hit.environment,
                 "source_type": hit.source_type,
                 "score": hit.score,
             }

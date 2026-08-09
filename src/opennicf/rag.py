@@ -12,6 +12,13 @@ class Evidence:
     source_id: str
     text: str
     locator: str
+    namespace_id: str = ""
+    domain_id: str = ""
+    system_id: str = ""
+    component_id: str = ""
+    environment: str = ""
+    evidence_type: str = ""
+    acl_scope: str = ""
 
 
 class EvidenceIndex:
@@ -42,4 +49,18 @@ class EvidenceIndex:
             query,
             filters=RetrievalFilters(principal_acl_scopes=frozenset({"internal"})),
         )
-        return [Evidence(hit.source_id, hit.text, hit.locator) for hit in hits]
+        return [
+            Evidence(
+                hit.source_id,
+                hit.text,
+                hit.locator,
+                namespace_id=hit.namespace_id,
+                domain_id=hit.domain_id,
+                system_id=hit.system_id,
+                component_id=hit.component_id,
+                environment=hit.environment,
+                evidence_type=hit.evidence_type,
+                acl_scope=hit.acl_scope,
+            )
+            for hit in hits
+        ]

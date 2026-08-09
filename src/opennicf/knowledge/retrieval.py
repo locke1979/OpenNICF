@@ -64,10 +64,13 @@ class HybridRetriever:
             excerpt_hash=candidate.chunk.chunk_hash,
             ingest_timestamp=candidate.version.ingest_timestamp,
             parser_version=candidate.chunk.parser_version,
-            acl_scope=candidate.chunk.acl_scope,
-            domain=candidate.chunk.domain,
-            system=candidate.chunk.system,
+            namespace_id=candidate.chunk.namespace_id,
+            domain_id=candidate.chunk.domain_id,
+            system_id=candidate.chunk.system_id,
+            component_id=candidate.chunk.component_id,
             environment=candidate.chunk.environment,
+            evidence_type=candidate.chunk.evidence_type,
+            acl_scope=candidate.chunk.acl_scope,
             source_type=candidate.chunk.source_type,
             semantic_score=semantic_score,
             lexical_score=lexical_score,
@@ -76,6 +79,8 @@ class HybridRetriever:
             dimensions=dimensions,
             chunk_id=candidate.chunk.chunk_id,
             chunk_ordinal=candidate.chunk.ordinal,
+            domain=candidate.chunk.domain,
+            system=candidate.chunk.system,
             metadata=dict(candidate.chunk.metadata),
         )
 
@@ -84,9 +89,24 @@ class HybridRetriever:
         query_result = self.embeddings.embed([query], prefer_gpu=True)
         query_vector = query_result.vectors[0] if query_result.vectors else ()
         candidates = self.store.search_candidates(filters)
+        allowed_domains = filters.effective_domain_ids()
+        allowed_systems = filters.effective_system_ids()
+        allowed_components = filters.effective_component_ids()
+        allowed_evidence_types = filters.effective_evidence_types()
+        allowed_namespaces = filters.effective_namespace_ids()
         scored: list[EvidenceHit] = []
         for candidate in candidates:
             if filters.principal_acl_scopes and candidate.chunk.acl_scope not in filters.principal_acl_scopes:
+                continue
+            if allowed_namespaces and candidate.chunk.namespace_id not in allowed_namespaces:
+                continue
+            if allowed_domains and candidate.chunk.domain_id not in allowed_domains:
+                continue
+            if allowed_systems and candidate.chunk.system_id not in allowed_systems:
+                continue
+            if allowed_components and candidate.chunk.component_id not in allowed_components:
+                continue
+            if allowed_evidence_types and candidate.chunk.evidence_type not in allowed_evidence_types:
                 continue
             hit = self._score_candidate(query_vector, candidate, query)
             if hit is not None:
@@ -145,6 +165,13 @@ class HybridRetriever:
             query_hash=sha256(query.encode("utf-8")).hexdigest(),
             filters={
                 "principal_acl_scopes": sorted(filters.principal_acl_scopes),
+                "principal_domain_id": filters.principal_domain_id,
+                "domain_ids": list(filters.domain_ids),
+                "delegated_domain_ids": list(filters.delegated_domain_ids),
+                "system_ids": list(filters.system_ids),
+                "component_ids": list(filters.component_ids),
+                "evidence_types": list(filters.evidence_types),
+                "namespace_ids": list(filters.namespace_ids),
                 "domains": list(filters.domains),
                 "systems": list(filters.systems),
                 "environments": list(filters.environments),
@@ -160,4 +187,3 @@ class HybridRetriever:
         )
         self.store.record_retrieval_event(event)
         return final_hits
-
