@@ -29,6 +29,7 @@ from .knowledge import (
     KnowledgePlatform,
     KnowledgeSource,
     KnowledgeSourceVersion,
+    ParsedBlock,
     LocalFirstEmbeddingService,
     MemoryKnowledgeStore,
     MemoryObjectStore,
@@ -40,6 +41,7 @@ from .knowledge import (
     SearchCandidate,
     SourceKind,
 )
+from .ingestion import DeadLetterEntry, IngestionJob, IngestionLimits, IngestionOutcome, IngestionQueue, IngestionService
 from .domain_agent import (
     DEFAULT_DOMAIN_IDS,
     DEFAULT_DOMAIN_PROFILES,
@@ -78,6 +80,7 @@ __all__ = [
     "KnowledgePlatform",
     "KnowledgeSource",
     "KnowledgeSourceVersion",
+    "ParsedBlock",
     "LocalFirstEmbeddingService",
     "MemoryKnowledgeStore",
     "MemoryObjectStore",
@@ -88,6 +91,12 @@ __all__ = [
     "RetrievalFilters",
     "SearchCandidate",
     "SourceKind",
+    "DeadLetterEntry",
+    "IngestionJob",
+    "IngestionLimits",
+    "IngestionOutcome",
+    "IngestionQueue",
+    "IngestionService",
     "DEFAULT_DOMAIN_IDS",
     "DEFAULT_DOMAIN_PROFILES",
     "DomainAgent",

@@ -19,6 +19,18 @@ class SourceKind:
 
 
 @dataclass(frozen=True)
+class ParsedBlock:
+    """Canonical text unit emitted by a parser."""
+
+    text: str
+    locator: str | None = None
+    page: int | None = None
+    line_start: int | None = None
+    line_end: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class KnowledgeSource:
     source_id: str
     source_uri: str
@@ -195,4 +207,3 @@ class IngestBundle:
     embeddings: tuple[EmbeddingRecord, ...]
     object_reference: "ObjectReference"
     created: bool
-
