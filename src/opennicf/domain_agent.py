@@ -24,6 +24,21 @@ DEFAULT_DOMAIN_IDS = (
     "encargos_sigef",
 )
 
+# Sanitized ownership from the NICF application map.  These identifiers are
+# deliberately names only: runtime connection details remain in secret stores.
+CONTENCIOSO_ADMINISTRATIVO_SYSTEMS = (
+    "SICAT",
+    "SICATPF",
+    "SIGEPRA",
+    "WSCAT",
+    "ISIGEPRAWS",
+    "JTRECLBAT",
+)
+CONTENCIOSO_ADMINISTRATIVO_DELEGATION_TARGETS = (
+    "contencioso_judicial",
+    "encargos_sigef",
+)
+
 GENERIC_RETRIEVAL_TOOL_NAMES = (
     "search_code_exact",
     "search_code_symbols",
@@ -182,6 +197,10 @@ class DomainProfile:
     name: str
     description: str
     owned_systems: tuple[str, ...] = ()
+    # Optional hard system ACL.  Legacy profiles retain their domain-only
+    # behavior; profiles with this field cannot widen retrieval by request.
+    retrieval_system_ids: tuple[str, ...] = ()
+    system_aliases: tuple[str, ...] = ()
     integration_boundary_aliases: tuple[str, ...] = ()
     permitted_evidence_classes: tuple[str, ...] = ()
     default_retrieval_filters: RetrievalFilters = field(default_factory=RetrievalFilters)
@@ -212,6 +231,8 @@ def _profile(
     name: str,
     description: str,
     owned_systems: tuple[str, ...] = (),
+    retrieval_system_ids: tuple[str, ...] = (),
+    system_aliases: tuple[str, ...] = (),
     integration_boundary_aliases: tuple[str, ...] = (),
     permitted_evidence_classes: tuple[str, ...] = (),
     permitted_tools: tuple[str, ...] = (
@@ -233,6 +254,8 @@ def _profile(
         name=name,
         description=description,
         owned_systems=owned_systems,
+        retrieval_system_ids=retrieval_system_ids,
+        system_aliases=system_aliases,
         integration_boundary_aliases=integration_boundary_aliases,
         permitted_evidence_classes=permitted_evidence_classes,
         permitted_tools=permitted_tools,
@@ -265,9 +288,29 @@ DEFAULT_DOMAIN_PROFILES: dict[str, DomainProfile] = {
         "contencioso_administrativo",
         name="Contencioso Administrativo",
         description="Administrative litigation matters and supporting evidence.",
-        owned_systems=("contencioso_administrativo_casework", "contencioso_administrativo_evidence"),
-        integration_boundary_aliases=("administrative-litigation",),
+        owned_systems=CONTENCIOSO_ADMINISTRATIVO_SYSTEMS,
+        retrieval_system_ids=CONTENCIOSO_ADMINISTRATIVO_SYSTEMS,
+        system_aliases=(
+            "sicat",
+            "sicatpf",
+            "sigepra",
+            "wscat",
+            "isigepraws",
+            "jtreclbat",
+        ),
+        integration_boundary_aliases=("administrative-litigation", "contencioso-admin"),
         permitted_evidence_classes=("document", "log", "code", "schema", "query-output"),
+        permitted_tools=(
+            "search_code_exact",
+            "search_code_symbols",
+            "search_code_semantic",
+            "search_logs",
+            "search_docs",
+            "search_schema",
+            "search_query_outputs",
+            "request_domain_diagnostic",
+            "request_cross_domain_collaboration",
+        ),
         system_prompt="You are the contencioso administrativo domain agent. Stay inside the administrative-litigation namespace.",
     ),
     "contencioso_judicial": _profile(
@@ -334,7 +377,16 @@ class DomainTools:
         query_evidence_types = _normalize_multi_value(payload.get("evidence_types"))
         source_ids = _normalize_multi_value(payload.get("source_ids"))
         namespace_ids = _normalize_multi_value(payload.get("namespace_ids"))
-        system_ids = _normalize_multi_value(payload.get("system_ids"))
+        requested_system_ids = _normalize_multi_value(payload.get("system_ids"))
+        if self.profile.retrieval_system_ids:
+            owned = set(self.profile.retrieval_system_ids)
+            aliases = {alias.lower(): system for alias, system in zip(self.profile.system_aliases, self.profile.retrieval_system_ids)}
+            normalized_requested = tuple(aliases.get(system.lower(), system) for system in requested_system_ids)
+            if normalized_requested and any(system not in owned for system in normalized_requested):
+                raise PermissionError("requested system is outside the registered domain ACL")
+            system_ids = normalized_requested or self.profile.retrieval_system_ids
+        else:
+            system_ids = requested_system_ids
         component_ids = _normalize_multi_value(payload.get("component_ids"))
         systems = _normalize_multi_value(payload.get("systems"))
         environments = _normalize_multi_value(payload.get("environments"))
@@ -807,6 +859,24 @@ class DomainTools:
         payload["domain_id"] = self.profile.domain_id
         return dict(self.diagnostic_broker.request(payload))
 
+    def request_cross_domain_collaboration(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        """Return a coordinator request without widening this agent's ACL."""
+        payload = dict(request)
+        target = str(payload.get("target_domain_id") or "").strip()
+        if target not in CONTENCIOSO_ADMINISTRATIVO_DELEGATION_TARGETS:
+            raise PermissionError("delegation target is not approved for this domain")
+        evidence_refs = payload.get("evidence_refs", ())
+        if not isinstance(evidence_refs, (list, tuple)) or not evidence_refs:
+            raise ValueError("evidence_refs are required for cross-domain collaboration")
+        return {
+            "status": "cross_domain_required",
+            "source_domain_id": self.profile.domain_id,
+            "target_domain_id": target,
+            "integration_edge": payload.get("integration_edge"),
+            "evidence_refs": list(evidence_refs),
+            "query": str(payload.get("query") or "").strip(),
+        }
+
     def as_qwen_tools(self) -> dict[str, Callable[..., Any]]:
         return {
             "search_code_exact": self.search_code_exact,
@@ -820,6 +890,7 @@ class DomainTools:
             "request_domain_diagnostic": self.request_domain_diagnostic,
             "search_delegated_domain_evidence": self.search_delegated_domain_evidence,
             "request_delegated_domain_diagnostic": self.request_delegated_domain_diagnostic,
+            "request_cross_domain_collaboration": self.request_cross_domain_collaboration,
         }
 
     def permitted_qwen_tools(self) -> dict[str, Callable[..., Any]]:
@@ -872,6 +943,10 @@ class DomainAgent:
         return self.runtime.run(request)
 
 
+class ContenciosoAdministrativoDomainAgent(DomainAgent):
+    """Shared-factory agent scoped to Administrative Litigation evidence."""
+
+
 class DomainAgentFactory:
     """Factory that builds isolated domain agents over shared runtime services."""
 
@@ -900,14 +975,31 @@ class DomainAgentFactory:
             raise KeyError(f"unknown domain_id: {domain_id}") from exc
 
     def create(self, domain_id: str) -> DomainAgent:
-        profile = self.profile_for(domain_id)
-        return DomainAgent(
+        resolved_domain_id = self.domain_for_alias(domain_id)
+        profile = self.profile_for(resolved_domain_id)
+        agent_class = (
+            ContenciosoAdministrativoDomainAgent
+            if resolved_domain_id == "contencioso_administrativo"
+            else DomainAgent
+        )
+        return agent_class(
             profile,
             gateway=self.gateway,
             knowledge=self.knowledge,
             diagnostic_broker=self.diagnostic_broker,
             runtime_factory=self._runtime_factory,
         )
+
+    def domain_for_alias(self, value: str) -> str:
+        candidate = str(value).strip()
+        if candidate in self.profiles:
+            return candidate
+        lowered = candidate.lower()
+        for domain_id, profile in self.profiles.items():
+            aliases = (*profile.system_aliases, *profile.integration_boundary_aliases, *profile.owned_systems)
+            if lowered in {str(alias).lower() for alias in aliases}:
+                return domain_id
+        raise KeyError(f"unknown domain or system alias: {value}")
 
 
 def create_domain_agent_factory(
@@ -925,3 +1017,21 @@ def create_domain_agent_factory(
         profiles=profiles,
         runtime_factory=runtime_factory,
     )
+
+
+def create_contencioso_administrativo_agent(
+    *,
+    gateway: ModelGateway | None = None,
+    knowledge: KnowledgePlatform | None = None,
+    diagnostic_broker: Any | None = None,
+    runtime_factory: Callable[[Any, dict[str, Callable[..., Any]]], Any] | None = None,
+) -> ContenciosoAdministrativoDomainAgent:
+    """Create the Administrative agent through the shared domain factory."""
+    agent = create_domain_agent_factory(
+        gateway=gateway,
+        knowledge=knowledge,
+        diagnostic_broker=diagnostic_broker,
+        runtime_factory=runtime_factory,
+    ).create("contencioso_administrativo")
+    assert isinstance(agent, ContenciosoAdministrativoDomainAgent)
+    return agent
