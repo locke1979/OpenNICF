@@ -68,6 +68,14 @@ from .domain_agent import (
     create_domain_agent_factory,
     create_contencioso_administrativo_agent,
 )
+from .encargos_sigef import (
+    COLLABORATION_TARGETS,
+    ENCARGOS_SIGEF_PROFILE,
+    EncargosSigefDomainAgent,
+    INTEGRATION_BOUNDARIES,
+    SIGEF_OWNED_SYSTEMS,
+    SIGEF_SYSTEM_ALIASES,
+)
 from .diagnostics import (
     APPROVED_WRAPPER,
     ALLOWED_OPERATION_CLASSES,
@@ -181,6 +189,12 @@ __all__ = [
     "DomainProfile",
     "create_domain_agent_factory",
     "create_contencioso_administrativo_agent",
+    "COLLABORATION_TARGETS",
+    "ENCARGOS_SIGEF_PROFILE",
+    "EncargosSigefDomainAgent",
+    "INTEGRATION_BOUNDARIES",
+    "SIGEF_OWNED_SYSTEMS",
+    "SIGEF_SYSTEM_ALIASES",
     "APPROVED_WRAPPER",
     "ALLOWED_OPERATION_CLASSES",
     "DiagnosticBrokerStore",

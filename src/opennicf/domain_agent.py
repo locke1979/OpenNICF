@@ -982,6 +982,13 @@ class DomainAgentFactory:
             if resolved_domain_id == "contencioso_administrativo"
             else DomainAgent
         )
+        if resolved_domain_id == "encargos_sigef":
+            # Keep SIGEF on the common factory and shared runtime while using
+            # its specialized profile and boundary tools.
+            from .encargos_sigef import ENCARGOS_SIGEF_PROFILE, EncargosSigefDomainAgent
+
+            agent_class = EncargosSigefDomainAgent
+            profile = ENCARGOS_SIGEF_PROFILE
         return agent_class(
             profile,
             gateway=self.gateway,
@@ -999,6 +1006,10 @@ class DomainAgentFactory:
             aliases = (*profile.system_aliases, *profile.integration_boundary_aliases, *profile.owned_systems)
             if lowered in {str(alias).lower() for alias in aliases}:
                 return domain_id
+        from .encargos_sigef import SIGEF_SYSTEM_ALIASES
+
+        if lowered in {alias.lower() for aliases in SIGEF_SYSTEM_ALIASES.values() for alias in aliases}:
+            return "encargos_sigef"
         raise KeyError(f"unknown domain or system alias: {value}")
 
 
