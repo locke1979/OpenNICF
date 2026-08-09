@@ -39,6 +39,18 @@ CONTENCIOSO_ADMINISTRATIVO_DELEGATION_TARGETS = (
     "encargos_sigef",
 )
 
+# These are sanitized registry labels only.  They identify the application
+# ownership boundary; connection details and deployment endpoints stay in the
+# runtime configuration and are never part of a profile.
+CRIMINAL_DOMAIN_ALIASES = (
+    "criminal",
+    "criminal-law",
+    "penal",
+    "sinquer",
+    "sinquer-criminal",
+    "criminal-sinquer",
+)
+
 GENERIC_RETRIEVAL_TOOL_NAMES = (
     "search_code_exact",
     "search_code_symbols",
@@ -270,8 +282,8 @@ DEFAULT_DOMAIN_PROFILES: dict[str, DomainProfile] = {
         "criminal",
         name="Criminal",
         description="Criminal-law matters and supporting evidence.",
-        owned_systems=("criminal_casework", "criminal_evidence"),
-        integration_boundary_aliases=("penal", "criminal-law"),
+        owned_systems=("criminal_casework", "criminal_evidence", "sinquer", "sinquer_criminal"),
+        integration_boundary_aliases=CRIMINAL_DOMAIN_ALIASES[1:],
         permitted_evidence_classes=("document", "log", "code", "schema", "query-output"),
         system_prompt="You are the criminal domain agent. Stay inside the criminal evidence namespace.",
     ),
@@ -593,6 +605,7 @@ class DomainTools:
                         "component_id": primary.component_id,
                         "evidence_type": primary.evidence_type,
                         "source_type": primary.source_type,
+                        "integration_edges": list(primary.metadata.get("integration_edges", [])),
                     },
                 }
             )
@@ -947,6 +960,89 @@ class ContenciosoAdministrativoDomainAgent(DomainAgent):
     """Shared-factory agent scoped to Administrative Litigation evidence."""
 
 
+class CriminalDomainAgent(DomainAgent):
+    """Criminal/SINQUER specialization over the shared DomainAgent runtime.
+
+    The specialization contains domain policy and response shaping only.  It
+    deliberately reuses ``DomainTools`` and the QwenAgent runtime supplied by
+    ``DomainAgentFactory``; it does not introduce another orchestration loop.
+    """
+
+    domain_id = "criminal"
+    aliases = CRIMINAL_DOMAIN_ALIASES
+
+    def __init__(self, profile: DomainProfile, **kwargs: Any) -> None:
+        if profile.domain_id != self.domain_id:
+            raise ValueError("CriminalDomainAgent requires the criminal profile")
+        super().__init__(profile, **kwargs)
+
+    @staticmethod
+    def _cross_domain_edge(package: Mapping[str, Any]) -> dict[str, Any] | None:
+        for edge in package.get("metadata", {}).get("integration_edges", ()):
+            if isinstance(edge, Mapping):
+                target = str(edge.get("target_domain_id") or edge.get("target_domain") or "").strip()
+                if target and target != "criminal":
+                    return dict(edge)
+        return None
+
+    def retrieve(self, request: str | Mapping[str, Any]) -> dict[str, Any]:
+        """Retrieve criminal evidence or return an explicit domain handoff."""
+        payload = _normalize_request(request)
+        query = str(payload.get("query") or "").strip()
+        # Known identifiers take the deterministic code path before semantic
+        # retrieval, keeping broad matching from obscuring ownership edges.
+        if payload.get("retrieval_mode") in {"exact", "symbol"} or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]*", query):
+            result = self.tools.search_code_exact(payload)
+        else:
+            result = self.tools.search_domain_evidence(payload)
+        for package in result.get("packages", ()):
+            edge = self._cross_domain_edge(package)
+            if edge is not None:
+                return {
+                    "status": "cross_domain_required",
+                    "cross_domain_required": True,
+                    "principal_domain_id": self.domain_id,
+                    "requested_domain_id": edge.get("target_domain_id") or edge.get("target_domain"),
+                    "integration_edge": edge,
+                    "evidence": package.get("evidence_refs", []),
+                }
+        result["cross_domain_required"] = False
+        return result
+
+    def run_failure_audit(self, request: str | Mapping[str, Any]) -> dict[str, Any]:
+        """Return a bounded, provenance-preserving audit package.
+
+        This is intentionally a result adapter for QwenAgent tools, not an
+        agent loop.  Classification remains explicit so the model cannot turn
+        an unverified observation into a fact without evidence.
+        """
+        result = self.retrieve(request)
+        if result.get("cross_domain_required"):
+            return result
+        evidence = [ref for package in result.get("packages", ()) for ref in package.get("evidence_refs", ())]
+        findings = [
+            {
+                "classification": "fact",
+                "statement": f"Criminal-domain evidence matched: {ref.get('statement', ref.get('locator', 'evidence'))}",
+                "confidence": 1.0,
+                "provenance_ref": ref.get("provenance_ref"),
+                "evidence_ref": ref,
+            }
+            for ref in evidence
+        ]
+        return {
+            "status": "ok",
+            "principal_domain_id": self.domain_id,
+            "cross_domain_required": False,
+            "findings": findings,
+            "evidence": evidence,
+        }
+
+    def request_live_verification(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        """Use only the allow-listed diagnostic broker interface."""
+        return self.tools.request_domain_diagnostic(request)
+
+
 class DomainAgentFactory:
     """Factory that builds isolated domain agents over shared runtime services."""
 
@@ -969,10 +1065,18 @@ class DomainAgentFactory:
         return tuple(self.profiles)
 
     def profile_for(self, domain_id: str) -> DomainProfile:
+        normalized = str(domain_id).strip().lower().replace("_", "-")
+        for candidate_id, profile in self.profiles.items():
+            aliases = tuple(alias.lower().replace("_", "-") for alias in profile.integration_boundary_aliases)
+            if normalized == candidate_id.replace("_", "-") or normalized in aliases:
+                return profile
         try:
             return self.profiles[domain_id]
         except KeyError as exc:
             raise KeyError(f"unknown domain_id: {domain_id}") from exc
+
+    def resolve_domain_id(self, domain_id: str) -> str:
+        return self.profile_for(domain_id).domain_id
 
     def create(self, domain_id: str) -> DomainAgent:
         resolved_domain_id = self.domain_for_alias(domain_id)
@@ -980,6 +1084,8 @@ class DomainAgentFactory:
         agent_class = (
             ContenciosoAdministrativoDomainAgent
             if resolved_domain_id == "contencioso_administrativo"
+            else CriminalDomainAgent
+            if resolved_domain_id == "criminal"
             else DomainAgent
         )
         if resolved_domain_id == "encargos_sigef":
