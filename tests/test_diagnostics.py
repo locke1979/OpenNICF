@@ -59,6 +59,16 @@ def _broker(tmp_path: Path) -> SecureDiagnosticBroker:
     )
 
 
+def _base_request() -> dict[str, object]:
+    return {
+        "requester": "auditor/alice",
+        "target_logical_system": "oracle-ledger-prod",
+        "policy_classification": "restricted-read",
+        "authentication_material_ref": "ref:vault/sqlcl/prod-ledger-reader",
+        "database_profile_alias": "prod-ledger",
+    }
+
+
 def _select_fixture() -> SqlclFixture:
     return SqlclFixture(
         stdout=(FIXTURE_DIR / "select_sessions.csv").read_text(encoding="utf-8"),
@@ -71,9 +81,9 @@ def test_broker_signs_template_jobs_and_rejects_tampering(tmp_path):
     broker = _broker(tmp_path)
     job = broker.create_job(
         {
+            **_base_request(),
             "audit_id": "audit-1",
             "finding_id": "finding-1",
-            "database_profile_alias": "prod-ledger",
             "operation_class": "read_select",
             "template_id": "select-sessions",
             "parameters": {"username": "APP"},
@@ -86,6 +96,10 @@ def test_broker_signs_template_jobs_and_rejects_tampering(tmp_path):
 
     assert job.signature
     assert job.payload_hash
+    assert job.requester == "auditor/alice"
+    assert job.target_logical_system == "oracle-ledger-prod"
+    assert job.policy_classification == "restricted-read"
+    assert job.authentication_material_ref == "ref:vault/sqlcl/prod-ledger-reader"
     assert "select session_id" in job.sql_text.lower()
     broker.verify_job(job)
 
@@ -100,6 +114,7 @@ def test_broker_rejects_dml_and_arbitrary_powershell(tmp_path):
     with pytest.raises(DiagnosticPolicyError):
         broker.create_job(
             {
+                **_base_request(),
                 "database_profile_alias": "prod-ledger",
                 "operation_class": "read_select",
                 "sql_text": "drop table users",
@@ -110,10 +125,22 @@ def test_broker_rejects_dml_and_arbitrary_powershell(tmp_path):
     with pytest.raises(DiagnosticPolicyError):
         broker.create_job(
             {
+                **_base_request(),
                 "database_profile_alias": "prod-ledger",
                 "operation_class": "read_select",
                 "sql_text": "select * from dual",
                 "wrapper_name": "Invoke-Expression",
+            }
+        )
+
+    with pytest.raises(DiagnosticPolicyError):
+        broker.create_job(
+            {
+                **_base_request(),
+                "database_profile_alias": "prod-ledger",
+                "operation_class": "read_select",
+                "sql_text": "select * from dual",
+                "authentication_material_value": "forbidden-credential-value",
             }
         )
 
@@ -122,6 +149,7 @@ def test_leases_are_single_use_and_expired_jobs_are_rejected(tmp_path):
     broker = _broker(tmp_path)
     job = broker.create_job(
         {
+            **_base_request(),
             "database_profile_alias": "prod-ledger",
             "operation_class": "describe",
             "template_id": "describe-users",
@@ -139,6 +167,7 @@ def test_leases_are_single_use_and_expired_jobs_are_rejected(tmp_path):
 
     expired = broker.create_job(
         {
+            **_base_request(),
             "database_profile_alias": "prod-ledger",
             "operation_class": "read_select",
             "template_id": "select-sessions",
@@ -156,9 +185,9 @@ def test_worker_resume_from_offline_spool_without_duplicate_execution(tmp_path):
     broker = _broker(tmp_path)
     job = broker.create_job(
         {
+            **_base_request(),
             "audit_id": "audit-9",
             "finding_id": "finding-9",
-            "database_profile_alias": "prod-ledger",
             "operation_class": "read_select",
             "template_id": "select-sessions",
             "parameters": {"username": "APP"},
@@ -194,9 +223,9 @@ def test_query_output_provenance_hook_records_hashes_and_audit_linkage(tmp_path)
     broker = _broker(tmp_path)
     broker.create_job(
         {
+            **_base_request(),
             "audit_id": "audit-9",
             "finding_id": "finding-9",
-            "database_profile_alias": "prod-ledger",
             "operation_class": "read_select",
             "template_id": "select-sessions",
             "parameters": {"username": "APP"},
@@ -227,7 +256,12 @@ def test_query_output_provenance_hook_records_hashes_and_audit_linkage(tmp_path)
     assert source.metadata["job_id"] == lease.job.job_id
     assert source.metadata["audit_id"] == lease.job.audit_id
     assert source.metadata["finding_id"] == lease.job.finding_id
+    assert source.metadata["requester"] == lease.job.requester
+    assert source.metadata["target_logical_system"] == lease.job.target_logical_system
+    assert source.metadata["policy_classification"] == lease.job.policy_classification
+    assert source.metadata["authentication_material_ref"] == lease.job.authentication_material_ref
     assert source.metadata["result_hash"] == result.result_hash
     assert source.metadata["stdout_hash"] == result.stdout_hash
+    assert "forbidden-credential-value" not in result.to_dict()
     hits = platform.search("SESSION_ID", filters=None, route="local")
     assert hits

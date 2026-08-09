@@ -26,6 +26,17 @@ _DANGEROUS_SQL = re.compile(
 )
 _MULTI_STATEMENT = re.compile(r";\s*\S")
 _PLACEHOLDER = re.compile(r"{{\s*([A-Za-z_][A-Za-z0-9_]*)\s*}}")
+_SAFE_LABEL = re.compile(r"^[A-Za-z0-9._@:/+-]{1,128}$")
+_SAFE_REFERENCE = re.compile(r"^(?:[A-Za-z][A-Za-z0-9+.-]*://|ref:)[^\s]{1,256}$")
+_FORBIDDEN_SECRET_KEYS = {
+    "authentication_material_value",
+    "credential_value",
+    "password",
+    "private_key",
+    "private_key_pem",
+    "raw_secret",
+    "secret_value",
+}
 
 
 def _utcnow() -> datetime:
@@ -80,6 +91,35 @@ def validate_read_only_sql(sql_text: str) -> str:
     return candidate
 
 
+def _validate_label(field_name: str, value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    candidate = value.strip()
+    if not candidate or not _SAFE_LABEL.fullmatch(candidate):
+        raise ValueError(f"{field_name} must be a safe non-empty label")
+    return candidate
+
+
+def _validate_reference(field_name: str, value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string reference")
+    candidate = value.strip()
+    if not candidate or not _SAFE_REFERENCE.fullmatch(candidate):
+        raise ValueError(f"{field_name} must be a safe reference such as ref:... or scheme://...")
+    return candidate
+
+
+def _reject_secret_material(request: Mapping[str, Any]) -> None:
+    for key in request:
+        if key in _FORBIDDEN_SECRET_KEYS:
+            raise DiagnosticPolicyError(f"{key} is not permitted; use authentication_material_ref instead")
+    metadata = request.get("metadata")
+    if isinstance(metadata, Mapping):
+        for key in metadata:
+            if key in _FORBIDDEN_SECRET_KEYS:
+                raise DiagnosticPolicyError(f"{key} is not permitted in metadata")
+
+
 @dataclass(frozen=True)
 class DiagnosticTemplate:
     template_id: str
@@ -114,6 +154,10 @@ class DiagnosticJob:
     audit_id: str | None
     finding_id: str | None
     database_profile_alias: str
+    requester: str
+    target_logical_system: str
+    policy_classification: str
+    authentication_material_ref: str
     operation_class: str
     wrapper_name: str
     sql_text: str
@@ -135,6 +179,10 @@ class DiagnosticJob:
             "audit_id": self.audit_id,
             "finding_id": self.finding_id,
             "database_profile_alias": self.database_profile_alias,
+            "requester": self.requester,
+            "target_logical_system": self.target_logical_system,
+            "policy_classification": self.policy_classification,
+            "authentication_material_ref": self.authentication_material_ref,
             "operation_class": self.operation_class,
             "wrapper_name": self.wrapper_name,
             "sql_text": self.sql_text,
@@ -441,12 +489,23 @@ class SecureDiagnosticBroker:
         return payload_hash, signature
 
     def _validate_request(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        _reject_secret_material(request)
         operation_class = str(request.get("operation_class") or "").strip()
         if operation_class not in ALLOWED_OPERATION_CLASSES:
             raise DiagnosticPolicyError("diagnostic operation is not allow-listed")
         wrapper_name = str(request.get("wrapper_name") or APPROVED_WRAPPER).strip()
         if wrapper_name != APPROVED_WRAPPER:
             raise DiagnosticPolicyError("only the approved SQLcl wrapper may execute jobs")
+        try:
+            requester = _validate_label("requester", request.get("requester"))
+            target_logical_system = _validate_label("target_logical_system", request.get("target_logical_system"))
+            policy_classification = _validate_label("policy_classification", request.get("policy_classification"))
+            authentication_material_ref = _validate_reference(
+                "authentication_material_ref",
+                request.get("authentication_material_ref"),
+            )
+        except ValueError as exc:
+            raise DiagnosticPolicyError(str(exc)) from exc
 
         template_id = request.get("template_id")
         sql_text = request.get("sql_text")
@@ -477,6 +536,10 @@ class SecureDiagnosticBroker:
             "audit_id": request.get("audit_id"),
             "finding_id": request.get("finding_id"),
             "database_profile_alias": str(request.get("database_profile_alias") or request.get("profile_alias") or "default"),
+            "requester": requester,
+            "target_logical_system": target_logical_system,
+            "policy_classification": policy_classification,
+            "authentication_material_ref": authentication_material_ref,
             "operation_class": operation_class,
             "wrapper_name": APPROVED_WRAPPER,
             "sql_text": sql_text,
@@ -673,6 +736,10 @@ class QueryOutputProvenanceHook:
             "output_hash": result.output_hash,
             "audit_id": job.audit_id,
             "finding_id": job.finding_id,
+            "requester": job.requester,
+            "target_logical_system": job.target_logical_system,
+            "policy_classification": job.policy_classification,
+            "authentication_material_ref": job.authentication_material_ref,
             "template_id": job.template_id,
             "parameters": job.parameters,
             "operation_class": job.operation_class,
