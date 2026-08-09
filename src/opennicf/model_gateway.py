@@ -659,6 +659,9 @@ class ModelGateway:
             retriable = True
             detail = {"reason": getattr(exc, "reason", message)}
         latency = self._clock() - started
+        secrets = [provider.api_key] if provider.api_key else []
+        message = _redact_text(message, secrets)
+        detail = _redact_structure(detail, secrets)
         detail.setdefault("latency_seconds", latency)
         return GatewayError(
             message,
@@ -789,12 +792,17 @@ class ModelGateway:
         last_error: GatewayError | None = None
         attempts = provider.max_retries + 1
         for attempt in range(attempts):
+            yielded_any = False
             try:
-                yield from self._stream_once(provider, payload=payload, route=route)
+                for chunk in self._stream_once(provider, payload=payload, route=route):
+                    yielded_any = True
+                    yield chunk
                 return
             except GatewayError as exc:
                 last_error = exc
-                if attempt < provider.max_retries and exc.retriable:
+                # Once a provider has emitted output, retrying can replay a
+                # request that already executed side effects such as tools.
+                if not yielded_any and attempt < provider.max_retries and exc.retriable:
                     backoff = provider.retry_backoff_seconds * (2**attempt)
                     self._sleep(backoff)
                     continue

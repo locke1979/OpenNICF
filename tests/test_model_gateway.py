@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import io
 import json
 import threading
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
@@ -10,9 +12,12 @@ from opennicf.router import (
     GatewayError,
     ModelGateway,
     ModelRouter,
+    OpenNICFChatModel,
     PrivacyPolicy,
     ProviderConfig,
     RouterConfig,
+    Route,
+    StreamChunk,
 )
 
 
@@ -306,3 +311,94 @@ def test_streaming_is_normalized_and_audited(mock_providers):
     assert chunks[0].route.provider == "lmstudio"
     assert gateway.audit_events[-1].streaming is True
 
+
+def test_streaming_does_not_retry_after_partial_output(mock_providers):
+    local, remote = mock_providers
+    gateway = _gateway(local, remote)
+    calls = 0
+
+    def partial_stream(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        yield StreamChunk(
+            provider="lmstudio",
+            route=Route(provider="lmstudio", reason="partial"),
+            delta="partial",
+        )
+        raise GatewayError("stream interrupted", provider="lmstudio", retriable=True)
+
+    gateway._stream_once = partial_stream
+    with pytest.raises(GatewayError, match="stream interrupted"):
+        list(
+            gateway.stream_chat(
+                [{"role": "user", "content": "tool-sensitive stream"}],
+                task_class="classification",
+                privacy=PrivacyPolicy.LOCAL_PREFERRED,
+            )
+        )
+    assert calls == 1
+
+
+def test_provider_error_redacts_api_key():
+    secret = "provider-secret-value"
+
+    def opener(request, timeout):
+        del timeout
+        body = json.dumps({"error": {"message": f"upstream saw {secret}"}}).encode()
+        raise urllib.error.HTTPError(
+            request.full_url,
+            502,
+            "bad gateway",
+            {"Content-Type": "application/json"},
+            io.BytesIO(body),
+        )
+
+    gateway = ModelGateway(
+        local_provider=ProviderConfig(
+            name="lmstudio",
+            base_url="http://local.invalid",
+            model="local-model",
+            api_key=secret,
+            max_retries=0,
+        ),
+        opener=opener,
+    )
+
+    with pytest.raises(GatewayError) as excinfo:
+        gateway.chat(
+            [{"role": "user", "content": "hello"}],
+            task_class="classification",
+            privacy=PrivacyPolicy.LOCAL_ONLY,
+        )
+
+    assert secret not in str(excinfo.value)
+    assert secret not in repr(excinfo.value.details)
+
+
+def test_qwen_adapter_filters_framework_only_generation_hints():
+    class Result:
+        content = "ok"
+        tool_calls = ()
+
+    class FakeGateway:
+        local_provider = ProviderConfig(
+            name="lmstudio",
+            base_url="http://local.invalid",
+            model="local-model",
+        )
+        remote_provider = None
+
+        def chat(self, messages, **kwargs):
+            self.messages = messages
+            self.kwargs = kwargs
+            return Result()
+
+    fake = FakeGateway()
+    adapter = OpenNICFChatModel(gateway=fake)
+    adapter.chat(
+        [{"role": "user", "content": "hello"}],
+        stream=False,
+        extra_generate_cfg={"lang": "en", "temperature": 0.2},
+    )
+
+    assert fake.kwargs["extra_payload"] == {"temperature": 0.2}
