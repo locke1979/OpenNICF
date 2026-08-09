@@ -63,6 +63,24 @@ def test_docx_webex_attachment_is_parsed_into_provenanced_chunks():
     assert all(bundle.version.parser_version == "1" for outcome in outcomes for bundle in outcome.bundles)
 
 
+def test_docx_telegram_attachment_is_parsed_into_provenanced_chunks():
+    platform = KnowledgePlatform.in_memory()
+    service = IngestionService(platform)
+
+    service.submit_telegram_message(
+        chat_id="chat-99",
+        message_id="msg-17",
+        message_text="telegram note",
+        attachments=[("evidence.docx", _build_docx_bytes(["Telegram paragraph one", "Telegram paragraph two"]))],
+    )
+    outcomes = service.run()
+
+    assert len(outcomes) == 2
+    assert any("Telegram paragraph one" in chunk.text for chunk in platform.store.chunks.values())
+    assert any(chunk.locator.endswith("#paragraph-1") for chunk in platform.store.chunks.values())
+    assert all(bundle.version.parser_version == "1" for outcome in outcomes for bundle in outcome.bundles)
+
+
 def test_tar_gz_archive_submission_is_supported_and_path_traversal_is_rejected(tmp_path):
     service = IngestionService(KnowledgePlatform.in_memory())
 
