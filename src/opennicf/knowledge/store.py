@@ -264,7 +264,10 @@ class PostgresKnowledgeStore:
                     "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, checksum TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
                 )
                 cur.execute("SELECT version, checksum FROM schema_migrations ORDER BY version")
-                existing = {int(version): checksum for version, checksum in cur.fetchall()}
+                existing = {
+                    int(version): checksum.decode("utf-8") if isinstance(checksum, bytes) else checksum
+                    for version, checksum in cur.fetchall()
+                }
                 for path in iter_migration_files(self._migration_package):
                     version = migration_version(path.name)
                     checksum = migration_checksum(path)

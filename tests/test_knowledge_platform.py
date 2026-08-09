@@ -245,7 +245,7 @@ def test_postgres_migrations_fail_on_checksum_drift():
             executed.append(sql.strip())
 
         def fetchall(self):
-            return [(1, "not-the-source-checksum")]
+            return [(1, b"not-the-source-checksum")]
 
     class Connection:
         def __enter__(self):
