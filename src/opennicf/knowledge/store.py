@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import importlib.resources as resources
 import json
+import os
 from pathlib import Path
 from typing import Any, Callable, Iterable, Protocol, Sequence
 import uuid
@@ -267,7 +268,12 @@ class PostgresKnowledgeStore:
                 for path in iter_migration_files(self._migration_package):
                     version = migration_version(path.name)
                     checksum = migration_checksum(path)
-                    if existing.get(version) == checksum:
+                    if version in existing and existing[version] != checksum:
+                        raise RuntimeError(
+                            f"migration checksum drift for version {version}: "
+                            "applied migration differs from source"
+                        )
+                    if version in existing:
                         continue
                     sql = path.read_text(encoding="utf-8")
                     for statement in _split_sql(sql):
@@ -479,6 +485,39 @@ class KnowledgePlatform:
     def in_memory(cls, *, root: str | None = None) -> "KnowledgePlatform":
         object_store = FilesystemObjectStore(root) if root else MemoryObjectStore()
         return cls(MemoryKnowledgeStore(), object_store)
+
+    @classmethod
+    def from_dsn(
+        cls,
+        dsn: str,
+        *,
+        object_store_root: str,
+        embeddings: LocalFirstEmbeddingService | None = None,
+        migration_package: str = "opennicf.knowledge.migrations",
+    ) -> "KnowledgePlatform":
+        """Build the production platform from injected runtime configuration."""
+        return cls(
+            PostgresKnowledgeStore.from_dsn(dsn, migration_package=migration_package),
+            FilesystemObjectStore(object_store_root),
+            embeddings,
+        )
+
+    @classmethod
+    def from_env(
+        cls,
+        *,
+        dsn_var: str = "OPENNICF_POSTGRES_DSN",
+        object_store_var: str = "OPENNICF_OBJECT_STORE_ROOT",
+        embeddings: LocalFirstEmbeddingService | None = None,
+    ) -> "KnowledgePlatform":
+        """Build from protected environment variables without logging their values."""
+        dsn = os.environ.get(dsn_var)
+        object_store_root = os.environ.get(object_store_var)
+        if not dsn:
+            raise RuntimeError(f"{dsn_var} is required for the PostgreSQL knowledge platform")
+        if not object_store_root:
+            raise RuntimeError(f"{object_store_var} is required for the PostgreSQL knowledge platform")
+        return cls.from_dsn(dsn, object_store_root=object_store_root, embeddings=embeddings)
 
     @staticmethod
     def _source_version_id(source_id: str, content_hash: str) -> str:

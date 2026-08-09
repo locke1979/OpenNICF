@@ -214,3 +214,46 @@ def test_postgres_migrations_apply_in_order():
     assert applied == [1, 2]
     assert any("CREATE EXTENSION IF NOT EXISTS vector" in statement for statement in executed)
     assert any("knowledge_sources" in statement for statement in executed)
+
+
+def test_postgres_migrations_fail_on_checksum_drift():
+    executed: list[str] = []
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def execute(self, sql, params=None):
+            executed.append(sql.strip())
+
+        def fetchall(self):
+            return [(1, "not-the-source-checksum")]
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def cursor(self):
+            return Cursor()
+
+        def commit(self):
+            return None
+
+    with pytest.raises(RuntimeError, match="checksum drift"):
+        PostgresKnowledgeStore(lambda: Connection()).migrate()
+    assert any("schema_migrations" in statement for statement in executed)
+    assert not any("CREATE EXTENSION IF NOT EXISTS vector" in statement for statement in executed)
+
+
+def test_runtime_platform_contract_uses_injected_environment(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENNICF_POSTGRES_DSN", "postgresql://runtime-only")
+    monkeypatch.setenv("OPENNICF_OBJECT_STORE_ROOT", str(tmp_path / "objects"))
+    platform = KnowledgePlatform.from_env()
+    assert isinstance(platform.store, PostgresKnowledgeStore)
+    assert (tmp_path / "objects").is_dir()
