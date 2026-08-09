@@ -82,6 +82,15 @@ from .encargos_sigef import (
     SIGEF_OWNED_SYSTEMS,
     SIGEF_SYSTEM_ALIASES,
 )
+from .contraordenacional import (
+    CONTRAORDENACIONAL_DOMAIN_ID,
+    SCO_INTEGRATION_ALIASES,
+    SCO_OWNED_SYSTEMS,
+    SCO_OWNERSHIP_ALIASES,
+    ContraordenacionalDomainAgent,
+    ContraordenacionalDomainAgentFactory,
+    create_contraordenacional_domain_agent_factory,
+)
 from .diagnostics import (
     APPROVED_WRAPPER,
     ALLOWED_OPERATION_CLASSES,
@@ -207,6 +216,13 @@ __all__ = [
     "INTEGRATION_BOUNDARIES",
     "SIGEF_OWNED_SYSTEMS",
     "SIGEF_SYSTEM_ALIASES",
+    "CONTRAORDENACIONAL_DOMAIN_ID",
+    "SCO_INTEGRATION_ALIASES",
+    "SCO_OWNED_SYSTEMS",
+    "SCO_OWNERSHIP_ALIASES",
+    "ContraordenacionalDomainAgent",
+    "ContraordenacionalDomainAgentFactory",
+    "create_contraordenacional_domain_agent_factory",
     "APPROVED_WRAPPER",
     "ALLOWED_OPERATION_CLASSES",
     "DiagnosticBrokerStore",

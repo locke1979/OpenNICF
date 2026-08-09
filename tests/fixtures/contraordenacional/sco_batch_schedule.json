@@ -1,0 +1,8 @@
+{
+  "job_name": "sco-notification-batch",
+  "schedule": "weekday-window",
+  "execution_id": "batch-20260808-0017",
+  "application": "sco",
+  "expected_return_code": 0,
+  "metadata": "sanitized scheduler evidence"
+}
