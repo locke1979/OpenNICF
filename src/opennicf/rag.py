@@ -1,5 +1,11 @@
-"""Small provenance-preserving RAG boundary; storage implementation is added by #5."""
+"""Compatibility wrapper over the provenance-aware knowledge platform."""
+
+from __future__ import annotations
+
 from dataclasses import dataclass
+
+from .knowledge import KnowledgePlatform, RetrievalFilters
+
 
 @dataclass(frozen=True)
 class Evidence:
@@ -7,14 +13,33 @@ class Evidence:
     text: str
     locator: str
 
+
 class EvidenceIndex:
-    def __init__(self):
-        self._items: list[Evidence] = []
+    """Thin adapter kept for the existing tool surface."""
+
+    def __init__(self, platform: KnowledgePlatform | None = None):
+        self.platform = platform or KnowledgePlatform.in_memory()
 
     def add(self, evidence: Evidence) -> None:
-        self._items.append(evidence)
+        self.platform.ingest(
+            source_id=evidence.source_id,
+            source_uri=evidence.locator,
+            explicit_locator=evidence.locator,
+            content=evidence.text,
+            acl_scope="internal",
+            source_kind="ad_hoc",
+            source_type="evidence",
+            channel="manual",
+            domain="general",
+            system="unknown",
+            environment="unknown",
+            parser_name="identity",
+            parser_version="1",
+        )
 
     def search(self, query: str) -> list[Evidence]:
-        terms = set(query.lower().split())
-        return [e for e in self._items if terms & set(e.text.lower().split())]
-
+        hits = self.platform.search(
+            query,
+            filters=RetrievalFilters(principal_acl_scopes=frozenset({"internal"})),
+        )
+        return [Evidence(hit.source_id, hit.text, hit.locator) for hit in hits]

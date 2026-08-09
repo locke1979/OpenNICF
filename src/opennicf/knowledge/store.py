@@ -1,0 +1,929 @@
+"""Memory and PostgreSQL knowledge stores."""
+
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from hashlib import sha256
+import importlib.resources as resources
+import json
+from pathlib import Path
+from typing import Any, Callable, Iterable, Protocol, Sequence
+import uuid
+
+from .embeddings import EmbeddingResult, LocalFirstEmbeddingService
+from .models import (
+    ArtifactRecord,
+    AuditFindingRecord,
+    ChunkRecord,
+    EmbeddingRecord,
+    EvidenceHit,
+    IngestBundle,
+    KnowledgeSource,
+    KnowledgeSourceVersion,
+    RetrievalEventRecord,
+    RetrievalFilters,
+    SearchCandidate,
+    SourceKind,
+    utcnow,
+)
+from .object_store import FilesystemObjectStore, MemoryObjectStore, ObjectReference, ObjectStore
+
+
+def _uuid(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex}"
+
+
+def _chunk_locator(prefix: str | None, ordinal: int, line_start: int | None, line_end: int | None) -> str:
+    locator = prefix or "chunk"
+    if line_start is None and line_end is None:
+        return f"{locator}#chunk-{ordinal + 1}"
+    if line_start is not None and line_end is not None and line_start != line_end:
+        return f"{locator}:L{line_start}-L{line_end}"
+    if line_start is not None:
+        return f"{locator}:L{line_start}"
+    return f"{locator}#chunk-{ordinal + 1}"
+
+
+def _split_blocks(text: str, *, max_chars: int = 900, overlap: int = 0) -> list[tuple[str, int, int]]:
+    lines = text.splitlines()
+    blocks: list[tuple[str, int, int]] = []
+    start = 0
+    while start < len(lines):
+        end = min(len(lines), start + 1)
+        char_count = len(lines[start])
+        while end < len(lines) and char_count < max_chars:
+            if not lines[end].strip():
+                break
+            char_count += len(lines[end]) + 1
+            if char_count > max_chars:
+                break
+            end += 1
+        if end == start:
+            end = start + 1
+        block_lines = lines[start:end]
+        if not block_lines:
+            break
+        block_text = "\n".join(block_lines).strip()
+        if block_text:
+            blocks.append((block_text, start + 1, end))
+        start = end + 1 if end < len(lines) and not lines[end].strip() else end
+        if overlap and start > overlap:
+            start -= overlap
+    if not blocks and text.strip():
+        blocks.append((text.strip(), 1, len(lines) or 1))
+    return blocks
+
+
+class KnowledgeStore(Protocol):
+    def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
+        raise NotImplementedError
+
+    def search_candidates(self, filters: RetrievalFilters) -> list[SearchCandidate]:
+        raise NotImplementedError
+
+    def record_retrieval_event(self, event: RetrievalEventRecord) -> None:
+        raise NotImplementedError
+
+    def record_audit_finding(self, finding: AuditFindingRecord) -> None:
+        raise NotImplementedError
+
+    def snapshot(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        raise NotImplementedError
+
+
+class MemoryKnowledgeStore:
+    """Deterministic in-memory store used for tests and local development."""
+
+    def __init__(self):
+        self.sources: dict[str, KnowledgeSource] = {}
+        self.source_versions: dict[str, KnowledgeSourceVersion] = {}
+        self.artifacts: dict[str, ArtifactRecord] = {}
+        self.chunks: dict[str, ChunkRecord] = {}
+        self.embeddings: dict[str, EmbeddingRecord] = {}
+        self.retrieval_events: list[RetrievalEventRecord] = []
+        self.audit_findings: list[AuditFindingRecord] = []
+        self._latest_version_by_source_hash: dict[tuple[str, str], str] = {}
+        self._versions_by_source: dict[str, list[str]] = {}
+        self._artifact_chunk_ids: dict[str, list[str]] = {}
+
+    def _store_chunk(self, chunk: ChunkRecord, embedding: EmbeddingRecord | None = None) -> None:
+        self.chunks[chunk.chunk_id] = chunk
+        self._artifact_chunk_ids.setdefault(chunk.artifact_hash, []).append(chunk.chunk_id)
+        if embedding is not None:
+            self.embeddings[chunk.chunk_id] = embedding
+
+    def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
+        key = (bundle.source.source_id, bundle.source.content_hash)
+        if key in self._latest_version_by_source_hash:
+            existing_version_id = self._latest_version_by_source_hash[key]
+            existing_version = self.source_versions[existing_version_id]
+            existing_artifact = self.artifacts[existing_version.artifact_hash]
+            existing_chunks = tuple(
+                self.chunks[chunk_id]
+                for chunk_id in self._artifact_chunk_ids.get(existing_artifact.artifact_hash, [])
+            )
+            existing_embeddings = tuple(
+                self.embeddings[chunk.chunk_id]
+                for chunk in existing_chunks
+                if chunk.chunk_id in self.embeddings
+            )
+            return IngestBundle(
+                source=bundle.source,
+                version=existing_version,
+                artifact=existing_artifact,
+                chunks=existing_chunks,
+                embeddings=existing_embeddings,
+                object_reference=bundle.object_reference,
+                created=False,
+            )
+
+        self.sources[bundle.source.source_id] = bundle.source
+        self.source_versions[bundle.version.source_version_id] = bundle.version
+        self.artifacts[bundle.artifact.artifact_hash] = bundle.artifact
+        self._latest_version_by_source_hash[key] = bundle.version.source_version_id
+        self._versions_by_source.setdefault(bundle.source.source_id, []).append(bundle.version.source_version_id)
+        for chunk, embedding in zip(bundle.chunks, bundle.embeddings):
+            self._store_chunk(chunk, embedding)
+        return bundle
+
+    def next_version_number(self, source_id: str, content_hash: str) -> int:
+        if (source_id, content_hash) in self._latest_version_by_source_hash:
+            version_id = self._latest_version_by_source_hash[(source_id, content_hash)]
+            return self.source_versions[version_id].version_number
+        return len(self._versions_by_source.get(source_id, [])) + 1
+
+    def search_candidates(self, filters: RetrievalFilters) -> list[SearchCandidate]:
+        filters = filters.normalized()
+        candidates: list[SearchCandidate] = []
+        for chunk_id, chunk in self.chunks.items():
+            if filters.principal_acl_scopes and chunk.acl_scope not in filters.principal_acl_scopes:
+                continue
+            if filters.domains and chunk.domain not in filters.domains:
+                continue
+            if filters.systems and chunk.system not in filters.systems:
+                continue
+            if filters.environments and chunk.environment not in filters.environments:
+                continue
+            if filters.source_types and chunk.source_type not in filters.source_types:
+                continue
+            if filters.source_ids and chunk.source_id not in filters.source_ids:
+                continue
+            version = self.source_versions[chunk.source_version_id]
+            if filters.since and version.ingest_timestamp < filters.since:
+                continue
+            if filters.until and version.ingest_timestamp > filters.until:
+                continue
+            source = self.sources[chunk.source_id]
+            artifact = self.artifacts[chunk.artifact_hash]
+            candidates.append(
+                SearchCandidate(
+                    chunk=chunk,
+                    source=source,
+                    version=version,
+                    artifact=artifact,
+                    embedding=self.embeddings.get(chunk_id),
+                )
+            )
+        candidates.sort(key=lambda candidate: (candidate.chunk.source_version_id, candidate.chunk.ordinal, candidate.chunk.chunk_id))
+        return candidates
+
+    def record_retrieval_event(self, event: RetrievalEventRecord) -> None:
+        self.retrieval_events.append(event)
+
+    def record_audit_finding(self, finding: AuditFindingRecord) -> None:
+        self.audit_findings.append(finding)
+
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            "sources": [asdict(item) for item in self.sources.values()],
+            "source_versions": [asdict(item) for item in self.source_versions.values()],
+            "artifacts": [asdict(item) for item in self.artifacts.values()],
+            "chunks": [asdict(item) for item in self.chunks.values()],
+            "embeddings": [asdict(item) for item in self.embeddings.values()],
+            "retrieval_events": [asdict(item) for item in self.retrieval_events],
+            "audit_findings": [asdict(item) for item in self.audit_findings],
+        }
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        self.__init__()
+        for source in snapshot.get("sources", []):
+            self.sources[source["source_id"]] = KnowledgeSource(**source)
+        for version in snapshot.get("source_versions", []):
+            record = KnowledgeSourceVersion(**version)
+            self.source_versions[record.source_version_id] = record
+            self._versions_by_source.setdefault(record.source_id, []).append(record.source_version_id)
+            self._latest_version_by_source_hash[(record.source_id, record.content_hash)] = record.source_version_id
+        for artifact in snapshot.get("artifacts", []):
+            self.artifacts[artifact["artifact_hash"]] = ArtifactRecord(**artifact)
+        for chunk in snapshot.get("chunks", []):
+            record = ChunkRecord(**chunk)
+            self.chunks[record.chunk_id] = record
+            self._artifact_chunk_ids.setdefault(record.artifact_hash, []).append(record.chunk_id)
+        for embedding in snapshot.get("embeddings", []):
+            record = EmbeddingRecord(**embedding)
+            self.embeddings[record.chunk_id] = record
+        for event in snapshot.get("retrieval_events", []):
+            self.retrieval_events.append(RetrievalEventRecord(**event))
+        for finding in snapshot.get("audit_findings", []):
+            self.audit_findings.append(AuditFindingRecord(**finding))
+
+
+class PostgresKnowledgeStore:
+    """PostgreSQL + pgvector store with source-controlled migrations."""
+
+    def __init__(self, connection_factory: Callable[[], Any], *, migration_package: str = "opennicf.knowledge.migrations"):
+        self._connection_factory = connection_factory
+        self._migration_package = migration_package
+
+    @classmethod
+    def from_dsn(cls, dsn: str, *, migration_package: str = "opennicf.knowledge.migrations") -> "PostgresKnowledgeStore":
+        def factory():
+            try:
+                import psycopg
+            except ImportError as exc:  # pragma: no cover - exercised in deployment, not tests
+                raise RuntimeError("psycopg is required for PostgresKnowledgeStore") from exc
+            return psycopg.connect(dsn)
+
+        return cls(factory, migration_package=migration_package)
+
+    def _connect(self):
+        return self._connection_factory()
+
+    def migrate(self) -> list[int]:
+        from .migration_utils import iter_migration_files, migration_checksum, migration_version
+
+        applied: list[int] = []
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, checksum TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+                )
+                cur.execute("SELECT version, checksum FROM schema_migrations ORDER BY version")
+                existing = {int(version): checksum for version, checksum in cur.fetchall()}
+                for path in iter_migration_files(self._migration_package):
+                    version = migration_version(path.name)
+                    checksum = migration_checksum(path)
+                    if existing.get(version) == checksum:
+                        continue
+                    sql = path.read_text(encoding="utf-8")
+                    for statement in _split_sql(sql):
+                        cur.execute(statement)
+                    cur.execute(
+                        "INSERT INTO schema_migrations(version, checksum, applied_at) VALUES (%s, %s, now()) ON CONFLICT (version) DO UPDATE SET checksum = EXCLUDED.checksum, applied_at = EXCLUDED.applied_at",
+                        (version, checksum),
+                    )
+                    applied.append(version)
+            conn.commit()
+        return applied
+
+    def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                _upsert_source(cur, bundle.source)
+                _upsert_version(cur, bundle.version)
+                _upsert_artifact(cur, bundle.artifact)
+                for chunk, embedding in zip(bundle.chunks, bundle.embeddings):
+                    _upsert_chunk(cur, chunk)
+                    _upsert_embedding(cur, embedding)
+            conn.commit()
+        return bundle
+
+    def next_version_number(self, source_id: str, content_hash: str) -> int:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT version_number FROM knowledge_source_versions WHERE source_id = %s AND content_hash = %s",
+                    (source_id, content_hash),
+                )
+                row = cur.fetchone()
+                if row:
+                    return int(row[0])
+                cur.execute(
+                    "SELECT COALESCE(MAX(version_number), 0) + 1 FROM knowledge_source_versions WHERE source_id = %s",
+                    (source_id,),
+                )
+                return int(cur.fetchone()[0])
+
+    def search_candidates(self, filters: RetrievalFilters) -> list[SearchCandidate]:
+        filters = filters.normalized()
+        sql, params = _build_search_sql(filters)
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                rows = cur.fetchall()
+        candidates: list[SearchCandidate] = []
+        for row in rows:
+            chunk = ChunkRecord(
+                chunk_id=row[0],
+                source_id=row[1],
+                source_version_id=row[2],
+                artifact_hash=row[3],
+                ordinal=row[4],
+                text=row[5],
+                locator=row[6],
+                chunk_hash=row[7],
+                parser_version=row[8],
+                acl_scope=row[9],
+                domain=row[10],
+                system=row[11],
+                environment=row[12],
+                source_type=row[13],
+                page=row[14],
+                line_start=row[15],
+                line_end=row[16],
+                metadata=row[17] or {},
+            )
+            source = KnowledgeSource(
+                source_id=row[18],
+                source_uri=row[19],
+                source_kind=row[20],
+                channel=row[21],
+                domain=row[22],
+                system=row[23],
+                environment=row[24],
+                acl_scope=row[25],
+                mime_type=row[26],
+                size_bytes=row[27],
+                content_hash=row[28],
+                created_at=row[29],
+                updated_at=row[30],
+                metadata=row[31] or {},
+            )
+            version = KnowledgeSourceVersion(
+                source_version_id=row[32],
+                source_id=row[33],
+                source_uri=row[34],
+                version_number=row[35],
+                content_hash=row[36],
+                artifact_hash=row[37],
+                ingest_timestamp=row[38],
+                parser_version=row[39],
+                storage_backend=row[40],
+                object_key=row[41],
+                metadata=row[42] or {},
+            )
+            artifact = ArtifactRecord(
+                artifact_hash=row[43],
+                source_version_id=row[44],
+                object_key=row[45],
+                storage_backend=row[46],
+                mime_type=row[47],
+                size_bytes=row[48],
+                parser_name=row[49],
+                parser_version=row[50],
+                created_at=row[51],
+                metadata=row[52] or {},
+            )
+            embedding = EmbeddingRecord(
+                chunk_id=row[0],
+                model=row[53],
+                dimensions=row[54],
+                device=row[55],
+                vector=_parse_vector_value(row[56]),
+                created_at=row[57],
+                metadata=row[58] or {},
+            )
+            candidates.append(SearchCandidate(chunk=chunk, source=source, version=version, artifact=artifact, embedding=embedding))
+        return candidates
+
+    def record_retrieval_event(self, event: RetrievalEventRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_retrieval_events (
+                        event_id, query_hash, filters, selected_chunks, scores, reranker, model_route, created_at, metadata
+                    ) VALUES (%s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (event_id) DO UPDATE SET
+                        query_hash = EXCLUDED.query_hash,
+                        filters = EXCLUDED.filters,
+                        selected_chunks = EXCLUDED.selected_chunks,
+                        scores = EXCLUDED.scores,
+                        reranker = EXCLUDED.reranker,
+                        model_route = EXCLUDED.model_route,
+                        created_at = EXCLUDED.created_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        event.event_id,
+                        event.query_hash,
+                        json.dumps(event.filters, sort_keys=True),
+                        json.dumps(list(event.selected_chunks), sort_keys=True),
+                        json.dumps(event.scores, sort_keys=True),
+                        event.reranker,
+                        event.model_route,
+                        event.created_at,
+                        json.dumps(event.metadata, sort_keys=True),
+                    ),
+                )
+            conn.commit()
+
+    def record_audit_finding(self, finding: AuditFindingRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_audit_findings (
+                        finding_id, finding_class, statement, confidence, evidence_links, status, created_at, metadata
+                    ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
+                    ON CONFLICT (finding_id) DO UPDATE SET
+                        finding_class = EXCLUDED.finding_class,
+                        statement = EXCLUDED.statement,
+                        confidence = EXCLUDED.confidence,
+                        evidence_links = EXCLUDED.evidence_links,
+                        status = EXCLUDED.status,
+                        created_at = EXCLUDED.created_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        finding.finding_id,
+                        finding.finding_class,
+                        finding.statement,
+                        finding.confidence,
+                        json.dumps(list(finding.evidence_links), sort_keys=True),
+                        finding.status,
+                        finding.created_at,
+                        json.dumps(finding.metadata, sort_keys=True),
+                    ),
+                )
+            conn.commit()
+
+    def snapshot(self) -> dict[str, Any]:
+        raise RuntimeError("PostgresKnowledgeStore snapshots are produced by database backups, not in-process export")
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        raise RuntimeError("PostgresKnowledgeStore restore requires a database restore procedure")
+
+
+class KnowledgePlatform:
+    """High-level pipeline for ingestion, retrieval, and backup/restore helpers."""
+
+    def __init__(
+        self,
+        store: KnowledgeStore,
+        object_store: ObjectStore,
+        embeddings: LocalFirstEmbeddingService | None = None,
+    ):
+        self.store = store
+        self.object_store = object_store
+        self.embeddings = embeddings or LocalFirstEmbeddingService()
+        from .retrieval import HybridRetriever
+
+        self.retriever = HybridRetriever(store, self.embeddings)
+
+    @classmethod
+    def in_memory(cls, *, root: str | None = None) -> "KnowledgePlatform":
+        object_store = FilesystemObjectStore(root) if root else MemoryObjectStore()
+        return cls(MemoryKnowledgeStore(), object_store)
+
+    @staticmethod
+    def _source_version_id(source_id: str, content_hash: str) -> str:
+        return _uuid(f"srcver_{source_id}_{content_hash[:8]}")
+
+    @staticmethod
+    def _artifact_hash(content_hash: str, parser_version: str) -> str:
+        return sha256(f"{content_hash}:{parser_version}".encode("utf-8")).hexdigest()
+
+    def ingest(
+        self,
+        *,
+        source_id: str,
+        source_uri: str,
+        explicit_locator: str | None = None,
+        content: str,
+        mime_type: str = "text/plain",
+        source_kind: str = "document",
+        channel: str = "manual",
+        domain: str = "general",
+        system: str = "unknown",
+        environment: str = "unknown",
+        acl_scope: str = "internal",
+        source_type: str = "document",
+        parser_name: str = "identity",
+        parser_version: str = "1",
+        metadata: dict[str, Any] | None = None,
+        available_memory_bytes: int | None = None,
+        available_vram_bytes: int | None = None,
+    ) -> IngestBundle:
+        content_bytes = content.encode("utf-8")
+        content_hash = sha256(content_bytes).hexdigest()
+        object_reference = self.object_store.put_bytes(content_bytes, mime_type=mime_type, metadata=metadata or {})
+        source = KnowledgeSource(
+            source_id=source_id,
+            source_uri=source_uri,
+            source_kind=source_kind,
+            channel=channel,
+            domain=domain,
+            system=system,
+            environment=environment,
+            acl_scope=acl_scope,
+            mime_type=mime_type,
+            size_bytes=len(content_bytes),
+            content_hash=content_hash,
+            metadata=dict(metadata or {}),
+        )
+        version_number = 1
+        if hasattr(self.store, "next_version_number"):
+            version_number = int(self.store.next_version_number(source_id, content_hash))
+        elif hasattr(self.store, "source_versions"):
+            version_number = len([version for version in getattr(self.store, "source_versions").values() if version.source_id == source_id]) + 1
+        version = KnowledgeSourceVersion(
+            source_version_id=self._source_version_id(source_id, content_hash),
+            source_id=source_id,
+            source_uri=source_uri,
+            version_number=version_number,
+            content_hash=content_hash,
+            artifact_hash=self._artifact_hash(content_hash, parser_version),
+            ingest_timestamp=utcnow(),
+            parser_version=parser_version,
+            storage_backend=object_reference.backend,
+            object_key=object_reference.object_key,
+            metadata=dict(metadata or {}),
+        )
+        artifact = ArtifactRecord(
+            artifact_hash=version.artifact_hash,
+            source_version_id=version.source_version_id,
+            object_key=object_reference.object_key,
+            storage_backend=object_reference.backend,
+            mime_type=mime_type,
+            size_bytes=len(content_bytes),
+            parser_name=parser_name,
+            parser_version=parser_version,
+            metadata=dict(metadata or {}),
+        )
+        blocks = _split_blocks(content)
+        chunk_texts = [block_text for block_text, _, _ in blocks]
+        embedding_result = self.embeddings.embed(
+            chunk_texts,
+            prefer_gpu=True,
+            available_memory_bytes=available_memory_bytes,
+            available_vram_bytes=available_vram_bytes,
+        ) if chunk_texts else EmbeddingResult(model=self.embeddings.info().model, dimensions=self.embeddings.info().dimensions, device=self.embeddings.info().device, vectors=())
+        chunks: list[ChunkRecord] = []
+        embeddings: list[EmbeddingRecord] = []
+        for ordinal, (block_text, line_start, line_end) in enumerate(blocks):
+            chunk_id = _uuid(f"chunk_{source_id}_{ordinal}")
+            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block_text}".encode("utf-8")).hexdigest()
+            locator = explicit_locator or _chunk_locator(source_uri, ordinal, line_start, line_end)
+            chunk = ChunkRecord(
+                chunk_id=chunk_id,
+                source_id=source_id,
+                source_version_id=version.source_version_id,
+                artifact_hash=artifact.artifact_hash,
+                ordinal=ordinal,
+                text=block_text,
+                locator=locator,
+                chunk_hash=chunk_hash,
+                parser_version=parser_version,
+                acl_scope=acl_scope,
+                domain=domain,
+                system=system,
+                environment=environment,
+                source_type=source_type,
+                line_start=line_start,
+                line_end=line_end,
+                metadata=dict(metadata or {}),
+            )
+            chunks.append(chunk)
+            embeddings.append(
+                EmbeddingRecord(
+                    chunk_id=chunk_id,
+                    model=embedding_result.model,
+                    dimensions=embedding_result.dimensions,
+                    device=embedding_result.device,
+                    vector=embedding_result.vectors[ordinal] if ordinal < len(embedding_result.vectors) else (),
+                    metadata={"fallback": embedding_result.fallback, **dict(metadata or {})},
+                )
+            )
+        bundle = IngestBundle(
+            source=source,
+            version=version,
+            artifact=artifact,
+            chunks=tuple(chunks),
+            embeddings=tuple(embeddings),
+            object_reference=object_reference,
+            created=True,
+        )
+        return self.store.save_bundle(bundle)
+
+    def search(self, query: str, *, filters: RetrievalFilters | None = None, route: str | None = None):
+        return self.retriever.search(query, filters=filters, route=route)
+
+    def backup(self) -> dict[str, Any]:
+        store_snapshot = self.store.snapshot()
+        object_snapshot = getattr(self.object_store, "snapshot", lambda: None)()
+        return {
+            "store": store_snapshot,
+            "object_store": object_snapshot,
+            "embeddings": self.embeddings.describe(),
+        }
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        self.store.restore(snapshot["store"])
+        if snapshot.get("object_store") and hasattr(self.object_store, "restore"):
+            restored = self.object_store.restore(snapshot["object_store"])
+            self.object_store = restored
+
+
+def _split_sql(sql: str) -> list[str]:
+    statements: list[str] = []
+    current: list[str] = []
+    in_single = False
+    in_double = False
+    for char in sql:
+        if char == "'" and not in_double:
+            in_single = not in_single
+        elif char == '"' and not in_single:
+            in_double = not in_double
+        if char == ";" and not in_single and not in_double:
+            statement = "".join(current).strip()
+            if statement:
+                statements.append(statement)
+            current = []
+        else:
+            current.append(char)
+    tail = "".join(current).strip()
+    if tail:
+        statements.append(tail)
+    return statements
+
+
+def _upsert_source(cur, source: KnowledgeSource) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_sources (
+            source_id, source_uri, source_kind, channel, domain, system, environment, acl_scope,
+            mime_type, size_bytes, content_hash, created_at, updated_at, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+        ON CONFLICT (source_id) DO UPDATE SET
+            source_uri = EXCLUDED.source_uri,
+            source_kind = EXCLUDED.source_kind,
+            channel = EXCLUDED.channel,
+            domain = EXCLUDED.domain,
+            system = EXCLUDED.system,
+            environment = EXCLUDED.environment,
+            acl_scope = EXCLUDED.acl_scope,
+            mime_type = EXCLUDED.mime_type,
+            size_bytes = EXCLUDED.size_bytes,
+            content_hash = EXCLUDED.content_hash,
+            updated_at = EXCLUDED.updated_at,
+            metadata = EXCLUDED.metadata
+        """,
+        (
+            source.source_id,
+            source.source_uri,
+            source.source_kind,
+            source.channel,
+            source.domain,
+            source.system,
+            source.environment,
+            source.acl_scope,
+            source.mime_type,
+            source.size_bytes,
+            source.content_hash,
+            source.created_at,
+            source.updated_at,
+            json.dumps(source.metadata, sort_keys=True),
+        ),
+    )
+
+
+def _upsert_version(cur, version: KnowledgeSourceVersion) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_source_versions (
+            source_version_id, source_id, source_uri, version_number, content_hash,
+            artifact_hash, ingest_timestamp, parser_version, storage_backend, object_key, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+        ON CONFLICT (source_id, content_hash) DO UPDATE SET
+            source_uri = EXCLUDED.source_uri,
+            version_number = EXCLUDED.version_number,
+            artifact_hash = EXCLUDED.artifact_hash,
+            ingest_timestamp = EXCLUDED.ingest_timestamp,
+            parser_version = EXCLUDED.parser_version,
+            storage_backend = EXCLUDED.storage_backend,
+            object_key = EXCLUDED.object_key,
+            metadata = EXCLUDED.metadata
+        """,
+        (
+            version.source_version_id,
+            version.source_id,
+            version.source_uri,
+            version.version_number,
+            version.content_hash,
+            version.artifact_hash,
+            version.ingest_timestamp,
+            version.parser_version,
+            version.storage_backend,
+            version.object_key,
+            json.dumps(version.metadata, sort_keys=True),
+        ),
+    )
+
+
+def _upsert_artifact(cur, artifact: ArtifactRecord) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_artifacts (
+            artifact_hash, source_version_id, object_key, storage_backend, mime_type,
+            size_bytes, parser_name, parser_version, created_at, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+        ON CONFLICT (artifact_hash) DO UPDATE SET
+            source_version_id = EXCLUDED.source_version_id,
+            object_key = EXCLUDED.object_key,
+            storage_backend = EXCLUDED.storage_backend,
+            mime_type = EXCLUDED.mime_type,
+            size_bytes = EXCLUDED.size_bytes,
+            parser_name = EXCLUDED.parser_name,
+            parser_version = EXCLUDED.parser_version,
+            created_at = EXCLUDED.created_at,
+            metadata = EXCLUDED.metadata
+        """,
+        (
+            artifact.artifact_hash,
+            artifact.source_version_id,
+            artifact.object_key,
+            artifact.storage_backend,
+            artifact.mime_type,
+            artifact.size_bytes,
+            artifact.parser_name,
+            artifact.parser_version,
+            artifact.created_at,
+            json.dumps(artifact.metadata, sort_keys=True),
+        ),
+    )
+
+
+def _upsert_chunk(cur, chunk: ChunkRecord) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_chunks (
+            chunk_id, source_id, source_version_id, artifact_hash, ordinal, text, locator,
+            chunk_hash, parser_version, acl_scope, domain, system, environment, source_type,
+            page, line_start, line_end, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+        ON CONFLICT (chunk_id) DO UPDATE SET
+            source_id = EXCLUDED.source_id,
+            source_version_id = EXCLUDED.source_version_id,
+            artifact_hash = EXCLUDED.artifact_hash,
+            ordinal = EXCLUDED.ordinal,
+            text = EXCLUDED.text,
+            locator = EXCLUDED.locator,
+            chunk_hash = EXCLUDED.chunk_hash,
+            parser_version = EXCLUDED.parser_version,
+            acl_scope = EXCLUDED.acl_scope,
+            domain = EXCLUDED.domain,
+            system = EXCLUDED.system,
+            environment = EXCLUDED.environment,
+            source_type = EXCLUDED.source_type,
+            page = EXCLUDED.page,
+            line_start = EXCLUDED.line_start,
+            line_end = EXCLUDED.line_end,
+            metadata = EXCLUDED.metadata
+        """,
+        (
+            chunk.chunk_id,
+            chunk.source_id,
+            chunk.source_version_id,
+            chunk.artifact_hash,
+            chunk.ordinal,
+            chunk.text,
+            chunk.locator,
+            chunk.chunk_hash,
+            chunk.parser_version,
+            chunk.acl_scope,
+            chunk.domain,
+            chunk.system,
+            chunk.environment,
+            chunk.source_type,
+            chunk.page,
+            chunk.line_start,
+            chunk.line_end,
+            json.dumps(chunk.metadata, sort_keys=True),
+        ),
+    )
+
+
+def _vector_literal(vector: Sequence[float]) -> str:
+    return "[" + ",".join(f"{value:.8f}" for value in vector) + "]"
+
+
+def _parse_vector_value(value: Any) -> tuple[float, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, tuple):
+        return tuple(float(item) for item in value)
+    if isinstance(value, list):
+        return tuple(float(item) for item in value)
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith("[") and text.endswith("]"):
+            text = text[1:-1]
+        if not text:
+            return ()
+        return tuple(float(item) for item in text.split(","))
+    return tuple(float(item) for item in value)
+
+
+def _upsert_embedding(cur, embedding: EmbeddingRecord) -> None:
+    cur.execute(
+        """
+        INSERT INTO knowledge_embeddings (
+            chunk_id, model, dimensions, device, vector, created_at, metadata
+        ) VALUES (%s, %s, %s, %s, %s::vector, %s, %s::jsonb)
+        ON CONFLICT (chunk_id, model, dimensions) DO UPDATE SET
+            device = EXCLUDED.device,
+            vector = EXCLUDED.vector,
+            created_at = EXCLUDED.created_at,
+            metadata = EXCLUDED.metadata
+        """,
+        (
+            embedding.chunk_id,
+            embedding.model,
+            embedding.dimensions,
+            embedding.device,
+            _vector_literal(embedding.vector),
+            embedding.created_at,
+            json.dumps(embedding.metadata, sort_keys=True),
+        ),
+    )
+
+
+def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
+    clauses = ["1 = 1"]
+    params: list[Any] = []
+    if filters.principal_acl_scopes:
+        clauses.append("c.acl_scope = ANY(%s)")
+        params.append(list(filters.principal_acl_scopes))
+    if filters.domains:
+        clauses.append("c.domain = ANY(%s)")
+        params.append(list(filters.domains))
+    if filters.systems:
+        clauses.append("c.system = ANY(%s)")
+        params.append(list(filters.systems))
+    if filters.environments:
+        clauses.append("c.environment = ANY(%s)")
+        params.append(list(filters.environments))
+    if filters.source_types:
+        clauses.append("c.source_type = ANY(%s)")
+        params.append(list(filters.source_types))
+    if filters.source_ids:
+        clauses.append("c.source_id = ANY(%s)")
+        params.append(list(filters.source_ids))
+    if filters.since:
+        clauses.append("v.ingest_timestamp >= %s")
+        params.append(filters.since)
+    if filters.until:
+        clauses.append("v.ingest_timestamp <= %s")
+        params.append(filters.until)
+
+    sql = f"""
+        SELECT
+            c.chunk_id, c.source_id, c.source_version_id, c.artifact_hash, c.ordinal, c.text, c.locator,
+            c.chunk_hash, c.parser_version, c.acl_scope, c.domain, c.system, c.environment, c.source_type,
+            c.page, c.line_start, c.line_end, c.metadata,
+            s.source_id, s.source_uri, s.source_kind, s.channel, s.domain, s.system, s.environment,
+            s.acl_scope, s.mime_type, s.size_bytes, s.content_hash, s.created_at, s.updated_at, s.metadata,
+            v.source_version_id, v.source_id, v.source_uri, v.version_number, v.content_hash, v.artifact_hash,
+            v.ingest_timestamp, v.parser_version, v.storage_backend, v.object_key, v.metadata,
+            a.artifact_hash, a.source_version_id, a.object_key, a.storage_backend, a.mime_type, a.size_bytes,
+            a.parser_name, a.parser_version, a.created_at, a.metadata,
+            e.model, e.dimensions, e.device, e.vector, e.created_at, e.metadata
+        FROM knowledge_chunks c
+        JOIN knowledge_sources s ON s.source_id = c.source_id
+        JOIN knowledge_source_versions v ON v.source_version_id = c.source_version_id
+        JOIN knowledge_artifacts a ON a.artifact_hash = c.artifact_hash
+        JOIN knowledge_embeddings e ON e.chunk_id = c.chunk_id
+        WHERE {" AND ".join(clauses)}
+        ORDER BY c.source_version_id, c.ordinal
+        LIMIT %s
+    """
+    params.append(filters.limit * max(1, filters.neighbor_window + 1))
+    return sql, tuple(params)
+
+
+def _split_sql(sql: str) -> list[str]:
+    statements: list[str] = []
+    current: list[str] = []
+    in_single = False
+    in_double = False
+    for char in sql:
+        if char == "'" and not in_double:
+            in_single = not in_single
+        elif char == '"' and not in_single:
+            in_double = not in_double
+        if char == ";" and not in_single and not in_double:
+            statement = "".join(current).strip()
+            if statement:
+                statements.append(statement)
+            current = []
+        else:
+            current.append(char)
+    tail = "".join(current).strip()
+    if tail:
+        statements.append(tail)
+    return statements
