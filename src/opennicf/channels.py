@@ -10,7 +10,7 @@ import json
 import mimetypes
 import sqlite3
 import time
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from .ingestion import IngestionService
 
@@ -347,12 +347,15 @@ class ChannelRuntimeHandler(Protocol):
         raise NotImplementedError
 
 
+RuntimeHandler = ChannelRuntimeHandler | Callable[[ChannelEnvelope], ChannelResponse]
+
+
 class ConversationChannelAdapter:
     def __init__(
         self,
         transport: ConversationTransport,
         ingestion: IngestionService,
-        runtime_handler: ChannelRuntimeHandler,
+        runtime_handler: RuntimeHandler,
         *,
         allow_list: ChannelAllowList | None = None,
         ledger: ChannelEventLedger | None = None,
@@ -525,7 +528,7 @@ class ConversationChannelAdapter:
                 "reply_target": event.reply_target,
             },
         )
-        response = self.runtime_handler.handle(envelope)
+        response = self.runtime_handler.handle(envelope) if hasattr(self.runtime_handler, "handle") else self.runtime_handler(envelope)
         self._send_deliveries(event, response.deliveries)
         self.ledger.record(event)
         return response
