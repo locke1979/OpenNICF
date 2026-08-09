@@ -13,6 +13,25 @@ from typing import Any
 from .model_gateway import ModelGateway, PrivacyPolicy
 
 
+# QwenAgent may add framework-specific generation hints that are not part of
+# the OpenAI-compatible provider contract.  Keep the provider payload narrow;
+# in particular, clawproxy rejects QwenAgent's ``lang`` hint.
+_PROVIDER_GENERATION_KEYS = frozenset(
+    {
+        "frequency_penalty",
+        "max_tokens",
+        "presence_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "temperature",
+        "top_p",
+        "tool_choice",
+        "parallel_tool_calls",
+    }
+)
+
+
 def _message_dict(message: Any) -> dict[str, Any]:
     if isinstance(message, Mapping):
         return dict(message)
@@ -99,7 +118,13 @@ class OpenNICFChatModel:
         if functions:
             extra_payload["tools"] = functions
         if extra_generate_cfg:
-            extra_payload.update(extra_generate_cfg)
+            extra_payload.update(
+                {
+                    key: value
+                    for key, value in extra_generate_cfg.items()
+                    if key in _PROVIDER_GENERATION_KEYS
+                }
+            )
 
         if not stream:
             result = self.gateway.chat(
