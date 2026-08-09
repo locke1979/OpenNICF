@@ -1,6 +1,6 @@
 # OpenNICF
 
-This repository is the implementation target for issues #1–#11. The bootstrap
+This repository is the implementation target for the core OpenNICF issue track. The bootstrap
 contract is intentionally provider-neutral: OpenClaw discovers and invokes the
 `subagent-pipeline` runner through `SUBAGENT_RUNNER_COMMAND`, while the runtime
 application is orchestrated exclusively by QwenAgent.

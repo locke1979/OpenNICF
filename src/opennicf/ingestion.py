@@ -24,6 +24,7 @@ import yaml
 from xml.etree import ElementTree as ET
 
 from .knowledge import IngestBundle, KnowledgePlatform, ParsedBlock
+from .knowledge.namespaces import sanitize_metadata
 
 
 ARCHIVE_SUFFIXES = {".zip", ".tar", ".tgz", ".tar.gz", ".7z"}
@@ -75,6 +76,10 @@ class IngestionJob:
     source_type: str = "document"
     domain: str = "general"
     system: str = "unknown"
+    domain_id: str = "general"
+    system_id: str = "unknown"
+    component_id: str = "unknown-component"
+    evidence_type: str = "document"
     environment: str = "unknown"
     acl_scope: str = "internal"
     parser_hint: str | None = None
@@ -178,6 +183,10 @@ def _job_to_json(job: IngestionJob) -> dict[str, Any]:
 def _job_from_json(data: dict[str, Any]) -> IngestionJob:
     payload = dict(data)
     payload["raw_bytes"] = base64.b64decode(payload["raw_bytes"])
+    payload.setdefault("domain_id", payload.get("domain", "general"))
+    payload.setdefault("system_id", payload.get("system", "unknown"))
+    payload.setdefault("component_id", payload.get("component_id") or payload.get("system_id") or "unknown-component")
+    payload.setdefault("evidence_type", payload.get("evidence_type") or payload.get("source_type") or "document")
     return IngestionJob(**payload)
 
 
@@ -219,6 +228,8 @@ def _bundle_to_json(bundle: IngestBundle) -> dict[str, Any]:
         "source": asdict(bundle.source),
         "version": asdict(bundle.version),
         "artifact": asdict(bundle.artifact),
+        "namespaces": [asdict(namespace) for namespace in bundle.namespaces],
+        "integration_edges": [asdict(edge) for edge in bundle.integration_edges],
         "chunks": [asdict(chunk) for chunk in bundle.chunks],
         "embeddings": [asdict(embedding) for embedding in bundle.embeddings],
         "object_reference": asdict(bundle.object_reference),
@@ -229,6 +240,7 @@ def _bundle_to_json(bundle: IngestBundle) -> dict[str, Any]:
 def _bundle_from_json(data: dict[str, Any]) -> IngestBundle:
     from .knowledge import ArtifactRecord, ChunkRecord, EmbeddingRecord, KnowledgeSource, KnowledgeSourceVersion
     from .knowledge.object_store import ObjectReference
+    from .knowledge.namespaces import IntegrationEdgeRecord, KnowledgeNamespaceRecord
 
     return IngestBundle(
         source=KnowledgeSource(**data["source"]),
@@ -238,6 +250,8 @@ def _bundle_from_json(data: dict[str, Any]) -> IngestBundle:
         embeddings=tuple(EmbeddingRecord(**embedding) for embedding in data.get("embeddings", [])),
         object_reference=ObjectReference(**data["object_reference"]),
         created=bool(data["created"]),
+        namespaces=tuple(KnowledgeNamespaceRecord(**namespace) for namespace in data.get("namespaces", [])),
+        integration_edges=tuple(IntegrationEdgeRecord(**edge) for edge in data.get("integration_edges", [])),
     )
 
 
@@ -654,6 +668,10 @@ class IngestionService:
         source_type: str,
         domain: str,
         system: str,
+        domain_id: str | None,
+        system_id: str | None,
+        component_id: str | None,
+        evidence_type: str | None,
         environment: str,
         acl_scope: str,
         parser_hint: str | None,
@@ -661,6 +679,11 @@ class IngestionService:
     ) -> IngestionJob:
         content_hash = sha256(raw_bytes).hexdigest()
         job_id = _stable_hash(channel, source_id, content_hash, parser_hint or source_type)
+        sanitized_metadata, _ = sanitize_metadata(metadata)
+        effective_domain_id = domain_id or domain
+        effective_system_id = system_id or system
+        effective_component_id = component_id or sanitized_metadata.get("component_id") or f"{effective_system_id}_component"
+        effective_evidence_type = evidence_type or source_type or source_kind
         return IngestionJob(
             job_id=f"job_{job_id}",
             source_id=source_id,
@@ -669,11 +692,15 @@ class IngestionService:
             mime_type=mime_type,
             content_hash=content_hash,
             raw_bytes=raw_bytes,
-            metadata=dict(metadata or {}),
+            metadata=sanitized_metadata,
             source_kind=source_kind,
             source_type=source_type,
             domain=domain,
             system=system,
+            domain_id=effective_domain_id,
+            system_id=effective_system_id,
+            component_id=effective_component_id,
+            evidence_type=effective_evidence_type,
             environment=environment,
             acl_scope=acl_scope,
             parser_hint=parser_hint,
@@ -695,6 +722,10 @@ class IngestionService:
         source_type: str = "document",
         domain: str = "general",
         system: str = "unknown",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
         environment: str = "unknown",
         acl_scope: str = "internal",
         parser_hint: str | None = None,
@@ -713,6 +744,10 @@ class IngestionService:
             source_type=source_type,
             domain=domain,
             system=system,
+            domain_id=domain_id,
+            system_id=system_id,
+            component_id=component_id,
+            evidence_type=evidence_type,
             environment=environment,
             acl_scope=acl_scope,
             parser_hint=parser_hint,
@@ -730,6 +765,10 @@ class IngestionService:
         source_uri: str | None = None,
         domain: str = "general",
         system: str = "unknown",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
         environment: str = "unknown",
         acl_scope: str = "internal",
         metadata: dict[str, Any] | None = None,
@@ -746,6 +785,10 @@ class IngestionService:
                         source_uri=posixpath.join(source_uri or str(file_path), child.relative_to(file_path).as_posix()),
                         domain=domain,
                         system=system,
+                        domain_id=domain_id,
+                        system_id=system_id,
+                        component_id=component_id,
+                        evidence_type=evidence_type,
                         environment=environment,
                         acl_scope=acl_scope,
                         metadata={"parent_directory": str(file_path), **dict(metadata or {})},
@@ -779,6 +822,10 @@ class IngestionService:
                     source_type=member_source_type,
                     domain=domain,
                     system=system,
+                    domain_id=domain_id,
+                    system_id=system_id,
+                    component_id=component_id,
+                    evidence_type=evidence_type,
                     environment=environment,
                     acl_scope=acl_scope,
                     parser_hint=member_source_type,
@@ -799,6 +846,10 @@ class IngestionService:
             source_type=source_type if source_type else inferred_source_type,
             domain=domain,
             system=system,
+            domain_id=domain_id,
+            system_id=system_id,
+            component_id=component_id,
+            evidence_type=evidence_type,
             environment=environment,
             acl_scope=acl_scope,
             parser_hint=source_type,
@@ -818,6 +869,10 @@ class IngestionService:
         source_uri: str | None = None,
         domain: str = "communications",
         system: str = "webex",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
         environment: str = "prod",
         acl_scope: str = "internal",
         metadata: dict[str, Any] | None = None,
@@ -834,6 +889,10 @@ class IngestionService:
                 source_type="document",
                 domain=domain,
                 system=system,
+                domain_id=domain_id,
+                system_id=system_id,
+                component_id=component_id,
+                evidence_type=evidence_type,
                 environment=environment,
                 acl_scope=acl_scope,
                 parser_hint="webex-message",
@@ -855,6 +914,10 @@ class IngestionService:
                     source_type=_classify_suffix(attachment_path)[0],
                     domain=domain,
                     system=system,
+                    domain_id=domain_id,
+                    system_id=system_id,
+                    component_id=component_id,
+                    evidence_type=evidence_type,
                     environment=environment,
                     acl_scope=acl_scope,
                     parser_hint="webex-attachment",
@@ -870,6 +933,10 @@ class IngestionService:
         channel: str = "mail-drop",
         domain: str = "communications",
         system: str = "mail",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
         environment: str = "prod",
         acl_scope: str = "internal",
         metadata: dict[str, Any] | None = None,
@@ -878,17 +945,56 @@ class IngestionService:
         if path.is_dir():
             jobs: list[IngestionJob] = []
             for child in _iter_directory_files(path):
-                jobs.extend(self.submit_mail_drop(child, channel=channel, domain=domain, system=system, environment=environment, acl_scope=acl_scope, metadata=metadata))
+                jobs.extend(
+                    self.submit_mail_drop(
+                        child,
+                        channel=channel,
+                        domain=domain,
+                        system=system,
+                        domain_id=domain_id,
+                        system_id=system_id,
+                        component_id=component_id,
+                        evidence_type=evidence_type,
+                        environment=environment,
+                        acl_scope=acl_scope,
+                        metadata=metadata,
+                    )
+                )
             return jobs
         if path.suffix.lower() == ".eml":
             raw_bytes = path.read_bytes()
             self._validate_payload_size(raw_bytes, label="mail-drop message")
             message = BytesParser(policy=policy.default).parsebytes(raw_bytes)
-            jobs = self._jobs_from_email(message, source_uri=str(path), channel=channel, domain=domain, system=system, environment=environment, acl_scope=acl_scope, metadata=metadata)
+            jobs = self._jobs_from_email(
+                message,
+                source_uri=str(path),
+                channel=channel,
+                domain=domain,
+                system=system,
+                domain_id=domain_id,
+                system_id=system_id,
+                component_id=component_id,
+                evidence_type=evidence_type,
+                environment=environment,
+                acl_scope=acl_scope,
+                metadata=metadata,
+            )
             for job in jobs:
                 self.queue.enqueue(job)
             return jobs
-        return self.submit_file(path, channel=channel, domain=domain, system=system, environment=environment, acl_scope=acl_scope, metadata={"mail_drop": True, **dict(metadata or {})})
+        return self.submit_file(
+            path,
+            channel=channel,
+            domain=domain,
+            system=system,
+            domain_id=domain_id,
+            system_id=system_id,
+            component_id=component_id,
+            evidence_type=evidence_type,
+            environment=environment,
+            acl_scope=acl_scope,
+            metadata={"mail_drop": True, **dict(metadata or {})},
+        )
 
     def _jobs_from_email(
         self,
@@ -898,6 +1004,10 @@ class IngestionService:
         channel: str,
         domain: str,
         system: str,
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
         environment: str,
         acl_scope: str,
         metadata: dict[str, Any] | None = None,
@@ -923,6 +1033,10 @@ class IngestionService:
                             source_type=_classify_suffix(Path(filename))[0],
                             domain=domain,
                             system=system,
+                            domain_id=domain_id,
+                            system_id=system_id,
+                            component_id=component_id,
+                            evidence_type=evidence_type,
                             environment=environment,
                             acl_scope=acl_scope,
                             parser_hint="email-attachment",
@@ -948,6 +1062,10 @@ class IngestionService:
                     source_type="document",
                     domain=domain,
                     system=system,
+                    domain_id=domain_id,
+                    system_id=system_id,
+                    component_id=component_id,
+                    evidence_type=evidence_type,
                     environment=environment,
                     acl_scope=acl_scope,
                     parser_hint="email-body",
@@ -1010,6 +1128,10 @@ class IngestionService:
             channel=job.channel,
             domain=job.domain,
             system=job.system,
+            domain_id=job.domain_id,
+            system_id=job.system_id,
+            component_id=job.component_id,
+            evidence_type=job.evidence_type,
             environment=job.environment,
             acl_scope=job.acl_scope,
             source_type=source_type,

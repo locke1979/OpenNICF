@@ -36,15 +36,21 @@ class KnowledgeSource:
     source_uri: str
     source_kind: str
     channel: str
-    domain: str
-    system: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
     environment: str
+    evidence_type: str
     acl_scope: str
     mime_type: str
     size_bytes: int
     content_hash: str
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)
+    domain: str = ""
+    system: str = ""
+    source_type: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -83,16 +89,21 @@ class ChunkRecord:
     source_id: str
     source_version_id: str
     artifact_hash: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
+    environment: str
+    evidence_type: str
+    acl_scope: str
     ordinal: int
     text: str
     locator: str
     chunk_hash: str
     parser_version: str
-    acl_scope: str
-    domain: str
-    system: str
-    environment: str
-    source_type: str
+    domain: str = ""
+    system: str = ""
+    source_type: str = ""
     page: int | None = None
     line_start: int | None = None
     line_end: int | None = None
@@ -207,6 +218,13 @@ class RetrievalEventRecord:
 @dataclass(frozen=True)
 class RetrievalFilters:
     principal_acl_scopes: frozenset[str] = frozenset()
+    principal_domain_id: str | None = None
+    domain_ids: tuple[str, ...] = ()
+    delegated_domain_ids: tuple[str, ...] = ()
+    system_ids: tuple[str, ...] = ()
+    component_ids: tuple[str, ...] = ()
+    evidence_types: tuple[str, ...] = ()
+    namespace_ids: tuple[str, ...] = ()
     domains: tuple[str, ...] = ()
     systems: tuple[str, ...] = ()
     environments: tuple[str, ...] = ()
@@ -218,8 +236,16 @@ class RetrievalFilters:
     neighbor_window: int = 1
 
     def normalized(self) -> "RetrievalFilters":
+        principal_domain_id = self.principal_domain_id.strip() if self.principal_domain_id else None
         return RetrievalFilters(
             principal_acl_scopes=frozenset(scope for scope in self.principal_acl_scopes if scope),
+            principal_domain_id=principal_domain_id or None,
+            domain_ids=tuple(domain for domain in self.domain_ids if domain),
+            delegated_domain_ids=tuple(domain for domain in self.delegated_domain_ids if domain),
+            system_ids=tuple(system_id for system_id in self.system_ids if system_id),
+            component_ids=tuple(component_id for component_id in self.component_ids if component_id),
+            evidence_types=tuple(evidence_type for evidence_type in self.evidence_types if evidence_type),
+            namespace_ids=tuple(namespace_id for namespace_id in self.namespace_ids if namespace_id),
             domains=tuple(domain for domain in self.domains if domain),
             systems=tuple(system for system in self.systems if system),
             environments=tuple(environment for environment in self.environments if environment),
@@ -230,6 +256,29 @@ class RetrievalFilters:
             limit=max(1, int(self.limit)),
             neighbor_window=max(0, int(self.neighbor_window)),
         )
+
+    def effective_domain_ids(self) -> tuple[str, ...]:
+        if self.principal_domain_id:
+            allowed = [self.principal_domain_id]
+            allowed.extend(domain for domain in self.delegated_domain_ids if domain and domain != self.principal_domain_id)
+            return tuple(dict.fromkeys(allowed))
+        if self.domain_ids:
+            return tuple(dict.fromkeys(domain for domain in self.domain_ids if domain))
+        return tuple(dict.fromkeys(domain for domain in self.domains if domain))
+
+    def effective_system_ids(self) -> tuple[str, ...]:
+        if self.system_ids:
+            return tuple(dict.fromkeys(system_id for system_id in self.system_ids if system_id))
+        return tuple(dict.fromkeys(system for system in self.systems if system))
+
+    def effective_component_ids(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(component_id for component_id in self.component_ids if component_id))
+
+    def effective_evidence_types(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(evidence_type for evidence_type in self.evidence_types if evidence_type))
+
+    def effective_namespace_ids(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(namespace_id for namespace_id in self.namespace_ids if namespace_id))
 
 
 @dataclass(frozen=True)
@@ -251,10 +300,13 @@ class EvidenceHit:
     excerpt_hash: str
     ingest_timestamp: datetime
     parser_version: str
-    acl_scope: str
-    domain: str
-    system: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
     environment: str
+    evidence_type: str
+    acl_scope: str
     source_type: str
     semantic_score: float
     lexical_score: float
@@ -263,6 +315,8 @@ class EvidenceHit:
     dimensions: int
     chunk_id: str
     chunk_ordinal: int
+    domain: str = ""
+    system: str = ""
     neighboring_chunk_ids: tuple[str, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -276,3 +330,5 @@ class IngestBundle:
     embeddings: tuple[EmbeddingRecord, ...]
     object_reference: "ObjectReference"
     created: bool
+    namespaces: tuple["KnowledgeNamespaceRecord", ...] = ()
+    integration_edges: tuple["IntegrationEdgeRecord", ...] = ()

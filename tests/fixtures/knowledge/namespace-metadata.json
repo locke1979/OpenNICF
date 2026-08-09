@@ -1,0 +1,23 @@
+{
+  "component_id": "criminal_evidence",
+  "namespace_label": "Criminal evidence registry",
+  "namespace_summary": "Sanitized evidence registry for criminal casework",
+  "api_key": "secret-token-123",
+  "endpoint": "https://billing.internal.local/api",
+  "integration_edges": [
+    {
+      "relation_type": "delegates-to",
+      "target": {
+        "domain_id": "encargos_sigef",
+        "system_id": "encargos_sigef_casework",
+        "component_id": "encargos_sigef_evidence",
+        "environment": "prod",
+        "evidence_type": "document",
+        "acl_scope": "internal",
+        "asset_name": "SIGEF handoff",
+        "component_name": "SIGEF evidence",
+        "summary": "handoff to SIGEF"
+      }
+    }
+  ]
+}
