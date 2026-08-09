@@ -111,12 +111,81 @@ class EmbeddingRecord:
 
 
 @dataclass(frozen=True)
+class AuditEvidenceRefRecord:
+    reference_id: str
+    source_id: str
+    source_version_id: str
+    source_type: str
+    locator: str
+    role: str
+    provenance_ref: str
+    excerpt_hash: str
+    statement: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class AuditFindingRecord:
     finding_id: str
-    finding_class: str
+    classification: str
     statement: str
     confidence: float
-    evidence_links: tuple[str, ...]
+    evidence_refs: tuple[AuditEvidenceRefRecord, ...]
+    time_range: tuple[datetime | None, datetime | None] | None = None
+    systems: tuple[str, ...] = ()
+    components: tuple[str, ...] = ()
+    verification_status: str = "unverified"
+    recommended_query: str | None = None
+    diagnostic_action: dict[str, Any] | None = None
+    supporting_evidence: tuple[str, ...] = ()
+    contradicting_evidence: tuple[str, ...] = ()
+    provenance_refs: tuple[str, ...] = ()
+    correlation_ids: tuple[str, ...] = ()
+    source_type_analyzers: tuple[str, ...] = ()
+    created_at: datetime = field(default_factory=utcnow)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AuditTimelineEventRecord:
+    event_id: str
+    audit_id: str
+    timestamp: datetime | None
+    statement: str
+    source_id: str
+    source_type: str
+    locator: str
+    correlation_ids: tuple[str, ...] = ()
+    systems: tuple[str, ...] = ()
+    components: tuple[str, ...] = ()
+    provenance_ref: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AuditReportRecord:
+    report_id: str
+    request_hash: str
+    request_payload: dict[str, Any]
+    executive_summary: str
+    human_report: str
+    machine_report: dict[str, Any]
+    finding_ids: tuple[str, ...]
+    timeline_event_ids: tuple[str, ...]
+    causal_chains: tuple[str, ...]
+    unresolved_hypotheses: tuple[str, ...]
+    recommended_verification_steps: tuple[str, ...]
+    created_at: datetime = field(default_factory=utcnow)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class VerificationRequestRecord:
+    request_id: str
+    audit_id: str
+    finding_id: str | None
+    broker_name: str
+    request_payload: dict[str, Any]
     status: str
     created_at: datetime = field(default_factory=utcnow)
     metadata: dict[str, Any] = field(default_factory=dict)

@@ -1,0 +1,3 @@
+invoice_id | status | created_at
+-----------+--------+-----------
+-- 0 rows

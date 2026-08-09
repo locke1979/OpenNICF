@@ -11,5 +11,6 @@ python -m pytest
 
 Production wiring must install `opennicf[qwen,knowledge]`, configure the OpenNICF model
 router with `LMSTUDIO_*` and `LITELLM_*` variables, and register only validated
-OpenNICF tools with QwenAgent. See `docs/architecture.md`, the ADR, and
-`AGENTS.md`.
+OpenNICF tools with QwenAgent. Failure audits use the brokered verification
+boundary and evidence-grounded reports described in `docs/architecture.md`.
+See the ADR and `AGENTS.md`.

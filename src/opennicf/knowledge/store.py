@@ -15,7 +15,10 @@ import uuid
 from .embeddings import EmbeddingResult, LocalFirstEmbeddingService
 from .models import (
     ArtifactRecord,
+    AuditEvidenceRefRecord,
     AuditFindingRecord,
+    AuditReportRecord,
+    VerificationRequestRecord,
     ChunkRecord,
     EmbeddingRecord,
     EvidenceHit,
@@ -90,6 +93,12 @@ class KnowledgeStore(Protocol):
     def record_audit_finding(self, finding: AuditFindingRecord) -> None:
         raise NotImplementedError
 
+    def record_audit_report(self, report: AuditReportRecord) -> None:
+        raise NotImplementedError
+
+    def record_verification_request(self, request: VerificationRequestRecord) -> None:
+        raise NotImplementedError
+
     def snapshot(self) -> dict[str, Any]:
         raise NotImplementedError
 
@@ -108,6 +117,8 @@ class MemoryKnowledgeStore:
         self.embeddings: dict[str, EmbeddingRecord] = {}
         self.retrieval_events: list[RetrievalEventRecord] = []
         self.audit_findings: list[AuditFindingRecord] = []
+        self.audit_reports: list[AuditReportRecord] = []
+        self.verification_requests: list[VerificationRequestRecord] = []
         self._latest_version_by_source_hash: dict[tuple[str, str], str] = {}
         self._versions_by_source: dict[str, list[str]] = {}
         self._artifact_chunk_ids: dict[str, list[str]] = {}
@@ -199,6 +210,12 @@ class MemoryKnowledgeStore:
     def record_audit_finding(self, finding: AuditFindingRecord) -> None:
         self.audit_findings.append(finding)
 
+    def record_audit_report(self, report: AuditReportRecord) -> None:
+        self.audit_reports.append(report)
+
+    def record_verification_request(self, request: VerificationRequestRecord) -> None:
+        self.verification_requests.append(request)
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "sources": [asdict(item) for item in self.sources.values()],
@@ -208,6 +225,8 @@ class MemoryKnowledgeStore:
             "embeddings": [asdict(item) for item in self.embeddings.values()],
             "retrieval_events": [asdict(item) for item in self.retrieval_events],
             "audit_findings": [asdict(item) for item in self.audit_findings],
+            "audit_reports": [asdict(item) for item in self.audit_reports],
+            "verification_requests": [asdict(item) for item in self.verification_requests],
         }
 
     def restore(self, snapshot: dict[str, Any]) -> None:
@@ -231,7 +250,11 @@ class MemoryKnowledgeStore:
         for event in snapshot.get("retrieval_events", []):
             self.retrieval_events.append(RetrievalEventRecord(**event))
         for finding in snapshot.get("audit_findings", []):
-            self.audit_findings.append(AuditFindingRecord(**finding))
+            self.audit_findings.append(_audit_finding_from_json(finding))
+        for report in snapshot.get("audit_reports", []):
+            self.audit_reports.append(_audit_report_from_json(report))
+        for request in snapshot.get("verification_requests", []):
+            self.verification_requests.append(_verification_request_from_json(request))
 
 
 class PostgresKnowledgeStore:
@@ -446,26 +469,194 @@ class PostgresKnowledgeStore:
                 cur.execute(
                     """
                     INSERT INTO knowledge_audit_findings (
-                        finding_id, finding_class, statement, confidence, evidence_links, status, created_at, metadata
-                    ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
+                        finding_id, classification, statement, confidence, evidence_refs, time_range, systems, components,
+                        verification_status, recommended_query, diagnostic_action, supporting_evidence,
+                        contradicting_evidence, provenance_refs, correlation_ids, source_type_analyzers,
+                        created_at, metadata
+                    ) VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::jsonb,
+                              %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s::jsonb)
                     ON CONFLICT (finding_id) DO UPDATE SET
-                        finding_class = EXCLUDED.finding_class,
+                        classification = EXCLUDED.classification,
                         statement = EXCLUDED.statement,
                         confidence = EXCLUDED.confidence,
-                        evidence_links = EXCLUDED.evidence_links,
-                        status = EXCLUDED.status,
+                        evidence_refs = EXCLUDED.evidence_refs,
+                        time_range = EXCLUDED.time_range,
+                        systems = EXCLUDED.systems,
+                        components = EXCLUDED.components,
+                        verification_status = EXCLUDED.verification_status,
+                        recommended_query = EXCLUDED.recommended_query,
+                        diagnostic_action = EXCLUDED.diagnostic_action,
+                        supporting_evidence = EXCLUDED.supporting_evidence,
+                        contradicting_evidence = EXCLUDED.contradicting_evidence,
+                        provenance_refs = EXCLUDED.provenance_refs,
+                        correlation_ids = EXCLUDED.correlation_ids,
+                        source_type_analyzers = EXCLUDED.source_type_analyzers,
                         created_at = EXCLUDED.created_at,
                         metadata = EXCLUDED.metadata
                     """,
                     (
                         finding.finding_id,
-                        finding.finding_class,
+                        finding.classification,
                         finding.statement,
                         finding.confidence,
-                        json.dumps(list(finding.evidence_links), sort_keys=True),
-                        finding.status,
+                        json.dumps([asdict(ref) for ref in finding.evidence_refs], sort_keys=True),
+                        json.dumps(_time_range_to_json(finding.time_range), sort_keys=True),
+                        json.dumps(list(finding.systems), sort_keys=True),
+                        json.dumps(list(finding.components), sort_keys=True),
+                        finding.verification_status,
+                        finding.recommended_query,
+                        json.dumps(finding.diagnostic_action, sort_keys=True),
+                        json.dumps(list(finding.supporting_evidence), sort_keys=True),
+                        json.dumps(list(finding.contradicting_evidence), sort_keys=True),
+                        json.dumps(list(finding.provenance_refs), sort_keys=True),
+                        json.dumps(list(finding.correlation_ids), sort_keys=True),
+                        json.dumps(list(finding.source_type_analyzers), sort_keys=True),
                         finding.created_at,
                         json.dumps(finding.metadata, sort_keys=True),
+                    ),
+                )
+            conn.commit()
+
+    def record_audit_report(self, report: AuditReportRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_audit_reports (
+                        report_id, request_hash, request_payload, executive_summary, human_report, machine_report,
+                        finding_ids, timeline_event_ids, causal_chains, unresolved_hypotheses,
+                        recommended_verification_steps, created_at, metadata
+                    ) VALUES (%s, %s, %s::jsonb, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s::jsonb)
+                    ON CONFLICT (report_id) DO UPDATE SET
+                        request_hash = EXCLUDED.request_hash,
+                        request_payload = EXCLUDED.request_payload,
+                        executive_summary = EXCLUDED.executive_summary,
+                        human_report = EXCLUDED.human_report,
+                        machine_report = EXCLUDED.machine_report,
+                        finding_ids = EXCLUDED.finding_ids,
+                        timeline_event_ids = EXCLUDED.timeline_event_ids,
+                        causal_chains = EXCLUDED.causal_chains,
+                        unresolved_hypotheses = EXCLUDED.unresolved_hypotheses,
+                        recommended_verification_steps = EXCLUDED.recommended_verification_steps,
+                        created_at = EXCLUDED.created_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        report.report_id,
+                        report.request_hash,
+                        json.dumps(report.request_payload, sort_keys=True),
+                        report.executive_summary,
+                        report.human_report,
+                        json.dumps(report.machine_report, sort_keys=True),
+                        json.dumps(list(report.finding_ids), sort_keys=True),
+                        json.dumps(list(report.timeline_event_ids), sort_keys=True),
+                        json.dumps(list(report.causal_chains), sort_keys=True),
+                        json.dumps(list(report.unresolved_hypotheses), sort_keys=True),
+                        json.dumps(list(report.recommended_verification_steps), sort_keys=True),
+                        report.created_at,
+                        json.dumps(report.metadata, sort_keys=True),
+                    ),
+                )
+            conn.commit()
+
+    def record_verification_request(self, request: VerificationRequestRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_verification_requests (
+                        request_id, audit_id, finding_id, broker_name, request_payload, status, created_at, metadata
+                    ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
+                    ON CONFLICT (request_id) DO UPDATE SET
+                        audit_id = EXCLUDED.audit_id,
+                        finding_id = EXCLUDED.finding_id,
+                        broker_name = EXCLUDED.broker_name,
+                        request_payload = EXCLUDED.request_payload,
+                        status = EXCLUDED.status,
+                        created_at = EXCLUDED.created_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        request.request_id,
+                        request.audit_id,
+                        request.finding_id,
+                        request.broker_name,
+                        json.dumps(request.request_payload, sort_keys=True),
+                        request.status,
+                        request.created_at,
+                        json.dumps(request.metadata, sort_keys=True),
+                    ),
+                )
+            conn.commit()
+
+    def record_audit_report(self, report: AuditReportRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_audit_reports (
+                        report_id, request_hash, request_payload, executive_summary, human_report, machine_report,
+                        finding_ids, timeline_event_ids, causal_chains, unresolved_hypotheses,
+                        recommended_verification_steps, created_at, metadata
+                    ) VALUES (%s, %s, %s::jsonb, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s::jsonb)
+                    ON CONFLICT (report_id) DO UPDATE SET
+                        request_hash = EXCLUDED.request_hash,
+                        request_payload = EXCLUDED.request_payload,
+                        executive_summary = EXCLUDED.executive_summary,
+                        human_report = EXCLUDED.human_report,
+                        machine_report = EXCLUDED.machine_report,
+                        finding_ids = EXCLUDED.finding_ids,
+                        timeline_event_ids = EXCLUDED.timeline_event_ids,
+                        causal_chains = EXCLUDED.causal_chains,
+                        unresolved_hypotheses = EXCLUDED.unresolved_hypotheses,
+                        recommended_verification_steps = EXCLUDED.recommended_verification_steps,
+                        created_at = EXCLUDED.created_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        report.report_id,
+                        report.request_hash,
+                        json.dumps(report.request_payload, sort_keys=True),
+                        report.executive_summary,
+                        report.human_report,
+                        json.dumps(report.machine_report, sort_keys=True),
+                        json.dumps(list(report.finding_ids), sort_keys=True),
+                        json.dumps(list(report.timeline_event_ids), sort_keys=True),
+                        json.dumps(list(report.causal_chains), sort_keys=True),
+                        json.dumps(list(report.unresolved_hypotheses), sort_keys=True),
+                        json.dumps(list(report.recommended_verification_steps), sort_keys=True),
+                        report.created_at,
+                        json.dumps(report.metadata, sort_keys=True),
+                    ),
+                )
+            conn.commit()
+
+    def record_verification_request(self, request: VerificationRequestRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_verification_requests (
+                        request_id, audit_id, finding_id, broker_name, request_payload, status, created_at, metadata
+                    ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
+                    ON CONFLICT (request_id) DO UPDATE SET
+                        audit_id = EXCLUDED.audit_id,
+                        finding_id = EXCLUDED.finding_id,
+                        broker_name = EXCLUDED.broker_name,
+                        request_payload = EXCLUDED.request_payload,
+                        status = EXCLUDED.status,
+                        created_at = EXCLUDED.created_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        request.request_id,
+                        request.audit_id,
+                        request.finding_id,
+                        request.broker_name,
+                        json.dumps(request.request_payload, sort_keys=True),
+                        request.status,
+                        request.created_at,
+                        json.dumps(request.metadata, sort_keys=True),
                     ),
                 )
             conn.commit()
@@ -968,6 +1159,99 @@ def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
     """
     params.append(filters.limit * max(1, filters.neighbor_window + 1))
     return sql, tuple(params)
+
+
+def _time_range_to_json(time_range: tuple[datetime | None, datetime | None] | None) -> dict[str, Any] | None:
+    if time_range is None:
+        return None
+    start, end = time_range
+    return {
+        "start": start.isoformat() if start is not None else None,
+        "end": end.isoformat() if end is not None else None,
+    }
+
+
+def _time_range_from_json(data: Any) -> tuple[datetime | None, datetime | None] | None:
+    if data in (None, ""):
+        return None
+    if isinstance(data, dict):
+        start = data.get("start")
+        end = data.get("end")
+    else:
+        start, end = data
+    return (
+        datetime.fromisoformat(start) if start else None,
+        datetime.fromisoformat(end) if end else None,
+    )
+
+
+def _audit_evidence_ref_from_json(data: dict[str, Any]) -> AuditEvidenceRefRecord:
+    return AuditEvidenceRefRecord(
+        reference_id=data["reference_id"],
+        source_id=data["source_id"],
+        source_version_id=data["source_version_id"],
+        source_type=data["source_type"],
+        locator=data["locator"],
+        role=data["role"],
+        provenance_ref=data["provenance_ref"],
+        excerpt_hash=data["excerpt_hash"],
+        statement=data["statement"],
+        metadata=dict(data.get("metadata", {})),
+    )
+
+
+def _audit_finding_from_json(data: dict[str, Any]) -> AuditFindingRecord:
+    return AuditFindingRecord(
+        finding_id=data["finding_id"],
+        classification=data.get("classification", data.get("finding_class", "fact")),
+        statement=data["statement"],
+        confidence=float(data["confidence"]),
+        evidence_refs=tuple(_audit_evidence_ref_from_json(item) for item in data.get("evidence_refs", data.get("evidence_links", []))),
+        time_range=_time_range_from_json(data.get("time_range")),
+        systems=tuple(data.get("systems", [])),
+        components=tuple(data.get("components", [])),
+        verification_status=data.get("verification_status", data.get("status", "unverified")),
+        recommended_query=data.get("recommended_query"),
+        diagnostic_action=dict(data["diagnostic_action"]) if data.get("diagnostic_action") else None,
+        supporting_evidence=tuple(data.get("supporting_evidence", [])),
+        contradicting_evidence=tuple(data.get("contradicting_evidence", [])),
+        provenance_refs=tuple(data.get("provenance_refs", [])),
+        correlation_ids=tuple(data.get("correlation_ids", [])),
+        source_type_analyzers=tuple(data.get("source_type_analyzers", [])),
+        created_at=datetime.fromisoformat(data["created_at"]) if isinstance(data.get("created_at"), str) else data.get("created_at", utcnow()),
+        metadata=dict(data.get("metadata", {})),
+    )
+
+
+def _audit_report_from_json(data: dict[str, Any]) -> AuditReportRecord:
+    return AuditReportRecord(
+        report_id=data["report_id"],
+        request_hash=data["request_hash"],
+        request_payload=dict(data.get("request_payload", {})),
+        executive_summary=data["executive_summary"],
+        human_report=data["human_report"],
+        machine_report=dict(data.get("machine_report", {})),
+        finding_ids=tuple(data.get("finding_ids", [])),
+        timeline_event_ids=tuple(data.get("timeline_event_ids", [])),
+        causal_chains=tuple(data.get("causal_chains", [])),
+        unresolved_hypotheses=tuple(data.get("unresolved_hypotheses", [])),
+        recommended_verification_steps=tuple(data.get("recommended_verification_steps", [])),
+        created_at=datetime.fromisoformat(data["created_at"]) if isinstance(data.get("created_at"), str) else data.get("created_at", utcnow()),
+        metadata=dict(data.get("metadata", {})),
+    )
+
+
+def _verification_request_from_json(data: dict[str, Any]) -> VerificationRequestRecord:
+    return VerificationRequestRecord(
+        request_id=data["request_id"],
+        audit_id=data["audit_id"],
+        finding_id=data.get("finding_id"),
+        broker_name=data["broker_name"],
+        request_payload=dict(data.get("request_payload", {})),
+        status=data["status"],
+        created_at=datetime.fromisoformat(data["created_at"]) if isinstance(data.get("created_at"), str) else data.get("created_at", utcnow()),
+        metadata=dict(data.get("metadata", {})),
+    )
 
 
 def _split_sql(sql: str) -> list[str]:

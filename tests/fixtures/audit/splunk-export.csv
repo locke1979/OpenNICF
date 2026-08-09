@@ -1,0 +1,3 @@
+_time,host,sourcetype,correlation_id,message
+2026-08-08T12:01:02Z,billing-api,app,trace-91,Payment finalization failed
+2026-08-08T12:01:03Z,billing-api,app,trace-91,Retry suppressed

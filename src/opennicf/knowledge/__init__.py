@@ -10,7 +10,10 @@ from .embeddings import (
 )
 from .models import (
     ArtifactRecord,
+    AuditEvidenceRefRecord,
     AuditFindingRecord,
+    AuditReportRecord,
+    AuditTimelineEventRecord,
     ChunkRecord,
     EvidenceHit,
     EmbeddingRecord,
@@ -22,6 +25,7 @@ from .models import (
     RetrievalFilters,
     SearchCandidate,
     SourceKind,
+    VerificationRequestRecord,
 )
 from .object_store import (
     FilesystemObjectStore,
@@ -34,7 +38,10 @@ from .store import KnowledgePlatform, MemoryKnowledgeStore, PostgresKnowledgeSto
 
 __all__ = [
     "ArtifactRecord",
+    "AuditEvidenceRefRecord",
     "AuditFindingRecord",
+    "AuditReportRecord",
+    "AuditTimelineEventRecord",
     "ChunkRecord",
     "EmbeddingBackend",
     "EmbeddingBatchSizer",
@@ -60,5 +67,6 @@ __all__ = [
     "RetrievalFilters",
     "SearchCandidate",
     "SourceKind",
+    "VerificationRequestRecord",
     "cosine_similarity",
 ]
