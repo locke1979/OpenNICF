@@ -1150,7 +1150,7 @@ class DomainAgentFactory:
             if normalized == candidate_id.replace("_", "-") or normalized in aliases:
                 return profile
         try:
-            return self.profiles[lookup]
+            return self.profiles[domain_id]
         except KeyError as exc:
             raise KeyError(f"unknown domain_id: {domain_id}") from exc
 
@@ -1190,7 +1190,12 @@ class DomainAgentFactory:
             return candidate
         lowered = candidate.lower()
         for domain_id, profile in self.profiles.items():
-            aliases = (*profile.system_aliases, *profile.integration_boundary_aliases, *profile.owned_systems)
+            aliases = (
+                *getattr(profile, "aliases", ()),
+                *profile.system_aliases,
+                *profile.integration_boundary_aliases,
+                *profile.owned_systems,
+            )
             if lowered in {str(alias).lower() for alias in aliases}:
                 return domain_id
         from .encargos_sigef import SIGEF_SYSTEM_ALIASES

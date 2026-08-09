@@ -1,0 +1,3 @@
+2026-08-08T10:15:00Z INFO batch execution_id=batch-20260808-0017 correlation_id=sco-trace-18 started
+2026-08-08T10:15:01Z ERROR batch execution_id=batch-20260808-0017 correlation_id=sco-trace-18 return_code=12 expected_return_code=0
+Traceback: sco_batch_worker.py:42 producer_return_code_mismatch
