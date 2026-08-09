@@ -6,17 +6,18 @@ from xml.sax.saxutils import escape
 
 from opennicf import (
     ChannelAllowList,
+    ChannelAttachment,
+    ChannelDelivery,
+    ChannelEnvelope,
     ChannelEventLedger,
     ChannelPage,
     ChannelRateLimitError,
-    EvidenceIndex,
+    ChannelResponse,
     IngestionService,
     KnowledgePlatform,
     MemoryConversationTransport,
-    OpenNICFTools,
     TelegramConversationAdapter,
     WebexConversationAdapter,
-    build_channel_operations,
 )
 
 
@@ -55,20 +56,180 @@ def _build_docx_bytes(paragraphs: list[str]) -> bytes:
     return buffer.getvalue()
 
 
-def _factory() -> tuple[KnowledgePlatform, IngestionService, OpenNICFTools]:
+def _parse_command(text: str) -> tuple[str, str]:
+    stripped = text.strip()
+    if not stripped:
+        return "help", ""
+    token, _, remainder = stripped.partition(" ")
+    if token.startswith("/"):
+        token = token[1:]
+    return token.lower(), remainder.strip()
+
+
+def _best_snippets(platform: KnowledgePlatform, query: str) -> list[str]:
+    lowered = query.lower()
+    return [
+        chunk.text
+        for chunk in platform.store.chunks.values()
+        if not lowered or lowered in chunk.text.lower()
+    ][:5]
+
+
+class FakeRuntimeHandler:
+    def __init__(self, platform: KnowledgePlatform):
+        self.platform = platform
+        self.envelopes: list[ChannelEnvelope] = []
+
+    def handle(self, envelope: ChannelEnvelope) -> ChannelResponse:
+        self.envelopes.append(envelope)
+        command, query = _parse_command(envelope.event.text)
+        reply_target = envelope.event.reply_target
+        thread_id = envelope.event.thread_id
+
+        if command == "search":
+            snippets = _best_snippets(self.platform, query)
+            attachment = ChannelAttachment.from_json(
+                "search-results.json",
+                {
+                    "query": query,
+                    "matches": snippets,
+                    "ingestion": envelope.ingestion_summary,
+                },
+            )
+            deliveries = (
+                ChannelDelivery(
+                    kind="message",
+                    text=f"Acknowledged search request for {query or 'all evidence'}.",
+                    reply_target=reply_target,
+                    thread_id=thread_id,
+                    metadata={"intent": "search"},
+                ),
+                ChannelDelivery(
+                    kind="artifact",
+                    text="Search results attached.",
+                    reply_target=reply_target,
+                    thread_id=thread_id,
+                    attachments=(attachment,),
+                    metadata={"intent": "search"},
+                ),
+            )
+            return ChannelResponse(
+                intent="search",
+                status="completed",
+                deliveries=deliveries,
+                metadata={"query": query, "matches": len(snippets)},
+            )
+
+        if command == "status":
+            attachment = ChannelAttachment.from_json(
+                "status.json",
+                {
+                    "state": "ok",
+                    "conversation_id": envelope.event.conversation.conversation_id,
+                    "attachments": envelope.ingestion_summary["submitted_jobs"] if envelope.ingestion_summary else [],
+                },
+            )
+            deliveries = (
+                ChannelDelivery(
+                    kind="message",
+                    text="Acknowledged status request.",
+                    reply_target=reply_target,
+                    thread_id=thread_id,
+                    metadata={"intent": "status"},
+                ),
+                ChannelDelivery(
+                    kind="artifact",
+                    text="Status snapshot attached.",
+                    reply_target=reply_target,
+                    thread_id=thread_id,
+                    attachments=(attachment,),
+                    metadata={"intent": "status"},
+                ),
+            )
+            return ChannelResponse(
+                intent="status",
+                status="completed",
+                deliveries=deliveries,
+                metadata={"state": "ok"},
+            )
+
+        if command == "health":
+            attachment = ChannelAttachment.from_json(
+                "health.json",
+                {
+                    "state": "healthy",
+                    "conversation_id": envelope.event.conversation.conversation_id,
+                },
+            )
+            deliveries = (
+                ChannelDelivery(
+                    kind="message",
+                    text="Acknowledged health request.",
+                    reply_target=reply_target,
+                    thread_id=thread_id,
+                    metadata={"intent": "health"},
+                ),
+                ChannelDelivery(
+                    kind="artifact",
+                    text="Health report attached.",
+                    reply_target=reply_target,
+                    thread_id=thread_id,
+                    attachments=(attachment,),
+                    metadata={"intent": "health"},
+                ),
+            )
+            return ChannelResponse(
+                intent="health",
+                status="completed",
+                deliveries=deliveries,
+                metadata={"state": "healthy"},
+            )
+
+        attachment = ChannelAttachment.from_json(
+            "help.json",
+            {
+                "available": ["search", "status", "health"],
+            },
+        )
+        deliveries = (
+            ChannelDelivery(
+                kind="message",
+                text="Available commands: /search, /status, /health.",
+                reply_target=reply_target,
+                thread_id=thread_id,
+                metadata={"intent": "help"},
+            ),
+            ChannelDelivery(
+                kind="artifact",
+                text="Help attached.",
+                reply_target=reply_target,
+                thread_id=thread_id,
+                attachments=(attachment,),
+                metadata={"intent": "help"},
+            ),
+        )
+        return ChannelResponse(
+            intent="help",
+            status="completed",
+            deliveries=deliveries,
+            metadata={"available": ["search", "status", "health"]},
+        )
+
+
+def _factory() -> tuple[KnowledgePlatform, IngestionService, FakeRuntimeHandler]:
     platform = KnowledgePlatform.in_memory()
     ingestion = IngestionService(platform)
-    tools = OpenNICFTools(EvidenceIndex(platform))
-    return platform, ingestion, tools
+    handler = FakeRuntimeHandler(platform)
+    return platform, ingestion, handler
 
 
 def test_webex_adapter_ingests_attachments_and_round_trips_search_results():
-    platform, ingestion, tools = _factory()
-    operations = build_channel_operations(ingestion=ingestion, tools=tools, platform=platform)
+    platform, ingestion, handler = _factory()
     transport = MemoryConversationTransport("webex")
     adapter = WebexConversationAdapter(
         transport,
-        operations,
+        ingestion,
+        handler,
         allow_list=ChannelAllowList(actor_ids=frozenset({"alice"}), conversation_ids=frozenset({"room-1"})),
         ledger=ChannelEventLedger(),
         sleep=lambda _: None,
@@ -96,20 +257,27 @@ def test_webex_adapter_ingests_attachments_and_round_trips_search_results():
 
     assert response.intent == "search"
     assert response.status == "completed"
+    assert len(handler.envelopes) == 1
+    assert handler.envelopes[0].ingestion_summary is not None
+    assert handler.envelopes[0].ingestion_summary["submitted_jobs"][1]["metadata"]["attachment_name"] == "evidence.docx"
     assert len(transport.sent_deliveries) == 2
     assert any("Acknowledged search request" in delivery.text for _, delivery in transport.sent_deliveries)
     assert any("First doc paragraph" in delivery.text for _, delivery in transport.sent_deliveries)
-    assert any("search-results.json" in attachment.filename for _, delivery in transport.sent_deliveries for attachment in delivery.attachments)
+    assert any(
+        "search-results.json" in attachment.filename
+        for _, delivery in transport.sent_deliveries
+        for attachment in delivery.attachments
+    )
     assert any("First doc paragraph" in chunk.text for chunk in platform.store.chunks.values())
 
 
 def test_telegram_adapter_deduplicates_updates_and_supports_status_intent():
-    platform, ingestion, tools = _factory()
-    operations = build_channel_operations(ingestion=ingestion, tools=tools, platform=platform)
+    platform, ingestion, handler = _factory()
     transport = MemoryConversationTransport("telegram")
     adapter = TelegramConversationAdapter(
         transport,
-        operations,
+        ingestion,
+        handler,
         allow_list=ChannelAllowList(actor_ids=frozenset({"alice"}), conversation_ids=frozenset({"chat-1"})),
         ledger=ChannelEventLedger(),
         sleep=lambda _: None,
@@ -132,13 +300,14 @@ def test_telegram_adapter_deduplicates_updates_and_supports_status_intent():
     assert first.intent == "status"
     assert first.status == "completed"
     assert second.status == "duplicate"
+    assert len(handler.envelopes) == 1
+    assert handler.envelopes[0].ingestion_summary is not None
     assert len(transport.sent_deliveries) == 2
     assert any(attachment.filename == "status.json" for _, delivery in transport.sent_deliveries for attachment in delivery.attachments)
 
 
 def test_channel_adapter_retries_rate_limited_page_fetches_and_paginates():
-    platform, ingestion, tools = _factory()
-    operations = build_channel_operations(ingestion=ingestion, tools=tools, platform=platform)
+    platform, ingestion, handler = _factory()
 
     class FlakyTransport(MemoryConversationTransport):
         def __init__(self) -> None:
@@ -186,7 +355,8 @@ def test_channel_adapter_retries_rate_limited_page_fetches_and_paginates():
     transport = FlakyTransport()
     adapter = TelegramConversationAdapter(
         transport,
-        operations,
+        ingestion,
+        handler,
         allow_list=ChannelAllowList(actor_ids=frozenset({"alice"}), conversation_ids=frozenset({"chat-2"})),
         ledger=ChannelEventLedger(),
         sleep=lambda _: None,
@@ -195,16 +365,17 @@ def test_channel_adapter_retries_rate_limited_page_fetches_and_paginates():
     responses = adapter.sync(limit=1)
 
     assert [response.intent for response in responses] == ["status", "health"]
+    assert len(handler.envelopes) == 2
     assert len(transport.sent_deliveries) == 4
 
 
 def test_allow_list_blocks_unauthorized_actor_without_ingesting():
-    platform, ingestion, tools = _factory()
-    operations = build_channel_operations(ingestion=ingestion, tools=tools, platform=platform)
+    platform, ingestion, handler = _factory()
     transport = MemoryConversationTransport("webex")
     adapter = WebexConversationAdapter(
         transport,
-        operations,
+        ingestion,
+        handler,
         allow_list=ChannelAllowList(actor_ids=frozenset({"alice"}), conversation_ids=frozenset({"room-1"})),
         ledger=ChannelEventLedger(),
         sleep=lambda _: None,
@@ -222,5 +393,6 @@ def test_allow_list_blocks_unauthorized_actor_without_ingesting():
     )
 
     assert response.status == "rejected"
+    assert len(handler.envelopes) == 0
     assert len(transport.sent_deliveries) == 1
     assert not platform.store.chunks

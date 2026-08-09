@@ -87,6 +87,7 @@ from .channels import (
     ChannelActor,
     ChannelAllowList,
     ChannelAttachment,
+    ChannelEnvelope,
     ChannelConversation,
     ChannelDelivery,
     ChannelEventLedger,
@@ -96,12 +97,11 @@ from .channels import (
     ChannelResponse,
     ChannelTransientError,
     ConversationChannelAdapter,
-    ConversationOperations,
     MemoryConversationTransport,
     RetryPolicy,
+    ChannelRuntimeHandler,
     TelegramConversationAdapter,
     WebexConversationAdapter,
-    build_channel_operations,
 )
 from .qwen_adapter import OpenNICFChatModel
 from .rag import Evidence, EvidenceIndex
@@ -192,6 +192,7 @@ __all__ = [
     "ChannelActor",
     "ChannelAllowList",
     "ChannelAttachment",
+    "ChannelEnvelope",
     "ChannelConversation",
     "ChannelDelivery",
     "ChannelEventLedger",
@@ -201,11 +202,10 @@ __all__ = [
     "ChannelResponse",
     "ChannelTransientError",
     "ConversationChannelAdapter",
-    "ConversationOperations",
     "MemoryConversationTransport",
     "RetryPolicy",
+    "ChannelRuntimeHandler",
     "TelegramConversationAdapter",
     "WebexConversationAdapter",
-    "build_channel_operations",
     "OpenNICFTools",
 ]

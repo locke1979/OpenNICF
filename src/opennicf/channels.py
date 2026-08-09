@@ -8,14 +8,11 @@ from hashlib import sha256
 from pathlib import PurePosixPath
 import json
 import mimetypes
-import re
 import sqlite3
 import time
 from typing import Any, Mapping, Protocol, Sequence
 
 from .ingestion import IngestionService
-from .knowledge import KnowledgePlatform
-from .tools import OpenNICFTools
 
 
 def utcnow() -> datetime:
@@ -52,22 +49,6 @@ def _as_text(value: Any) -> str:
     if isinstance(value, str):
         return value
     return str(value)
-
-
-def _extract_command(text: str, *, commands: Sequence[str]) -> tuple[str, str]:
-    stripped = text.strip()
-    if not stripped:
-        return "help", ""
-    if stripped.startswith("/"):
-        command, _, remainder = stripped[1:].partition(" ")
-        lowered = command.lower()
-        if lowered in commands:
-            return lowered, remainder.strip()
-    first_token, _, remainder = stripped.partition(" ")
-    lowered = first_token.lower()
-    if lowered in commands:
-        return lowered, remainder.strip()
-    return "help", stripped
 
 
 def _conversation_source_uri(channel: str, conversation_id: str, message_id: str) -> str:
@@ -354,410 +335,24 @@ class MemoryConversationTransport:
         self.sent_deliveries.append((event, delivery))
 
 
-class ConversationOperations:
-    """Intent routing over the existing ingestion, knowledge and tool surfaces."""
+@dataclass(frozen=True)
+class ChannelEnvelope:
+    event: ChannelMessage
+    ingestion_summary: dict[str, Any] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    commands = ("health", "ingest", "search", "audit", "status", "artifact")
 
-    def __init__(
-        self,
-        *,
-        ingestion: IngestionService,
-        tools: OpenNICFTools,
-        platform: KnowledgePlatform | None = None,
-    ):
-        self.ingestion = ingestion
-        self.tools = tools
-        self.platform = platform or tools.evidence.platform
-
-    def _ack(self, event: ChannelMessage, intent: str, detail: str) -> ChannelDelivery:
-        thread_id, reply_target = _delivery_target(event)
-        return ChannelDelivery(
-            kind="ack",
-            text=f"Acknowledged {intent} request from {event.actor.display_name or event.actor.actor_id}. {detail}".strip(),
-            thread_id=thread_id,
-            reply_target=reply_target,
-            metadata={
-                "event_id": event.event_id,
-                "intent": intent,
-            },
-        )
-
-    def _deliver(self, event: ChannelMessage, intent: str, text: str, *, kind: str = "message", attachments: Sequence[ChannelAttachment] = (), metadata: dict[str, Any] | None = None) -> ChannelDelivery:
-        thread_id, reply_target = _delivery_target(event)
-        return ChannelDelivery(
-            kind=kind,
-            text=text,
-            thread_id=thread_id,
-            reply_target=reply_target,
-            attachments=tuple(attachments),
-            metadata={
-                "event_id": event.event_id,
-                "intent": intent,
-                **dict(metadata or {}),
-            },
-        )
-
-    def _submit_ingestion(self, event: ChannelMessage) -> dict[str, Any]:
-        attachments = [attachment.as_ingestion_tuple() for attachment in event.attachments]
-        metadata = {
-            **event.metadata,
-            "actor_id": event.actor.actor_id,
-            "actor_display_name": event.actor.display_name,
-            "event_id": event.event_id,
-            "reply_target": event.reply_target,
-            "thread_id": event.thread_id,
-            "channel_event_id": event.event_id,
-        }
-        if event.channel == "webex":
-            jobs = self.ingestion.submit_webex_message(
-                room_id=event.conversation.conversation_id,
-                message_id=event.conversation.message_id,
-                message_text=event.text,
-                attachments=attachments,
-                thread_id=event.conversation.thread_id,
-                source_uri=event.metadata.get("source_uri") or _conversation_source_uri(event.channel, event.conversation.conversation_id, event.conversation.message_id),
-                acl_scope=event.auth_scope,
-                metadata=metadata,
-            )
-        elif event.channel == "telegram":
-            jobs = self.ingestion.submit_telegram_message(
-                chat_id=event.conversation.conversation_id,
-                message_id=event.conversation.message_id,
-                message_text=event.text,
-                attachments=attachments,
-                thread_id=event.conversation.thread_id,
-                source_uri=event.metadata.get("source_uri") or _conversation_source_uri(event.channel, event.conversation.conversation_id, event.conversation.message_id),
-                acl_scope=event.auth_scope,
-                metadata=metadata,
-            )
-        else:
-            jobs = [
-                self.ingestion.submit_manual(
-                    source_uri=event.metadata.get("source_uri") or _conversation_source_uri(event.channel, event.conversation.conversation_id, event.conversation.message_id),
-                    content=event.text,
-                    channel=event.channel,
-                    acl_scope=event.auth_scope,
-                    metadata=metadata,
-                )
-            ]
-            for attachment in event.attachments:
-                jobs.append(
-                    self.ingestion.submit_manual(
-                        source_uri=f"{event.metadata.get('source_uri') or _conversation_source_uri(event.channel, event.conversation.conversation_id, event.conversation.message_id)}/attachments/{attachment.filename}",
-                        content=attachment.content,
-                        mime_type=attachment.content_type,
-                        channel=event.channel,
-                        source_kind="document",
-                        source_type="document",
-                        acl_scope=event.auth_scope,
-                        metadata={**metadata, "attachment_name": attachment.filename},
-                    )
-                )
-        outcomes = self.ingestion.run()
-        return {
-            "job_ids": [job.job_id for job in jobs],
-            "outcomes": [
-                {
-                    "job_id": outcome.job_id,
-                    "created": outcome.created,
-                    "bundles": len(outcome.bundles),
-                    "content_hash": outcome.content_hash,
-                }
-                for outcome in outcomes
-            ],
-            "attachment_count": len(event.attachments),
-            "bundle_count": sum(len(outcome.bundles) for outcome in outcomes),
-        }
-
-    def _search(self, event: ChannelMessage, query: str) -> tuple[str, ChannelAttachment]:
-        hits = self.tools.search_evidence(query)
-        if not hits:
-            summary = f"No evidence matched `{query}`."
-        else:
-            lines = [f"Found {len(hits)} hit(s) for `{query}`:"]
-            for hit in hits[:5]:
-                lines.append(
-                    f"- {hit['source_id']} | {hit['locator']} | {hit.get('score', 0.0):.2f} | {hit['text']}"
-                )
-            summary = "\n".join(lines)
-        return summary, ChannelAttachment.from_json(
-            "search-results.json",
-            {"query": query, "hits": hits},
-            metadata={"intent": "search"},
-        )
-
-    def _audit(self, event: ChannelMessage, request: str) -> tuple[str, ChannelAttachment, ChannelAttachment]:
-        report = self.tools.analyze_failure_audit(request)
-        human_report = _as_text(report.get("human_report") or report.get("executive_summary") or "No audit report available.")
-        markdown = report.get("human_report") or human_report
-        return (
-            human_report,
-            ChannelAttachment.from_json("audit-report.json", report, metadata={"intent": "audit"}),
-            ChannelAttachment.from_text("audit-report.md", _as_text(markdown), content_type="text/markdown", metadata={"intent": "audit"}),
-        )
-
-    def _status(self, event: ChannelMessage) -> tuple[str, ChannelAttachment]:
-        queue_snapshot = self.ingestion.queue.snapshot()
-        store = self.platform.store
-        counts = {
-            "sources": len(getattr(store, "sources", {})),
-            "artifacts": len(getattr(store, "artifacts", {})),
-            "chunks": len(getattr(store, "chunks", {})),
-            "namespaces": len(getattr(store, "namespaces", {})),
-            "retrieval_events": len(getattr(store, "retrieval_events", [])),
-            "pending_jobs": len(queue_snapshot.get("pending", [])),
-            "in_progress_jobs": len(queue_snapshot.get("in_progress", [])),
-            "completed_jobs": len(queue_snapshot.get("completed", {})),
-            "dead_letters": len(queue_snapshot.get("dead_letters", [])),
-        }
-        summary = "\n".join(
-            [
-                "Channel and knowledge status:",
-                f"- channel: {event.channel}",
-                f"- actor: {event.actor.actor_id}",
-                f"- conversation: {event.conversation.conversation_id}",
-                f"- object_store: {self.platform.object_store.backend_name}",
-                *(f"- {key}: {value}" for key, value in counts.items()),
-            ]
-        )
-        return summary, ChannelAttachment.from_json(
-            "status.json",
-            {
-                "channel": event.channel,
-                "actor_id": event.actor.actor_id,
-                "conversation_id": event.conversation.conversation_id,
-                "counts": counts,
-                "queue": queue_snapshot,
-            },
-            metadata={"intent": "status"},
-        )
-
-    def _health(self, event: ChannelMessage) -> tuple[str, ChannelAttachment]:
-        summary = "\n".join(
-            [
-                "Channel runtime health:",
-                f"- channel: {event.channel}",
-                f"- auth_scope: {event.auth_scope}",
-                f"- allow_list_actor: {event.actor.actor_id}",
-                f"- ingestion_backend: {self.platform.object_store.backend_name}",
-            ]
-        )
-        return summary, ChannelAttachment.from_json(
-            "health.json",
-            {
-                "channel": event.channel,
-                "auth_scope": event.auth_scope,
-                "actor_id": event.actor.actor_id,
-                "conversation_id": event.conversation.conversation_id,
-                "object_store_backend": self.platform.object_store.backend_name,
-            },
-            metadata={"intent": "health"},
-        )
-
-    def _artifact(self, event: ChannelMessage, request: str) -> tuple[str, ChannelAttachment]:
-        identifier = self._extract_identifier(request)
-        artifact = self._resolve_artifact(identifier)
-        if artifact is None:
-            summary = f"No artifact matched `{identifier}`."
-            return summary, ChannelAttachment.from_json(
-                "artifact-status.json",
-                {"identifier": identifier, "matched": False},
-                metadata={"intent": "artifact"},
-            )
-        payload = self.platform.object_store.get_bytes(artifact.object_key)
-        summary = f"Artifact `{artifact.artifact_hash}` from source `{artifact.source_version_id}`"
-        return summary, ChannelAttachment.from_bytes(
-            artifact.object_key.split("/")[-1] or f"{artifact.artifact_hash}.bin",
-            payload,
-            content_type=artifact.mime_type,
-            metadata={
-                "artifact_hash": artifact.artifact_hash,
-                "source_version_id": artifact.source_version_id,
-                "source_id": self._artifact_source_id(artifact.artifact_hash),
-            },
-        )
-
-    def _artifact_source_id(self, artifact_hash: str) -> str | None:
-        store = self.platform.store
-        if hasattr(store, "artifacts"):
-            artifact = store.artifacts.get(artifact_hash)
-            if artifact is None:
-                return None
-            source_version = getattr(store, "source_versions", {}).get(artifact.source_version_id)
-            return source_version.source_id if source_version else None
-        return None
-
-    def _resolve_artifact(self, identifier: str) -> Any | None:
-        store = self.platform.store
-        if hasattr(store, "artifacts") and identifier in store.artifacts:
-            return store.artifacts[identifier]
-        if hasattr(store, "chunks") and identifier in store.chunks:
-            chunk = store.chunks[identifier]
-            return store.artifacts.get(chunk.artifact_hash)
-        if hasattr(store, "sources") and identifier in store.sources:
-            versions = getattr(store, "_versions_by_source", {}).get(identifier, [])
-            if versions:
-                version = store.source_versions[versions[-1]]
-                return store.artifacts.get(version.artifact_hash)
-        return None
-
-    def _extract_identifier(self, text: str) -> str:
-        for key in ("artifact_hash", "source_id", "chunk_id"):
-            match = re.search(rf"{key}\s*[:=]\s*([A-Za-z0-9._:-]+)", text)
-            if match:
-                return match.group(1)
-        return text.strip()
-
-    def handle(self, event: ChannelMessage) -> ChannelResponse:
-        command, remainder = _extract_command(event.text, commands=self.commands)
-        deliveries: list[ChannelDelivery] = []
-        ingestion_summary: dict[str, Any] | None = None
-
-        if command == "help" and event.attachments and not event.text.strip():
-            command = "ingest"
-
-        if event.attachments:
-            ingestion_summary = self._submit_ingestion(event)
-
-        if command == "help":
-            deliveries.append(
-                self._ack(
-                    event,
-                    "help",
-                    "Send /health, /ingest, /search, /audit, /status, or /artifact.",
-                )
-            )
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "help",
-                    "Supported intents: /health, /ingest, /search <query>, /audit <request>, /status, /artifact <id>.",
-                    metadata={"ingestion": ingestion_summary} if ingestion_summary else {},
-                )
-            )
-            return ChannelResponse(intent="help", status="completed", deliveries=tuple(deliveries), metadata={"ingestion": ingestion_summary} if ingestion_summary else {})
-
-        if command == "ingest":
-            if ingestion_summary is None:
-                ingestion_summary = self._submit_ingestion(event)
-            deliveries.append(self._ack(event, "ingest", f"Queued {len(ingestion_summary['job_ids'])} job(s) for ingestion."))
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "ingest",
-                    "\n".join(
-                        [
-                            f"Ingested {ingestion_summary['attachment_count']} attachment(s).",
-                            f"Processed {ingestion_summary['bundle_count']} bundle(s).",
-                            f"Job IDs: {', '.join(ingestion_summary['job_ids']) or 'none'}",
-                        ]
-                    ),
-                    kind="report",
-                    attachments=(ChannelAttachment.from_json("ingest-summary.json", ingestion_summary, metadata={"intent": "ingest"}),),
-                    metadata={"ingestion": ingestion_summary},
-                )
-            )
-            return ChannelResponse(intent="ingest", status="completed", deliveries=tuple(deliveries), metadata={"ingestion": ingestion_summary})
-
-        if command == "search":
-            ack_detail = "I am searching the evidence index."
-            if ingestion_summary is not None:
-                ack_detail = f"{ack_detail} I ingested {ingestion_summary['attachment_count']} attachment(s) first."
-            deliveries.append(self._ack(event, "search", ack_detail))
-            summary, attachment = self._search(event, remainder or event.text)
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "search",
-                    summary,
-                    kind="report",
-                    attachments=(attachment,),
-                    metadata={"query": remainder or event.text, "ingestion": ingestion_summary},
-                )
-            )
-            return ChannelResponse(intent="search", status="completed", deliveries=tuple(deliveries), metadata={"query": remainder or event.text, "ingestion": ingestion_summary})
-
-        if command == "audit":
-            ack_detail = "I am analyzing the failure evidence."
-            if ingestion_summary is not None:
-                ack_detail = f"{ack_detail} I ingested {ingestion_summary['attachment_count']} attachment(s) first."
-            deliveries.append(self._ack(event, "audit", ack_detail))
-            human_report, json_attachment, markdown_attachment = self._audit(event, remainder or event.text)
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "audit",
-                    human_report,
-                    kind="report",
-                    attachments=(json_attachment, markdown_attachment),
-                    metadata={"request": remainder or event.text, "ingestion": ingestion_summary},
-                )
-            )
-            return ChannelResponse(intent="audit", status="completed", deliveries=tuple(deliveries), metadata={"request": remainder or event.text, "ingestion": ingestion_summary})
-
-        if command == "status":
-            deliveries.append(self._ack(event, "status", "Reporting queue and store status."))
-            summary, attachment = self._status(event)
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "status",
-                    summary,
-                    kind="report",
-                    attachments=(attachment,),
-                    metadata={"ingestion": ingestion_summary},
-                )
-            )
-            return ChannelResponse(intent="status", status="completed", deliveries=tuple(deliveries), metadata={"ingestion": ingestion_summary})
-
-        if command == "health":
-            deliveries.append(self._ack(event, "health", "Reporting runtime health."))
-            summary, attachment = self._health(event)
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "health",
-                    summary,
-                    kind="status",
-                    attachments=(attachment,),
-                    metadata={"ingestion": ingestion_summary},
-                )
-            )
-            return ChannelResponse(intent="health", status="completed", deliveries=tuple(deliveries), metadata={"ingestion": ingestion_summary})
-
-        if command == "artifact":
-            deliveries.append(self._ack(event, "artifact", "Fetching the requested artifact."))
-            summary, attachment = self._artifact(event, remainder or event.text)
-            deliveries.append(
-                self._deliver(
-                    event,
-                    "artifact",
-                    summary,
-                    kind="artifact",
-                    attachments=(attachment,),
-                    metadata={"request": remainder or event.text, "ingestion": ingestion_summary},
-                )
-            )
-            return ChannelResponse(intent="artifact", status="completed", deliveries=tuple(deliveries), metadata={"request": remainder or event.text, "ingestion": ingestion_summary})
-
-        deliveries.append(self._ack(event, "help", "Send /health, /ingest, /search, /audit, /status, or /artifact."))
-        deliveries.append(
-            self._deliver(
-                event,
-                "help",
-                "I only route allow-listed operational intents. Try /status for a queue snapshot.",
-                metadata={"ingestion": ingestion_summary},
-            )
-        )
-        return ChannelResponse(intent="help", status="completed", deliveries=tuple(deliveries), metadata={"ingestion": ingestion_summary})
+class ChannelRuntimeHandler(Protocol):
+    def handle(self, envelope: ChannelEnvelope) -> ChannelResponse:
+        raise NotImplementedError
 
 
 class ConversationChannelAdapter:
     def __init__(
         self,
         transport: ConversationTransport,
-        operations: ConversationOperations,
+        ingestion: IngestionService,
+        runtime_handler: ChannelRuntimeHandler,
         *,
         allow_list: ChannelAllowList | None = None,
         ledger: ChannelEventLedger | None = None,
@@ -765,7 +360,8 @@ class ConversationChannelAdapter:
         sleep=time.sleep,
     ):
         self.transport = transport
-        self.operations = operations
+        self.ingestion = ingestion
+        self.runtime_handler = runtime_handler
         self.allow_list = allow_list or ChannelAllowList()
         self.ledger = ledger or ChannelEventLedger()
         self.retry_policy = retry_policy or RetryPolicy()
@@ -796,6 +392,112 @@ class ConversationChannelAdapter:
         for delivery in deliveries:
             self._retry(lambda delivery=delivery: self.transport.send_delivery(event, delivery))
 
+    def _summarize_job(self, job) -> dict[str, Any]:
+        return {
+            "job_id": job.job_id,
+            "source_id": job.source_id,
+            "source_uri": job.source_uri,
+            "channel": job.channel,
+            "mime_type": job.mime_type,
+            "content_hash": job.content_hash,
+            "source_kind": job.source_kind,
+            "source_type": job.source_type,
+            "domain": job.domain,
+            "system": job.system,
+            "domain_id": job.domain_id,
+            "system_id": job.system_id,
+            "component_id": job.component_id,
+            "evidence_type": job.evidence_type,
+            "environment": job.environment,
+            "acl_scope": job.acl_scope,
+            "parser_hint": job.parser_hint,
+            "state": job.state,
+            "attempts": job.attempts,
+            "metadata": dict(job.metadata),
+        }
+
+    def _summarize_outcome(self, outcome) -> dict[str, Any]:
+        return {
+            "job_id": outcome.job_id,
+            "created": outcome.created,
+            "content_hash": outcome.content_hash,
+            "metadata": dict(outcome.metadata),
+            "bundles": [
+                {
+                    "source_id": bundle.source.source_id,
+                    "source_uri": bundle.source.source_uri,
+                    "source_kind": bundle.source.source_kind,
+                    "channel": bundle.source.channel,
+                    "mime_type": bundle.source.mime_type,
+                    "content_hash": bundle.source.content_hash,
+                    "size_bytes": bundle.source.size_bytes,
+                    "source_type": bundle.source.source_type,
+                    "parser_version": bundle.version.parser_version,
+                    "parser_name": bundle.artifact.parser_name,
+                    "artifact_hash": bundle.artifact.artifact_hash,
+                    "chunk_count": len(bundle.chunks),
+                    "metadata": dict(bundle.artifact.metadata),
+                }
+                for bundle in outcome.bundles
+            ],
+        }
+
+    def _ingest_event(self, event: ChannelMessage) -> dict[str, Any]:
+        attachments = tuple(attachment.as_ingestion_tuple() for attachment in event.attachments)
+        metadata = {
+            "event_id": event.event_id,
+            "actor_id": event.actor.actor_id,
+            "actor_display_name": event.actor.display_name,
+            "conversation_id": event.conversation.conversation_id,
+            "message_id": event.conversation.message_id,
+            "thread_id": event.thread_id,
+            "reply_target": event.reply_target,
+            "channel_event_metadata": dict(event.metadata),
+            "conversation_metadata": dict(event.conversation.metadata),
+            "actor_metadata": dict(event.actor.metadata),
+            "attachment_count": len(event.attachments),
+            "attachments": [
+                {
+                    "filename": attachment.filename,
+                    "content_type": attachment.content_type,
+                    "content_hash": attachment.content_hash,
+                    "size_bytes": attachment.size_bytes,
+                    "metadata": dict(attachment.metadata),
+                }
+                for attachment in event.attachments
+            ],
+        }
+        if event.channel == "webex":
+            jobs = self.ingestion.submit_webex_message(
+                room_id=event.conversation.conversation_id,
+                message_id=event.conversation.message_id,
+                message_text=event.text,
+                attachments=attachments,
+                thread_id=event.thread_id,
+                source_uri=event.metadata.get("source_uri"),
+                acl_scope=event.auth_scope,
+                metadata=metadata,
+            )
+        elif event.channel == "telegram":
+            jobs = self.ingestion.submit_telegram_message(
+                chat_id=event.conversation.conversation_id,
+                message_id=event.conversation.message_id,
+                message_text=event.text,
+                attachments=attachments,
+                thread_id=event.thread_id,
+                source_uri=event.metadata.get("source_uri"),
+                acl_scope=event.auth_scope,
+                metadata=metadata,
+            )
+        else:
+            raise ValueError(f"unsupported channel for ingestion: {event.channel}")
+
+        outcomes = self.ingestion.run(max_jobs=len(jobs))
+        return {
+            "submitted_jobs": [self._summarize_job(job) for job in jobs],
+            "outcomes": [self._summarize_outcome(outcome) for outcome in outcomes],
+        }
+
     def process_event(self, event: ChannelMessage) -> ChannelResponse:
         if self.ledger.seen(event):
             return ChannelResponse(intent="duplicate", status="duplicate", deliveries=())
@@ -811,7 +513,19 @@ class ConversationChannelAdapter:
             self.ledger.record(event)
             return ChannelResponse(intent="rejected", status="rejected", deliveries=(delivery,), metadata={"event_id": event.event_id})
 
-        response = self.operations.handle(event)
+        ingestion_summary = self._ingest_event(event)
+        envelope = ChannelEnvelope(
+            event=event,
+            ingestion_summary=ingestion_summary,
+            metadata={
+                "channel": event.channel,
+                "conversation_id": event.conversation.conversation_id,
+                "message_id": event.conversation.message_id,
+                "thread_id": event.thread_id,
+                "reply_target": event.reply_target,
+            },
+        )
+        response = self.runtime_handler.handle(envelope)
         self._send_deliveries(event, response.deliveries)
         self.ledger.record(event)
         return response
@@ -940,12 +654,3 @@ class TelegramConversationAdapter(ConversationChannelAdapter):
                 "source_uri": _conversation_source_uri("telegram", conversation_id, message_id),
             },
         )
-
-
-def build_channel_operations(
-    *,
-    ingestion: IngestionService,
-    tools: OpenNICFTools,
-    platform: KnowledgePlatform | None = None,
-) -> ConversationOperations:
-    return ConversationOperations(ingestion=ingestion, tools=tools, platform=platform)
