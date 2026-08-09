@@ -38,6 +38,26 @@ CONTENCIOSO_ADMINISTRATIVO_DELEGATION_TARGETS = (
     "contencioso_judicial",
     "encargos_sigef",
 )
+CONTENCIOSO_JUDICIAL_DOMAIN_ID = "contencioso_judicial"
+CONTENCIOSO_JUDICIAL_ALIASES = (
+    "sicjut",
+    "sicjutpf",
+    "sicjutindbat",
+    "cjtcaadws",
+    "isicjutws",
+    "wsaftaf",
+    "wscexecf",
+)
+CONTENCIOSO_JUDICIAL_DELEGATED_DOMAINS = (
+    "contencioso_administrativo",
+    "encargos_sigef",
+)
+_CONTENCIOSO_JUDICIAL_DELEGATION_ALIASES = {
+    "administrative": "contencioso_administrativo",
+    "sigepra": "contencioso_administrativo",
+    "sigef": "encargos_sigef",
+    "encargos": "encargos_sigef",
+}
 
 # These are sanitized registry labels only.  They identify the application
 # ownership boundary; connection details and deployment endpoints stay in the
@@ -213,6 +233,9 @@ class DomainProfile:
     # behavior; profiles with this field cannot widen retrieval by request.
     retrieval_system_ids: tuple[str, ...] = ()
     system_aliases: tuple[str, ...] = ()
+    owned_components: tuple[str, ...] = ()
+    aliases: tuple[str, ...] = ()
+    delegated_domains: tuple[str, ...] = ()
     integration_boundary_aliases: tuple[str, ...] = ()
     permitted_evidence_classes: tuple[str, ...] = ()
     default_retrieval_filters: RetrievalFilters = field(default_factory=RetrievalFilters)
@@ -245,6 +268,9 @@ def _profile(
     owned_systems: tuple[str, ...] = (),
     retrieval_system_ids: tuple[str, ...] = (),
     system_aliases: tuple[str, ...] = (),
+    owned_components: tuple[str, ...] = (),
+    aliases: tuple[str, ...] = (),
+    delegated_domains: tuple[str, ...] = (),
     integration_boundary_aliases: tuple[str, ...] = (),
     permitted_evidence_classes: tuple[str, ...] = (),
     permitted_tools: tuple[str, ...] = (
@@ -260,6 +286,7 @@ def _profile(
     privacy_policy: PrivacyPolicy = PrivacyPolicy.LOCAL_PREFERRED,
     task_class: str = "simple_rag",
     system_prompt: str | None = None,
+    default_retrieval_filters: RetrievalFilters | None = None,
 ) -> DomainProfile:
     return DomainProfile(
         domain_id=domain_id,
@@ -268,8 +295,12 @@ def _profile(
         owned_systems=owned_systems,
         retrieval_system_ids=retrieval_system_ids,
         system_aliases=system_aliases,
+        owned_components=owned_components,
+        aliases=aliases,
+        delegated_domains=delegated_domains,
         integration_boundary_aliases=integration_boundary_aliases,
         permitted_evidence_classes=permitted_evidence_classes,
+        default_retrieval_filters=default_retrieval_filters or RetrievalFilters(),
         permitted_tools=permitted_tools,
         privacy_policy=privacy_policy,
         task_class=task_class,
@@ -329,10 +360,22 @@ DEFAULT_DOMAIN_PROFILES: dict[str, DomainProfile] = {
         "contencioso_judicial",
         name="Contencioso Judicial",
         description="Judicial litigation matters and supporting evidence.",
-        owned_systems=("contencioso_judicial_casework", "contencioso_judicial_evidence"),
-        integration_boundary_aliases=("judicial-litigation",),
+        owned_systems=("SICJUT", "SICJUTPF", "SICJUTINDBAT"),
+        owned_components=("CJTCAADWS", "ISICJUTWS", "WSAFTAF", "WSCEXECF"),
+        aliases=CONTENCIOSO_JUDICIAL_ALIASES,
+        delegated_domains=CONTENCIOSO_JUDICIAL_DELEGATED_DOMAINS,
+        integration_boundary_aliases=("judicial-litigation", "SIGEPRA", "SIGEF", "Encargos"),
         permitted_evidence_classes=("document", "log", "code", "schema", "query-output"),
-        system_prompt="You are the contencioso judicial domain agent. Stay inside the judicial-litigation namespace.",
+        default_retrieval_filters=RetrievalFilters(
+            principal_acl_scopes=frozenset({"internal"}),
+            principal_domain_id=CONTENCIOSO_JUDICIAL_DOMAIN_ID,
+            domains=(CONTENCIOSO_JUDICIAL_DOMAIN_ID,),
+        ),
+        system_prompt=(
+            "You are the Contencioso Judicial domain agent. Stay inside the "
+            "contencioso_judicial namespace. Use exact or symbol retrieval first; "
+            "request Administrative or SIGEF evidence through coordinator delegation only."
+        ),
     ),
     "encargos_sigef": _profile(
         "encargos_sigef",
@@ -402,9 +445,12 @@ class DomainTools:
         component_ids = _normalize_multi_value(payload.get("component_ids"))
         systems = _normalize_multi_value(payload.get("systems"))
         environments = _normalize_multi_value(payload.get("environments"))
+        requested_acl_scopes = frozenset(_normalize_multi_value(payload.get("principal_acl_scopes")))
+        if requested_acl_scopes and not requested_acl_scopes.issubset(defaults.principal_acl_scopes):
+            raise PermissionError("principal_acl_scopes cannot widen the registered domain ACL")
         filters = replace(
             defaults,
-            principal_acl_scopes=frozenset(_normalize_multi_value(payload.get("principal_acl_scopes")) or defaults.principal_acl_scopes),
+            principal_acl_scopes=defaults.principal_acl_scopes,
             principal_domain_id=self.profile.domain_id,
             domain_ids=(self.profile.domain_id,),
             delegated_domain_ids=delegated_domains if allow_delegation else (),
@@ -842,11 +888,32 @@ class DomainTools:
             payload["limit"] = limit
         if self.diagnostic_broker is None:
             raise NotImplementedError("cross-domain coordinator is not implemented")
-        delegated_domains = _normalize_multi_value(payload.get("delegated_domain_ids"))
+        requested_delegated_domains = _normalize_multi_value(payload.get("delegated_domain_ids"))
+        delegated_domains = tuple(
+            _CONTENCIOSO_JUDICIAL_DELEGATION_ALIASES.get(domain.lower(), domain)
+            for domain in requested_delegated_domains
+        )
         if not delegated_domains:
             raise PermissionError("delegated_domain_ids are required for cross-domain retrieval")
+        if not set(delegated_domains).issubset(self.profile.delegated_domains):
+            raise PermissionError("delegation is limited to the registered Administrative and SIGEF boundaries")
+        payload["delegated_domain_ids"] = list(delegated_domains)
         payload["allow_delegation"] = True
-        return dict(self.diagnostic_broker.search(payload))
+        delegated = dict(self.diagnostic_broker.search(payload))
+        delegated.setdefault("evidence_refs", [])
+        delegated["cross_domain_required"] = True
+        delegated["delegation"] = {
+            "source_domain_id": self.profile.domain_id,
+            "target_domain_ids": list(delegated_domains),
+            "coordinator": "diagnostic_broker",
+        }
+        delegated["suspected_edge"] = {
+            "source_domain_id": self.profile.domain_id,
+            "target_domain_ids": list(delegated_domains),
+            "relation_type": "delegates-to",
+            "evidence_refs": delegated["evidence_refs"],
+        }
+        return delegated
 
     def request_domain_diagnostic(self, request: Mapping[str, Any]) -> dict[str, Any]:
         payload = dict(request)
@@ -1041,6 +1108,10 @@ class CriminalDomainAgent(DomainAgent):
     def request_live_verification(self, request: Mapping[str, Any]) -> dict[str, Any]:
         """Use only the allow-listed diagnostic broker interface."""
         return self.tools.request_domain_diagnostic(request)
+class ContenciosoJudicialDomainAgent(DomainAgent):
+    """Judicial domain facade created by the shared factory."""
+
+    pass
 
 
 class DomainAgentFactory:
@@ -1067,11 +1138,19 @@ class DomainAgentFactory:
     def profile_for(self, domain_id: str) -> DomainProfile:
         normalized = str(domain_id).strip().lower().replace("_", "-")
         for candidate_id, profile in self.profiles.items():
-            aliases = tuple(alias.lower().replace("_", "-") for alias in profile.integration_boundary_aliases)
+            aliases = tuple(
+                str(alias).lower().replace("_", "-")
+                for alias in (
+                    *getattr(profile, "aliases", ()),
+                    *getattr(profile, "system_aliases", ()),
+                    *profile.integration_boundary_aliases,
+                    *profile.owned_systems,
+                )
+            )
             if normalized == candidate_id.replace("_", "-") or normalized in aliases:
                 return profile
         try:
-            return self.profiles[domain_id]
+            return self.profiles[lookup]
         except KeyError as exc:
             raise KeyError(f"unknown domain_id: {domain_id}") from exc
 
@@ -1086,6 +1165,8 @@ class DomainAgentFactory:
             if resolved_domain_id == "contencioso_administrativo"
             else CriminalDomainAgent
             if resolved_domain_id == "criminal"
+            else ContenciosoJudicialDomainAgent
+            if resolved_domain_id == CONTENCIOSO_JUDICIAL_DOMAIN_ID
             else DomainAgent
         )
         if resolved_domain_id == "encargos_sigef":

@@ -9,6 +9,9 @@ import types
 import pytest
 
 from opennicf import (
+    CONTENCIOSO_JUDICIAL_ALIASES,
+    CONTENCIOSO_JUDICIAL_DELEGATED_DOMAINS,
+    ContenciosoJudicialDomainAgent,
     DEFAULT_DOMAIN_IDS,
     DEFAULT_DOMAIN_PROFILES,
     DomainAgentFactory,
@@ -282,3 +285,74 @@ def test_retrieval_packages_are_more_compact_than_loading_full_corpora():
 
     assert package["estimated_bytes"] < raw_bytes
     assert package["estimated_tokens"] < raw_tokens
+
+
+def test_contencioso_judicial_is_shared_factory_profile_with_confirmed_sicjut_ownership():
+    factory = _factory()
+    agent = factory.create("SICJUTPF".lower())
+    profile = agent.profile
+
+    assert isinstance(agent, ContenciosoJudicialDomainAgent)
+    assert agent.gateway is factory.gateway
+    assert agent.knowledge is factory.knowledge
+    assert set(("SICJUT", "SICJUTPF", "SICJUTINDBAT")) == set(profile.owned_systems)
+    assert set(("CJTCAADWS", "ISICJUTWS", "WSAFTAF", "WSCEXECF")) == set(profile.owned_components)
+    assert set(CONTENCIOSO_JUDICIAL_ALIASES).issubset(profile.aliases)
+    assert profile.delegated_domains == CONTENCIOSO_JUDICIAL_DELEGATED_DOMAINS
+
+
+def test_contencioso_judicial_exact_and_symbol_search_is_acl_and_domain_scoped():
+    factory = _factory()
+    factory.knowledge.ingest(
+        source_id="sicjut-code",
+        source_uri="sicjut/service.py",
+        content="class SICJUTCase:\n    def persist_process(self):\n        return 'judicial'\n",
+        acl_scope="internal",
+        domain="contencioso_judicial",
+        system="SICJUT",
+        component_id="CJTCAADWS",
+        environment="test",
+        source_type="code",
+        parser_version="1",
+    )
+    agent = factory.create("contencioso_judicial")
+
+    exact = agent.tools.search_code_exact({"query": "persist_process"})
+    symbols = agent.tools.search_code_symbols({"class_name": "SICJUTCase"})
+
+    assert exact["packages"][0]["domain_id"] == "contencioso_judicial"
+    assert symbols["packages"][0]["evidence_refs"][0]["metadata"]["match_kind"] == "symbol"
+    assert exact["filters"]["principal_acl_scopes"] == {"internal"}
+    with pytest.raises(PermissionError, match="cannot widen"):
+        agent.tools.search_code_exact({"query": "persist_process", "principal_acl_scopes": ["public"]})
+    with pytest.raises(PermissionError, match="delegated interface"):
+        agent.tools.search_code_exact({"query": "persist_process", "domain_ids": ["encargos_sigef"]})
+
+
+class _CrossDomainCoordinator:
+    def search(self, payload):
+        assert payload["delegated_domain_ids"] == ["encargos_sigef"]
+        return {"evidence_refs": [{"source_id": "sigef-case", "locator": "case:17"}]}
+
+
+def test_contencioso_judicial_delegation_is_explicit_and_structured():
+    factory = DomainAgentFactory(
+        gateway=ModelGateway.from_env({}),
+        knowledge=_platform(),
+        diagnostic_broker=_CrossDomainCoordinator(),
+        runtime_factory=lambda model_adapter, tools: _FakeRuntime(model_adapter, tools),
+    )
+    agent = factory.create("sicjut")
+
+    result = agent.tools.search_delegated_domain_evidence(
+        {"query": "return code", "delegated_domain_ids": ["encargos_sigef"]}
+    )
+
+    assert result["cross_domain_required"] is True
+    assert result["delegation"]["source_domain_id"] == "contencioso_judicial"
+    assert result["suspected_edge"]["relation_type"] == "delegates-to"
+    assert result["suspected_edge"]["evidence_refs"] == result["evidence_refs"]
+    with pytest.raises(PermissionError, match="Administrative and SIGEF"):
+        agent.tools.search_delegated_domain_evidence(
+            {"query": "x", "delegated_domain_ids": ["criminal"]}
+        )
