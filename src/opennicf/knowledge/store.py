@@ -1451,6 +1451,8 @@ def _upsert_embedding(cur, embedding: EmbeddingRecord) -> None:
 
 
 def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
+    if not filters.embedding_space_id:
+        raise EmbeddingError("PostgreSQL vector search requires an explicit embedding_space_id")
     clauses = ["1 = 1"]
     params: list[Any] = []
     allowed_namespaces = filters.effective_namespace_ids()

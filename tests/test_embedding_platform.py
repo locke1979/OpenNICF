@@ -146,3 +146,8 @@ def test_postgres_upsert_and_search_sql_are_space_scoped():
     assert record.embedding_space_id in params
     for field in ("e.provider", "e.model_revision", "e.normalized", "e.purpose"):
         assert field in sql
+
+
+def test_postgres_search_without_space_fails_closed():
+    with pytest.raises(EmbeddingError, match="explicit embedding_space_id"):
+        _build_search_sql(RetrievalFilters())
