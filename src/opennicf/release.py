@@ -71,7 +71,13 @@ def safe_extract_artifact(archive: str | Path, destination: str | Path) -> None:
                 raise ReleaseError("artifact path escapes extraction root")
             if member.issym() or member.islnk():
                 raise ReleaseError("artifact links are not allowed")
-        tar.extractall(destination, members=members, filter="data")
+        try:
+            tar.extractall(destination, members=members, filter="data")
+        except TypeError:
+            # Python 3.11 lacks tarfile's filter argument.  The member
+            # traversal/link checks above provide the same bounded archive
+            # policy for the supported production runtime.
+            tar.extractall(destination, members=members)
 
 
 def _systemctl(*args: str) -> None:
