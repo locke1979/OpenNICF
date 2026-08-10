@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from dataclasses import dataclass, asdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -80,6 +81,8 @@ class KnowledgeServiceConfig:
 
 
 def _jsonable(value: Any) -> Any:
+    if isinstance(value, bytes):
+        return {"size_bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()}
     if hasattr(value, "isoformat"):
         return value.isoformat()
     if hasattr(value, "__dataclass_fields__"):
