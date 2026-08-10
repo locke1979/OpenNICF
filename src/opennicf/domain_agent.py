@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime, timezone
-from hashlib import sha256
-from pathlib import PurePosixPath
 import ast
 import re
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import asdict, dataclass, field, replace
+from datetime import UTC, datetime
+from hashlib import sha256
+from pathlib import PurePosixPath
+from typing import Any
 
-from .knowledge import AuditEvidenceRefRecord, EvidenceHit, KnowledgePlatform, RetrievalFilters, SearchCandidate
+from .knowledge import (
+    AuditEvidenceRefRecord,
+    EvidenceHit,
+    KnowledgePlatform,
+    RetrievalFilters,
+    SearchCandidate,
+)
 from .model_gateway import ModelGateway, PrivacyPolicy
 from .qwen_adapter import OpenNICFChatModel
 from .qwen_runtime import QwenAgentRuntime
-
 
 DEFAULT_DOMAIN_IDS = (
     "criminal",
@@ -198,14 +204,14 @@ def _extract_log_timestamps(text: str, metadata: Mapping[str, Any] | None = None
         value = match.group("ts")
         normalized = value.replace("Z", "+00:00")
         try:
-            timestamps.append(datetime.fromisoformat(normalized).astimezone(timezone.utc))
+            timestamps.append(datetime.fromisoformat(normalized).astimezone(UTC))
         except ValueError:
             continue
     metadata = metadata or {}
     for value in _normalize_multi_value(metadata.get("timestamps")):
         normalized = value.replace("Z", "+00:00")
         try:
-            timestamps.append(datetime.fromisoformat(normalized).astimezone(timezone.utc))
+            timestamps.append(datetime.fromisoformat(normalized).astimezone(UTC))
         except ValueError:
             continue
     return tuple(dict.fromkeys(timestamps))
@@ -253,7 +259,7 @@ class DomainProfile:
     task_class: str = "simple_rag"
     system_prompt: str | None = None
 
-    def normalized(self) -> "DomainProfile":
+    def normalized(self) -> DomainProfile:
         filters = self.default_retrieval_filters.normalized()
         if self.domain_id:
             filters = replace(filters, domains=(self.domain_id,))
@@ -415,9 +421,8 @@ class DomainTools:
 
         requested_domains = _normalize_multi_value(payload.get("domain_ids") or payload.get("domains"))
         delegated_domains = _normalize_multi_value(payload.get("delegated_domain_ids"))
-        if requested_domains and any(domain != self.profile.domain_id for domain in requested_domains):
-            if not allow_delegation:
-                raise PermissionError("cross-domain retrieval requires the delegated interface")
+        if requested_domains and any(domain != self.profile.domain_id for domain in requested_domains) and not allow_delegation:
+            raise PermissionError("cross-domain retrieval requires the delegated interface")
         if delegated_domains and not allow_delegation:
             raise PermissionError("delegated domain retrieval requires the delegated interface")
         return delegated_domains
@@ -784,9 +789,9 @@ class DomainTools:
         since = payload.get("since")
         until = payload.get("until")
         if isinstance(since, str):
-            since = datetime.fromisoformat(since.replace("Z", "+00:00"))
+            since = datetime.fromisoformat(since.replace("Z", "+00:00"))  # noqa: FURB162
         if isinstance(until, str):
-            until = datetime.fromisoformat(until.replace("Z", "+00:00"))
+            until = datetime.fromisoformat(until.replace("Z", "+00:00"))  # noqa: FURB162
         hits: list[EvidenceHit] = []
         for candidate in candidates:
             if candidate.chunk.evidence_type != "log" and candidate.chunk.source_type != "log":
@@ -804,7 +809,7 @@ class DomainTools:
             if until and candidate_timestamps and all(timestamp > until for timestamp in candidate_timestamps):
                 continue
             text = candidate.chunk.text
-            haystack = " ".join([text, candidate.chunk.locator, candidate.source.source_uri]).lower()
+            haystack = f"{text} {candidate.chunk.locator} {candidate.source.source_uri}".lower()
             lexical_score = _term_score(query_terms, haystack)
             structured_boost = 0.0
             if requested_correlation_ids:
@@ -1114,7 +1119,6 @@ class CriminalDomainAgent(DomainAgent):
 class ContenciosoJudicialDomainAgent(DomainAgent):
     """Judicial domain facade created by the shared factory."""
 
-    pass
 
 
 class DomainAgentFactory:

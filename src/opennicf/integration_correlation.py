@@ -8,20 +8,19 @@ introducing a second orchestration framework.
 
 from __future__ import annotations
 
+import json
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
-import json
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any
 
-from .audit import AuditFindingRecord
 from .domain_agent import DEFAULT_DOMAIN_IDS, DomainAgentFactory
 from .knowledge import KnowledgePlatform
 from .model_gateway import ModelGateway, PrivacyPolicy
 from .qwen_adapter import OpenNICFChatModel
 from .qwen_runtime import QwenAgentRuntime
-
 
 _COORDINATOR_DOMAIN_ALIASES: dict[str, str] = {
     "administrative": "contencioso_administrativo",
@@ -64,7 +63,7 @@ def _stable_id(prefix: str, *parts: str) -> str:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _estimate_tokens(text: str) -> int:
@@ -89,11 +88,11 @@ def _normalize_datetime(value: Any) -> datetime | None:
     if value in (None, ""):
         return None
     if isinstance(value, datetime):
-        return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return value.astimezone(UTC) if value.tzinfo else value.replace(tzinfo=UTC)
     text = str(value).strip()
     if not text:
         return None
-    return datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(timezone.utc)
+    return datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(UTC)  # noqa: FURB162
 
 
 def _json_default(value: Any) -> Any:
@@ -154,7 +153,7 @@ class IntegrationCorrelationRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_input(cls, value: str | Mapping[str, Any]) -> "IntegrationCorrelationRequest":
+    def from_input(cls, value: str | Mapping[str, Any]) -> IntegrationCorrelationRequest:
         if isinstance(value, str):
             question = value.strip()
             return cls(
@@ -253,7 +252,7 @@ class IntegrationCorrelationRequest:
 class IntegrationCorrelationTools:
     """Tool surface used by the shared QwenAgent runtime."""
 
-    def __init__(self, agent: "IntegrationCorrelationAgent") -> None:
+    def __init__(self, agent: IntegrationCorrelationAgent) -> None:
         self.agent = agent
 
     def request_integration_correlation(self, request: str | Mapping[str, Any]) -> dict[str, Any]:
@@ -563,7 +562,7 @@ class IntegrationCorrelationAgent:
                 "contradicting_evidence": [],
                 "summary_hint": f"{_DOMAIN_DISPLAY_NAMES.get(domain_id, domain_id)} yielded {len(packages)} package(s).",
             }
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - package every delegate failure explicitly
             failure_code = _error_code_for(exc)
             return {
                 "task_id": task_id,
@@ -835,7 +834,7 @@ class IntegrationCorrelationAgent:
                 tool_complexity=1,
                 extra_payload={"response_format": {"type": "text"}},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 - synthesis failure is returned as an explicit result
             domain_names = ", ".join(_DOMAIN_DISPLAY_NAMES.get(delegation["domain_id"], delegation["domain_id"]) for delegation in delegations)
             return (
                 f"Correlated {len(delegations)} domain(s) [{domain_names}] with {len(graph['edges'])} integration edge(s) "

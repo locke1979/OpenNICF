@@ -3,20 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import pytest
-
 from opennicf import (
-    IntegrationCorrelationAgent,
+    HashingEmbeddingBackend,
     KnowledgePlatform,
     LocalFirstEmbeddingService,
     MemoryKnowledgeStore,
     MemoryObjectStore,
     ModelGateway,
-    HashingEmbeddingBackend,
-    create_integration_correlation_agent,
     create_domain_agent_factory,
+    create_integration_correlation_agent,
 )
-
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "integration"
 
