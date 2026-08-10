@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, replace
@@ -15,6 +16,7 @@ from datetime import datetime
 from hashlib import sha256
 from typing import Any, Protocol
 
+from .code_index import build_code_index
 from .embeddings import EmbeddingError, EmbeddingResult, LocalFirstEmbeddingService
 from .models import (
     ArtifactRecord,
@@ -22,6 +24,8 @@ from .models import (
     AuditFindingRecord,
     AuditReportRecord,
     ChunkRecord,
+    CodeRelationshipRecord,
+    CodeSymbolRecord,
     EmbeddingRecord,
     IngestBundle,
     KnowledgeSource,
@@ -155,6 +159,12 @@ class KnowledgeStore(Protocol):
     def record_admin_operation(self, operation: Any) -> None:
         raise NotImplementedError
 
+    def save_code_index(self, symbols: Sequence[CodeSymbolRecord], relationships: Sequence[CodeRelationshipRecord]) -> None:
+        raise NotImplementedError
+
+    def search_code_symbols(self, query: str, filters: RetrievalFilters) -> list[CodeSymbolRecord]:
+        raise NotImplementedError
+
 
 class MemoryKnowledgeStore:
     """Deterministic in-memory store used for tests and local development."""
@@ -173,6 +183,8 @@ class MemoryKnowledgeStore:
         self.audit_reports: list[AuditReportRecord] = []
         self.verification_requests: list[VerificationRequestRecord] = []
         self.admin_operations: dict[str, Any] = {}
+        self.symbols: dict[str, CodeSymbolRecord] = {}
+        self.relationships: dict[str, CodeRelationshipRecord] = {}
         self._latest_version_by_source_hash: dict[tuple[str, str, str], str] = {}
         self._versions_by_source: dict[str, list[str]] = {}
         self._artifact_chunk_ids: dict[str, list[str]] = {}
@@ -235,6 +247,8 @@ class MemoryKnowledgeStore:
                 created=False,
                 namespaces=existing_namespaces,
                 integration_edges=existing_edges,
+                symbols=tuple(self.symbols[symbol_id] for symbol_id in self.symbols if self.symbols[symbol_id].artifact_hash == existing_artifact.artifact_hash),
+                relationships=tuple(item for item in self.relationships.values() if item.artifact_hash == existing_artifact.artifact_hash),
             )
 
         self.sources[bundle.source.source_id] = bundle.source
@@ -248,7 +262,31 @@ class MemoryKnowledgeStore:
             self._store_edge(edge, artifact_hash=bundle.artifact.artifact_hash)
         for chunk, embedding in zip(bundle.chunks, bundle.embeddings):
             self._store_chunk(chunk, embedding)
+        self.save_code_index(bundle.symbols, bundle.relationships)
         return bundle
+
+    def save_code_index(self, symbols: Sequence[CodeSymbolRecord], relationships: Sequence[CodeRelationshipRecord]) -> None:
+        self.symbols.update({item.symbol_id: item for item in symbols})
+        self.relationships.update({item.relationship_id: item for item in relationships})
+
+    def search_code_symbols(self, query: str, filters: RetrievalFilters) -> list[CodeSymbolRecord]:
+        filters = filters.normalized()
+        terms = {term.lower() for term in re.findall(r"[A-Za-z0-9_.-]+", query) if term}
+        allowed_domains = filters.effective_domain_ids()
+        allowed_systems = filters.effective_system_ids()
+        matches = []
+        for symbol in self.symbols.values():
+            if filters.principal_acl_scopes and symbol.acl_scope not in filters.principal_acl_scopes:
+                continue
+            if allowed_domains and symbol.domain_id not in allowed_domains:
+                continue
+            if allowed_systems and symbol.system_id not in allowed_systems:
+                continue
+            haystack = {symbol.name.lower(), symbol.qualified_name.lower(), symbol.kind.lower()}
+            if terms and not any(term in value for term in terms for value in haystack):
+                continue
+            matches.append(symbol)
+        return sorted(matches, key=lambda item: (item.name.lower(), item.source_version_id, item.line_start))[: filters.limit]
 
     def save_embedding(self, embedding: EmbeddingRecord) -> None:
         """Add or replace one vector without creating a new logical chunk."""
@@ -413,6 +451,8 @@ class MemoryKnowledgeStore:
             "audit_reports": [asdict(item) for item in self.audit_reports],
             "verification_requests": [asdict(item) for item in self.verification_requests],
             "admin_operations": [asdict(item) for item in self.admin_operations.values()],
+            "symbols": [asdict(item) for item in self.symbols.values()],
+            "relationships": [asdict(item) for item in self.relationships.values()],
         }
 
     def restore(self, snapshot: dict[str, Any]) -> None:
@@ -467,6 +507,12 @@ class MemoryKnowledgeStore:
                 details=dict(operation.get("details", {})),
             )
             self.admin_operations[record.operation_id] = record
+        for symbol in snapshot.get("symbols", []):
+            record = CodeSymbolRecord(**symbol)
+            self.symbols[record.symbol_id] = record
+        for relationship in snapshot.get("relationships", []):
+            record = CodeRelationshipRecord(**relationship)
+            self.relationships[record.relationship_id] = record
 
 
 class PostgresKnowledgeStore:
@@ -489,6 +535,49 @@ class PostgresKnowledgeStore:
 
     def _connect(self):
         return self._connection_factory()
+
+    def save_code_index(self, symbols: Sequence[CodeSymbolRecord], relationships: Sequence[CodeRelationshipRecord]) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                for symbol in symbols:
+                    cur.execute(
+                        """INSERT INTO knowledge_code_symbols
+                        (symbol_id, source_id, source_version_id, artifact_hash, chunk_id, name, qualified_name, kind,
+                         signature, locator, line_start, line_end, parser_name, parser_version, source_hash, namespace_id,
+                         domain_id, system_id, component_id, environment, evidence_type, acl_scope, metadata)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        ON CONFLICT (symbol_id) DO UPDATE SET metadata = EXCLUDED.metadata""",
+                        (symbol.symbol_id, symbol.source_id, symbol.source_version_id, symbol.artifact_hash, symbol.chunk_id, symbol.name, symbol.qualified_name, symbol.kind, symbol.signature, symbol.locator, symbol.line_start, symbol.line_end, symbol.parser_name, symbol.parser_version, symbol.source_hash, symbol.namespace_id, symbol.domain_id, symbol.system_id, symbol.component_id, symbol.environment, symbol.evidence_type, symbol.acl_scope, json.dumps(symbol.metadata, sort_keys=True)),
+                    )
+                for relationship in relationships:
+                    cur.execute(
+                        """INSERT INTO knowledge_code_relationships
+                        (relationship_id, source_symbol_id, target_name, relation_type, source_id, source_version_id,
+                         artifact_hash, chunk_id, locator, parser_name, parser_version, source_hash, namespace_id,
+                         domain_id, system_id, component_id, environment, evidence_type, acl_scope, metadata)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        ON CONFLICT (relationship_id) DO UPDATE SET metadata = EXCLUDED.metadata""",
+                        (relationship.relationship_id, relationship.source_symbol_id, relationship.target_name, relationship.relation_type, relationship.source_id, relationship.source_version_id, relationship.artifact_hash, relationship.chunk_id, relationship.locator, relationship.parser_name, relationship.parser_version, relationship.source_hash, relationship.namespace_id, relationship.domain_id, relationship.system_id, relationship.component_id, relationship.environment, relationship.evidence_type, relationship.acl_scope, json.dumps(relationship.metadata, sort_keys=True)),
+                    )
+            conn.commit()
+
+    def search_code_symbols(self, query: str, filters: RetrievalFilters) -> list[CodeSymbolRecord]:
+        filters = filters.normalized()
+        clauses = ["(s.name ILIKE %s OR s.qualified_name ILIKE %s OR s.kind ILIKE %s)"]
+        params: list[Any] = [f"%{query}%", f"%{query}%", f"%{query}%"]
+        if filters.principal_acl_scopes:
+            clauses.append("s.acl_scope = ANY(%s)")
+            params.append(list(filters.principal_acl_scopes))
+        if filters.effective_domain_ids():
+            clauses.append("s.domain_id = ANY(%s)")
+            params.append(list(filters.effective_domain_ids()))
+        if filters.effective_system_ids():
+            clauses.append("s.system_id = ANY(%s)")
+            params.append(list(filters.effective_system_ids()))
+        params.append(filters.limit)
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(f"SELECT symbol_id, source_id, source_version_id, artifact_hash, chunk_id, name, qualified_name, kind, signature, locator, line_start, line_end, parser_name, parser_version, source_hash, namespace_id, domain_id, system_id, component_id, environment, evidence_type, acl_scope, metadata FROM knowledge_code_symbols s WHERE {' AND '.join(clauses)} ORDER BY s.name, s.line_start LIMIT %s", tuple(params))
+            return [CodeSymbolRecord(*row[:-1], metadata=row[-1] or {}) for row in cur.fetchall()]
 
     def migrate(self) -> list[int]:
         from .migration_utils import (
@@ -1275,7 +1364,19 @@ class KnowledgePlatform:
             namespaces=(namespace, *extra_namespaces),
             integration_edges=integration_edge_records,
         )
+        symbols, relationships = build_code_index(
+            content_bytes.decode("utf-8", errors="replace"),
+            source=source,
+            version=version,
+            artifact=artifact,
+            chunks=chunks,
+        )
+        bundle = replace(bundle, symbols=symbols, relationships=relationships)
         return self.store.save_bundle(bundle)
+
+    def search_code_symbols(self, query: str, *, filters: RetrievalFilters | None = None) -> list[CodeSymbolRecord]:
+        """Search the durable symbol index after the normal ACL/domain boundary."""
+        return self.store.search_code_symbols(query, (filters or RetrievalFilters()).normalized())
 
     def search(self, query: str, *, filters: RetrievalFilters | None = None, route: str | None = None):
         return self.retriever.search(query, filters=filters, route=route)

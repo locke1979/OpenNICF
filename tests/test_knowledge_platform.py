@@ -190,7 +190,7 @@ def test_fixture_queries_import_and_search_grounded_chunks():
 
 def test_migrations_are_source_controlled_and_versioned():
     files = iter_migration_files()
-    assert [migration_version(path.name) for path in files] == [1, 2, 3, 4, 5, 6]
+    assert [migration_version(path.name) for path in files] == [1, 2, 3, 4, 5, 6, 7]
     assert [path.name for path in files] == [
         "0001_initial.sql",
         "0002_hybrid_retrieval.sql",
@@ -198,6 +198,7 @@ def test_migrations_are_source_controlled_and_versioned():
         "0004_knowledge_namespaces.sql",
         "0005_embedding_spaces.sql",
         "0006_knowledge_administration.sql",
+        "0007_code_intelligence.sql",
     ]
     assert all(migration_checksum(path) for path in files)
 
@@ -236,7 +237,7 @@ def test_postgres_migrations_apply_in_order():
 
     store = PostgresKnowledgeStore(lambda: Connection())
     applied = store.migrate()
-    assert applied == [1, 2, 3, 4, 5, 6]
+    assert applied == [1, 2, 3, 4, 5, 6, 7]
     assert any("CREATE EXTENSION IF NOT EXISTS vector" in statement for statement in executed)
     assert any("knowledge_sources" in statement for statement in executed)
 

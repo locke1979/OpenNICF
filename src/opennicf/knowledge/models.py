@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(frozen=True)
@@ -127,6 +127,61 @@ class EmbeddingRecord:
 
 
 @dataclass(frozen=True)
+class CodeSymbolRecord:
+    """Persistent, provenance-bearing symbol extracted from a source version."""
+
+    symbol_id: str
+    source_id: str
+    source_version_id: str
+    artifact_hash: str
+    chunk_id: str
+    name: str
+    qualified_name: str
+    kind: str
+    signature: str
+    locator: str
+    line_start: int
+    line_end: int
+    parser_name: str
+    parser_version: str
+    source_hash: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
+    environment: str
+    evidence_type: str
+    acl_scope: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class CodeRelationshipRecord:
+    """A directed relationship between symbols or a symbol and an external ref."""
+
+    relationship_id: str
+    source_symbol_id: str
+    target_name: str
+    relation_type: str
+    source_id: str
+    source_version_id: str
+    artifact_hash: str
+    chunk_id: str
+    locator: str
+    parser_name: str
+    parser_version: str
+    source_hash: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
+    environment: str
+    evidence_type: str
+    acl_scope: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class AuditEvidenceRefRecord:
     reference_id: str
     source_id: str
@@ -241,7 +296,7 @@ class RetrievalFilters:
     limit: int = 10
     neighbor_window: int = 1
 
-    def normalized(self) -> "RetrievalFilters":
+    def normalized(self) -> RetrievalFilters:
         principal_domain_id = self.principal_domain_id.strip() if self.principal_domain_id else None
         return RetrievalFilters(
             principal_acl_scopes=frozenset(scope for scope in self.principal_acl_scopes if scope),
@@ -336,7 +391,9 @@ class IngestBundle:
     artifact: ArtifactRecord
     chunks: tuple[ChunkRecord, ...]
     embeddings: tuple[EmbeddingRecord, ...]
-    object_reference: "ObjectReference"
+    object_reference: "ObjectReference"  # noqa: UP037, F821
     created: bool
-    namespaces: tuple["KnowledgeNamespaceRecord", ...] = ()
-    integration_edges: tuple["IntegrationEdgeRecord", ...] = ()
+    namespaces: tuple["KnowledgeNamespaceRecord", ...] = ()  # noqa: UP037, F821
+    integration_edges: tuple["IntegrationEdgeRecord", ...] = ()  # noqa: UP037, F821
+    symbols: tuple[CodeSymbolRecord, ...] = ()
+    relationships: tuple[CodeRelationshipRecord, ...] = ()
