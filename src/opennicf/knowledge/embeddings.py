@@ -296,6 +296,62 @@ class GeminiEmbeddingBackend:
         )
 
 
+class HttpEmbeddingBackend:
+    """Provider-neutral client for the OpenNICF local embedding worker.
+
+    The URL is deployment configuration.  No transport or Tailscale identity
+    is encoded in the provider abstraction.
+    """
+
+    def __init__(self, base_url: str | None = None, *, service_token: str | None = None,
+                 timeout: float = 30.0, model: str = "Qwen/Qwen3-Embedding-0.6B",
+                 dimension: int = CANONICAL_DIMENSION, model_revision: str = "v1"):
+        self.base_url = (base_url or os.environ.get("OPENNICF_EMBEDDING_BASE_URL", "")).rstrip("/")
+        self.service_token = service_token or os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN")
+        self.timeout = timeout
+        self.dimension = dimension
+        self._info = EmbeddingModelInfo(
+            model=model, dimensions=dimension, device="remote-local", backend="opennicf-http",
+            embedding_space_id=_space_id(model, dimension, model_revision), provider="LOCAL",
+            model_revision=model_revision,
+        )
+
+    @property
+    def info(self) -> EmbeddingModelInfo:
+        return self._info
+
+    def _request(self, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        if not self.base_url:
+            raise EmbeddingError("OPENNICF_EMBEDDING_BASE_URL is not configured")
+        headers = {"Accept": "application/json"}
+        if payload is not None:
+            headers["Content-Type"] = "application/json"
+        if self.service_token:
+            headers["Authorization"] = f"Bearer {self.service_token}"
+        request = Request(self.base_url + path, headers=headers,
+                          data=json.dumps(payload).encode() if payload is not None else None,
+                          method="POST" if payload is not None else "GET")
+        try:
+            with urlopen(request, timeout=self.timeout) as response:
+                return json.loads(response.read().decode())
+        except (HTTPError, URLError, TimeoutError, ValueError) as exc:
+            raise EmbeddingError("local embedding service request failed") from exc
+
+    def embed(self, texts: Sequence[str], *, purpose: str = "retrieval_document") -> EmbeddingResult:
+        payload = self._request("/v1/embeddings", {"input": list(texts), "purpose": purpose,
+                                                    "dimension": self.dimension})
+        vectors = tuple(_normalize(item["embedding"] if isinstance(item, dict) else item)
+                        for item in payload.get("data", []))
+        if len(vectors) != len(texts) or any(len(vector) != self.dimension for vector in vectors):
+            raise EmbeddingError("local embedding service returned the wrong result shape")
+        return EmbeddingResult(model=self._info.model, dimensions=self.dimension,
+                               device="remote-local", vectors=vectors,
+                               fallback=bool(payload.get("fallback", False)),
+                               metadata={"service": "opennicf-embedding-worker"},
+                               embedding_space_id=self._info.embedding_space_id, provider="LOCAL",
+                               model_revision=self._info.model_revision, normalized=True, purpose=purpose)
+
+
 class LocalFirstEmbeddingService:
     """Provider-neutral registry with explicit active-space and privacy guards."""
 
