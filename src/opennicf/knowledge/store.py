@@ -173,7 +173,7 @@ class MemoryKnowledgeStore:
         self.audit_reports: list[AuditReportRecord] = []
         self.verification_requests: list[VerificationRequestRecord] = []
         self.admin_operations: dict[str, Any] = {}
-        self._latest_version_by_source_hash: dict[tuple[str, str], str] = {}
+        self._latest_version_by_source_hash: dict[tuple[str, str, str], str] = {}
         self._versions_by_source: dict[str, list[str]] = {}
         self._artifact_chunk_ids: dict[str, list[str]] = {}
         self._artifact_namespace_ids: dict[str, list[str]] = {}
@@ -201,7 +201,7 @@ class MemoryKnowledgeStore:
         self._artifact_edge_ids.setdefault(key, []).append(edge.edge_id)
 
     def save_bundle(self, bundle: IngestBundle) -> IngestBundle:
-        key = (bundle.source.source_id, bundle.source.content_hash)
+        key = (bundle.source.source_id, bundle.source.content_hash, bundle.version.parser_version)
         if key in self._latest_version_by_source_hash:
             existing_version_id = self._latest_version_by_source_hash[key]
             existing_version = self.source_versions[existing_version_id]
@@ -258,8 +258,11 @@ class MemoryKnowledgeStore:
         self.embeddings[(embedding.chunk_id, space_id)] = embedding
 
     def next_version_number(self, source_id: str, content_hash: str) -> int:
-        if (source_id, content_hash) in self._latest_version_by_source_hash:
-            version_id = self._latest_version_by_source_hash[(source_id, content_hash)]
+        matching = [version for version in self.source_versions.values() if version.source_id == source_id and version.content_hash == content_hash]
+        if matching:
+            return matching[0].version_number
+        if (source_id, content_hash, "1") in self._latest_version_by_source_hash:
+            version_id = self._latest_version_by_source_hash[(source_id, content_hash, "1")]
             return self.source_versions[version_id].version_number
         return len(self._versions_by_source.get(source_id, [])) + 1
 
@@ -421,7 +424,7 @@ class MemoryKnowledgeStore:
             record = KnowledgeSourceVersion(**version)
             self.source_versions[record.source_version_id] = record
             self._versions_by_source.setdefault(record.source_id, []).append(record.source_version_id)
-            self._latest_version_by_source_hash[(record.source_id, record.content_hash)] = record.source_version_id
+            self._latest_version_by_source_hash[(record.source_id, record.content_hash, record.parser_version)] = record.source_version_id
         for artifact in snapshot.get("artifacts", []):
             self.artifacts[artifact["artifact_hash"]] = ArtifactRecord(**artifact)
         for namespace in snapshot.get("namespaces", []):
@@ -530,8 +533,8 @@ class PostgresKnowledgeStore:
         with self._connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT 1 FROM knowledge_source_versions WHERE source_id = %s AND content_hash = %s",
-                    (bundle.source.source_id, bundle.source.content_hash),
+                    "SELECT 1 FROM knowledge_source_versions WHERE source_id = %s AND content_hash = %s AND parser_version = %s",
+                    (bundle.source.source_id, bundle.source.content_hash, bundle.version.parser_version),
                 )
                 if cur.fetchone() is not None:
                     conn.commit()
@@ -1045,8 +1048,8 @@ class KnowledgePlatform:
         return cls.from_dsn(dsn, object_store_root=object_store_root, embeddings=embeddings)
 
     @staticmethod
-    def _source_version_id(source_id: str, content_hash: str) -> str:
-        digest = sha256(f"source-version:{source_id}:{content_hash}".encode()).hexdigest()
+    def _source_version_id(source_id: str, content_hash: str, parser_version: str = "1") -> str:
+        digest = sha256(f"source-version:{source_id}:{content_hash}:{parser_version}".encode()).hexdigest()
         return f"srcver_{digest}"
 
     @staticmethod
@@ -1154,7 +1157,7 @@ class KnowledgePlatform:
         elif hasattr(self.store, "source_versions"):
             version_number = len([version for version in self.store.source_versions.values() if version.source_id == source_id]) + 1
         version = KnowledgeSourceVersion(
-            source_version_id=self._source_version_id(source_id, content_hash),
+            source_version_id=self._source_version_id(source_id, content_hash, parser_version),
             source_id=source_id,
             source_uri=sanitized_source_uri,
             version_number=version_number,

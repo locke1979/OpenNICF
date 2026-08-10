@@ -58,7 +58,18 @@ from .audit import (
     FailureAuditEngine,
     LocalFailureAuditBroker,
 )
-from .ingestion import DeadLetterEntry, IngestionJob, IngestionLimits, IngestionOutcome, IngestionQueue, IngestionService
+from .ingestion import (
+    DeadLetterEntry,
+    DirectoryWatcher,
+    IngestionJob,
+    IngestionLimits,
+    IngestionOutcome,
+    IngestionQueue,
+    IngestionService,
+    MailDumpWatcher,
+    ManualWatcher,
+    SFTPWatcher,
+)
 from .domain_agent import (
     CRIMINAL_DOMAIN_ALIASES,
     CONTENCIOSO_JUDICIAL_ALIASES,
@@ -200,11 +211,15 @@ __all__ = [  # noqa: RUF022
     "FailureAuditEngine",
     "LocalFailureAuditBroker",
     "DeadLetterEntry",
+    "DirectoryWatcher",
     "IngestionJob",
     "IngestionLimits",
     "IngestionOutcome",
     "IngestionQueue",
     "IngestionService",
+    "MailDumpWatcher",
+    "ManualWatcher",
+    "SFTPWatcher",
     "DEFAULT_DOMAIN_IDS",
     "CONTENCIOSO_JUDICIAL_ALIASES",
     "CONTENCIOSO_JUDICIAL_DELEGATED_DOMAINS",
