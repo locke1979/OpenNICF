@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This is the controlled-runner entrypoint. It deliberately does not contain
+# credentials or remote endpoints; the persistent OpenClaw runner injects them.
+root="$(cd "$(dirname "$0")/.." && pwd)"
+release="${1:-}"
+[[ "$release" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "release id is required and must be safe" >&2; exit 2; }
+[[ "${MANAGE_INFRASTRUCTURE:-false}" == "true" ]] || { echo "deployment blocked: controlled runner authorization required" >&2; exit 3; }
+[[ "${REVIEWED_PLAN:-false}" == "true" ]] || { echo "deployment blocked: reviewed plan required" >&2; exit 3; }
+python3 - "$release" "${CORRELATION_ID:-}" <<'PY'
+import json
+import sys
+import uuid
+
+release_id = sys.argv[1]
+correlation_id = sys.argv[2] or f"deploy-{uuid.uuid4()}"
+print(
+    json.dumps(
+        {
+            "correlation_id": correlation_id,
+            "release_id": release_id,
+            "runner": "controlled-openclaw-runner",
+            "state": "gates_pending",
+        },
+        sort_keys=True,
+    )
+)
+PY
+echo "Run migration, readiness, smoke, promote and rollback gates through the runner; no LAN access from GitHub-hosted CI." >&2

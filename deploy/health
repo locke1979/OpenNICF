@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Synthetic readiness endpoint for the controlled runner."""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from opennicf.ops.health import HealthState, check_health
+
+
+def _flag(name: str, default: str = "ok") -> bool:
+    return os.environ.get(name, default).lower() == "ok"
+
+
+def main() -> int:
+    correlation_id = os.environ.get("CORRELATION_ID") or f"health-{uuid4()}"
+    report = check_health(
+        "opennicf",
+        [
+            ("postgres", lambda: _flag("POSTGRES_HEALTH")),
+            ("lmstudio", lambda: _flag("LM_STUDIO_HEALTH")),
+            ("litellm", lambda: _flag("LITELLM_HEALTH")),
+            ("broker", lambda: _flag("BROKER_HEALTH")),
+        ],
+        release_id=os.environ.get("RELEASE_ID"),
+    )
+    payload = report.as_dict()
+    payload["correlation_id"] = correlation_id
+    print(json.dumps(payload, sort_keys=True))
+    return 0 if report.state is HealthState.OK else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

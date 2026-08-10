@@ -1,0 +1,14 @@
+{
+  "schema_version": "opennicf.config-inventory/v1",
+  "values": "omitted",
+  "secrets": [
+    {"name": "PROXMOX_API_CREDENTIALS", "source": "external-secret-store"},
+    {"name": "LM_STUDIO_ENDPOINT_CONFIG", "source": "deployment-config"},
+    {"name": "LITELLM_OCI_ENDPOINT_TOKEN", "source": "external-secret-store"},
+    {"name": "WEBEX_TOKEN_SECRET", "source": "external-secret-store"},
+    {"name": "TELEGRAM_TOKEN", "source": "external-secret-store"},
+    {"name": "POSTGRES_OBJECT_STORE_CREDENTIALS", "source": "external-secret-store"},
+    {"name": "BROKER_SIGNING_MTLS_MATERIAL", "source": "external-secret-store"},
+    {"name": "GITHUB_OPENCLAW_RUNNER_CREDENTIAL", "source": "runner-secret-store"}
+  ]
+}

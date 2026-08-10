@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+export PYTHONPATH="$root/src${PYTHONPATH:+:$PYTHONPATH}"
+python3 -m compileall -q src tests
+python3 - <<'PY'
+import opennicf
+import opennicf.ops
+PY
+if [[ -n "${SECRET_SCAN_BASE:-}" ]]; then
+  git diff --check "${SECRET_SCAN_BASE}"...HEAD
+else
+  git diff --check --cached
+  git diff --check
+fi
+python3 -m pytest
+python3 tools/secret_scan.py "${SECRET_SCAN_BASE:-}"
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+import yaml
+
+json.loads(Path("docs/config-inventory.json").read_text(encoding="utf-8"))
+for path in Path(".github/workflows").glob("*.yml"):
+    assert isinstance(yaml.safe_load(path.read_text(encoding="utf-8")), dict), path
+PY
+echo 'operations acceptance: OK'
