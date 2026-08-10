@@ -1,5 +1,9 @@
 """OpenNICF package."""
 
+# The public export blocks intentionally follow the package's established
+# grouping rather than ruff's alphabetical import/export ordering.
+# ruff: noqa: I001
+
 from .model_gateway import (
     AuditEvent,
     CircuitBreaker,
@@ -140,7 +144,7 @@ from .qwen_adapter import OpenNICFChatModel
 from .rag import Evidence, EvidenceIndex
 from .tools import OpenNICFTools
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     "AuditEvent",
     "CircuitBreaker",
     "GatewayError",
