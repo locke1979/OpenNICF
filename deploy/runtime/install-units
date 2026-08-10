@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_root="${OPENNICF_RUNTIME_ROOT:-/opt/opennicf}"
+unit_dir="${OPENNICF_SYSTEMD_UNIT_DIR:-/etc/systemd/system}"
+source_dir="$runtime_root/current/deploy/runtime"
+[[ -d "$source_dir" ]] || { echo "active release missing: $source_dir" >&2; exit 1; }
+mkdir -p "$unit_dir"
+for template in "$source_dir"/*.service.in; do
+  [[ -f "$template" ]] || continue
+  install -m 0644 "$template" "$unit_dir/$(basename "$template" .in)"
+done
+systemctl_bin="${OPENNICF_SYSTEMCTL:-systemctl}"
+"$systemctl_bin" daemon-reload
+echo "units_installed=$unit_dir"

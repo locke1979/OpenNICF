@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+version="${1:-}"
+out="${2:-${ROOT}/dist/opennicf-${version}.tar.gz}"
+[[ "$version" =~ ^[A-Za-z0-9._-]+$ && -n "$version" ]] || { echo 'usage: build-release VERSION [OUTPUT]' >&2; exit 2; }
+mkdir -p "$(dirname "$out")"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/release/src" "$tmp/release/deploy/runtime"
+cp -a "$ROOT/src/opennicf" "$tmp/release/src/"
+cp "$ROOT/pyproject.toml" "$tmp/release/"
+cp "$ROOT/deploy/runtime/"*.service.in "$tmp/release/deploy/runtime/"
+find "$tmp/release" -type d -name __pycache__ -prune -exec rm -rf {} +
+find "$tmp/release" -type f -name '*.pyc' -delete
+PYTHONPATH="$ROOT/src" python3 -c 'from opennicf.release import write_manifest; import sys; write_manifest(sys.argv[1], version=sys.argv[2])' "$tmp/release" "$version"
+tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -czf "$out" -C "$tmp/release" .
+sha256sum "$out" | awk '{print "artifact_sha256=" $1}'
+echo "artifact=$out"

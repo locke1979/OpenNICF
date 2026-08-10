@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+artifact="${1:-}"
+version="${2:-}"
+runtime_root="${OPENNICF_RUNTIME_ROOT:-/opt/opennicf}"
+etc_root="${OPENNICF_ETC_ROOT:-/etc/opennicf}"
+state_root="${OPENNICF_STATE_ROOT:-/var/lib/opennicf}"
+log_root="${OPENNICF_LOG_ROOT:-/var/log/opennicf}"
+[[ -f "$artifact" && "$version" =~ ^[A-Za-z0-9._-]+$ ]] || { echo 'usage: install-release ARTIFACT VERSION' >&2; exit 2; }
+target="$runtime_root/releases/$version"
+[[ ! -e "$target" ]] || { echo "refusing to overwrite release: $version" >&2; exit 1; }
+mkdir -p "$runtime_root/releases" "$etc_root" "$state_root" "$log_root"
+if [[ "${OPENNICF_SKIP_USER_SETUP:-false}" != "true" ]]; then
+  if ! id opennicf >/dev/null 2>&1; then
+    useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin opennicf
+  fi
+  chown opennicf:opennicf "$state_root" "$log_root"
+  chmod 0750 "$state_root" "$log_root"
+fi
+tmp="$(mktemp -d "$runtime_root/releases/.${version}.tmp.XXXXXX")"
+trap 'rm -rf "$tmp"' EXIT
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$ROOT/src" python3 -c 'from opennicf.release import safe_extract_artifact; import sys; safe_extract_artifact(sys.argv[1], sys.argv[2])' "$artifact" "$tmp"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$tmp/src" python3 -m opennicf.release verify "$tmp"
+mv "$tmp" "$target"
+trap - EXIT
+chmod -R a+rX,go-w "$target"
+echo "installed_release=$version"
