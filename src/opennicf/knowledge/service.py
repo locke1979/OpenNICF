@@ -80,17 +80,31 @@ class KnowledgeServiceConfig:
             raise KnowledgeServiceError("knowledge service requires an object-store root")
 
 
-def _jsonable(value: Any) -> Any:
+_TEXT_BYTE_FIELDS = frozenset({
+    "source_id", "source_version_id", "source_uri", "source_kind", "source_type",
+    "channel", "namespace_id", "domain_id", "system_id", "component_id",
+    "environment", "evidence_type", "acl_scope", "content_hash", "artifact_hash",
+    "chunk_id", "locator", "object_key", "mime_type", "model", "provider",
+    "device", "embedding_space_id", "status",
+})
+
+
+def _jsonable(value: Any, *, field_name: str | None = None) -> Any:
     if isinstance(value, bytes):
+        if field_name in _TEXT_BYTE_FIELDS:
+            try:
+                return value.decode("utf-8")
+            except UnicodeDecodeError:
+                pass
         return {"size_bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()}
     if hasattr(value, "isoformat"):
         return value.isoformat()
     if hasattr(value, "__dataclass_fields__"):
-        return {key: _jsonable(item) for key, item in asdict(value).items()}
+        return {key: _jsonable(item, field_name=key) for key, item in asdict(value).items()}
     if isinstance(value, dict):
-        return {str(key): _jsonable(item) for key, item in value.items()}
+        return {str(key): _jsonable(item, field_name=str(key)) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_jsonable(item) for item in value]
+        return [_jsonable(item, field_name=field_name) for item in value]
     return value
 
 
