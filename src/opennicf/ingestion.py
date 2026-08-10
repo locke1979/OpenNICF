@@ -83,6 +83,7 @@ class IngestionJob:
     environment: str = "unknown"
     acl_scope: str = "internal"
     parser_hint: str | None = None
+    parser_version: str | None = None
     state: str = "queued"
     attempts: int = 0
 
@@ -107,18 +108,31 @@ class IngestionOutcome:
 class IngestionQueue:
     """Deterministic, restartable queue with a dead-letter queue."""
 
-    def __init__(self):
+    def __init__(self, *, state_path: str | Path | None = None, max_attempts: int = 3):
+        self.state_path = Path(state_path) if state_path else None
+        self.max_attempts = max(1, int(max_attempts))
         self.pending: list[IngestionJob] = []
         self.in_progress: dict[str, IngestionJob] = {}
         self.completed: dict[str, IngestionOutcome] = {}
         self.dead_letters: list[DeadLetterEntry] = []
         self._seen: set[str] = set()
+        self.jobs: dict[str, IngestionJob] = {}
+
+    def _persist(self) -> None:
+        if self.state_path is None:
+            return
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
+        temporary.write_text(json.dumps(self.snapshot(), sort_keys=True), encoding="utf-8")
+        temporary.replace(self.state_path)
 
     def enqueue(self, job: IngestionJob) -> bool:
         if job.job_id in self._seen:
             return False
         self.pending.append(job)
         self._seen.add(job.job_id)
+        self.jobs[job.job_id] = job
+        self._persist()
         return True
 
     def claim(self) -> IngestionJob | None:
@@ -126,11 +140,13 @@ class IngestionQueue:
             return None
         job = self.pending.pop(0)
         self.in_progress[job.job_id] = replace(job, state="running", attempts=job.attempts + 1)
+        self._persist()
         return self.in_progress[job.job_id]
 
     def ack(self, job: IngestionJob, outcome: IngestionOutcome) -> None:
         self.in_progress.pop(job.job_id, None)
         self.completed[job.job_id] = outcome
+        self._persist()
 
     def fail(self, job: IngestionJob, reason: str, *, retryable: bool = True) -> None:
         self.in_progress.pop(job.job_id, None)
@@ -141,8 +157,9 @@ class IngestionQueue:
             retryable=retryable,
         )
         self.dead_letters.append(dead)
-        if retryable:
+        if retryable and job.attempts < self.max_attempts:
             self.pending.append(replace(job, state="queued"))
+        self._persist()
 
     def retry_dead_letter(self, job_id: str) -> bool:
         for index, entry in enumerate(list(self.dead_letters)):
@@ -150,8 +167,41 @@ class IngestionQueue:
                 self.dead_letters.pop(index)
                 self.pending.append(replace(entry.job, state="queued"))
                 self._seen.add(job_id)
+                self._persist()
                 return True
         return False
+
+    def status(self, *, limit: int = 100) -> dict[str, Any]:
+        """Return a bounded operational view without exposing payload bytes."""
+        bound = max(1, int(limit))
+        jobs = [*self.pending, *self.in_progress.values()]
+        return {
+            "pending": len(self.pending),
+            "in_progress": len(self.in_progress),
+            "completed": len(self.completed),
+            "dead_letters": len(self.dead_letters),
+            "jobs": [
+                {"job_id": job.job_id, "source_id": job.source_id, "state": job.state, "attempts": job.attempts}
+                for job in jobs[:bound]
+            ],
+            "dead_letter_jobs": [entry.job.job_id for entry in self.dead_letters[:bound]],
+        }
+
+    def retry_dead_letters(self, *, limit: int = 10) -> int:
+        retried = 0
+        for entry in list(self.dead_letters):
+            if retried >= max(0, int(limit)):
+                break
+            if self.retry_dead_letter(entry.job.job_id):
+                retried += 1
+        return retried
+
+    @classmethod
+    def from_state(cls, state_path: str | Path, *, max_attempts: int = 3) -> "IngestionQueue":
+        queue = cls(state_path=state_path, max_attempts=max_attempts)
+        if queue.state_path and queue.state_path.exists():
+            queue.restore(json.loads(queue.state_path.read_text(encoding="utf-8")))
+        return queue
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -160,18 +210,30 @@ class IngestionQueue:
             "completed": {job_id: _outcome_to_json(outcome) for job_id, outcome in self.completed.items()},
             "dead_letters": [_dead_letter_to_json(entry) for entry in self.dead_letters],
             "seen": sorted(self._seen),
+            "jobs": {job_id: _job_to_json(job) for job_id, job in self.jobs.items()},
         }
 
     def restore(self, snapshot: dict[str, Any]) -> None:
-        self.__init__()
+        state_path, max_attempts = self.state_path, self.max_attempts
+        self.__init__(state_path=state_path, max_attempts=max_attempts)
         self.pending = [_job_from_json(job) for job in snapshot.get("pending", [])]
-        self.in_progress = {job["job_id"]: _job_from_json(job) for job in snapshot.get("in_progress", [])}
+        # A process can die after claim and before ack. Requeue those jobs so a
+        # restart never leaves evidence permanently invisible.
+        recovered = [replace(_job_from_json(job), state="queued") for job in snapshot.get("in_progress", [])]
+        self.pending.extend(recovered)
+        self.in_progress = {}
         self.completed = {
             job_id: _outcome_from_json(outcome)
             for job_id, outcome in snapshot.get("completed", {}).items()
         }
         self.dead_letters = [_dead_letter_from_json(entry) for entry in snapshot.get("dead_letters", [])]
         self._seen = set(snapshot.get("seen", []))
+        self.jobs = {job_id: _job_from_json(job) for job_id, job in snapshot.get("jobs", {}).items()}
+        for job in [*self.pending, *self.in_progress.values()]:
+            self.jobs.setdefault(job.job_id, job)
+        for entry in self.dead_letters:
+            self.jobs.setdefault(entry.job.job_id, entry.job)
+        self._persist()
 
 
 def _job_to_json(job: IngestionJob) -> dict[str, Any]:
@@ -656,6 +718,24 @@ class IngestionService:
         self.limits = limits or IngestionLimits()
         self.malware_scanner = malware_scanner or (lambda _content, _metadata: None)
 
+    def status(self, *, limit: int = 100) -> dict[str, Any]:
+        return self.queue.status(limit=limit)
+
+    def retry_dead_letters(self, *, limit: int = 10) -> int:
+        return self.queue.retry_dead_letters(limit=limit)
+
+    def reprocess(self, source_id: str, *, parser_version: str, limit: int = 1) -> list[IngestionJob]:
+        """Queue bounded parser-version work from retained immutable job bytes."""
+        candidates = [job for job in self.queue.jobs.values() if job.source_id == source_id]
+        candidates.sort(key=lambda job: (job.content_hash, job.job_id))
+        jobs: list[IngestionJob] = []
+        for original in candidates[:max(0, int(limit))]:
+            job = replace(original, parser_version=parser_version, state="queued", attempts=0)
+            job = replace(job, job_id=f"job_{_stable_hash(job.channel, job.source_id, job.content_hash, job.parser_hint or job.source_type, parser_version)}")
+            if self.queue.enqueue(job):
+                jobs.append(job)
+        return jobs
+
     def _build_job(
         self,
         *,
@@ -675,10 +755,11 @@ class IngestionService:
         environment: str,
         acl_scope: str,
         parser_hint: str | None,
-        metadata: dict[str, Any] | None,
+        parser_version: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> IngestionJob:
         content_hash = sha256(raw_bytes).hexdigest()
-        job_id = _stable_hash(channel, source_id, content_hash, parser_hint or source_type)
+        job_id = _stable_hash(channel, source_id, content_hash, parser_hint or source_type, parser_version or "detected")
         sanitized_metadata, _ = sanitize_metadata(metadata)
         effective_domain_id = domain_id or domain
         effective_system_id = system_id or system
@@ -704,6 +785,7 @@ class IngestionService:
             environment=environment,
             acl_scope=acl_scope,
             parser_hint=parser_hint,
+            parser_version=parser_version,
         )
 
     def _validate_payload_size(self, raw_bytes: bytes, *, label: str) -> None:
@@ -729,6 +811,7 @@ class IngestionService:
         environment: str = "unknown",
         acl_scope: str = "internal",
         parser_hint: str | None = None,
+        parser_version: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> IngestionJob:
         raw_bytes = content.encode("utf-8") if isinstance(content, str) else bytes(content)
@@ -751,6 +834,7 @@ class IngestionService:
             environment=environment,
             acl_scope=acl_scope,
             parser_hint=parser_hint,
+            parser_version=parser_version,
             metadata=metadata,
         )
         self.queue.enqueue(job)
@@ -772,6 +856,7 @@ class IngestionService:
         environment: str = "unknown",
         acl_scope: str = "internal",
         metadata: dict[str, Any] | None = None,
+        parser_version: str | None = None,
     ) -> list[IngestionJob]:
         file_path = Path(path)
         if file_path.is_dir():
@@ -828,8 +913,9 @@ class IngestionService:
                     evidence_type=evidence_type,
                     environment=environment,
                     acl_scope=acl_scope,
-                    parser_hint=member_source_type,
-                    metadata={"archive_path": str(file_path), "member_path": member_path.as_posix(), **member_metadata, **dict(metadata or {})},
+                        parser_hint=member_source_type,
+                        parser_version=parser_version,
+                        metadata={"archive_path": str(file_path), "member_path": member_path.as_posix(), **member_metadata, **dict(metadata or {})},
                 )
                 self.queue.enqueue(job)
                 member_jobs.append(job)
@@ -853,6 +939,7 @@ class IngestionService:
             environment=environment,
             acl_scope=acl_scope,
             parser_hint=source_type,
+            parser_version=parser_version,
             metadata={**parsed_metadata, **dict(metadata or {})},
         )
         self.queue.enqueue(job)
@@ -1204,7 +1291,8 @@ class IngestionService:
 
     def _process_job(self, job: IngestionJob) -> list[IngestBundle]:
         path = Path(job.source_uri)
-        blocks, parser_name, parser_version, source_type = self._parse_job(job, path)
+        blocks, parser_name, detected_parser_version, source_type = self._parse_job(job, path)
+        parser_version = job.parser_version or detected_parser_version
         bundle = self.platform.ingest(
             source_id=job.source_id,
             source_uri=job.source_uri,
@@ -1265,3 +1353,72 @@ def _parse_binary_or_text(path: Path, data: bytes) -> tuple[list[ParsedBlock], s
     if not blocks and _looks_like_text(data):
         blocks = _line_blocks(_decode_text(data), prefix=path.name)
     return blocks, parser_name, parser_version, source_type
+
+
+class DirectoryWatcher:
+    """Poll a directory; unchanged files are submitted at most once per scan."""
+
+    def __init__(self, service: IngestionService, root: str | Path, *, channel: str = "directory", **submit_options: Any):
+        self.service, self.root, self.channel = service, Path(root), channel
+        self.submit_options = submit_options
+        self._observed: dict[str, tuple[int, int]] = {}
+
+    def scan(self) -> list[IngestionJob]:
+        jobs: list[IngestionJob] = []
+        for path in _iter_directory_files(self.root):
+            stat = path.stat()
+            marker = (stat.st_size, stat.st_mtime_ns)
+            key = str(path)
+            if self._observed.get(key) == marker:
+                continue
+            jobs.extend(self.service.submit_file(path, channel=self.channel, metadata={"watcher": "directory", **self.submit_options.get("metadata", {})}, **{k: v for k, v in self.submit_options.items() if k != "metadata"}))
+            self._observed[key] = marker
+        return jobs
+
+
+class ManualWatcher:
+    """Explicit, operator-driven source watcher for files or in-memory payloads."""
+
+    def __init__(self, service: IngestionService):
+        self.service = service
+
+    def submit(self, *, source_uri: str, content: bytes | str, **options: Any) -> IngestionJob:
+        return self.service.submit_manual(source_uri=source_uri, content=content, **options)
+
+
+class SFTPWatcher:
+    """SFTP boundary using injected list/read callables; no credentials in this layer."""
+
+    def __init__(self, service: IngestionService, list_files: Callable[[], Iterable[str]], read_file: Callable[[str], bytes], *, channel: str = "sftp", **submit_options: Any):
+        self.service, self.list_files, self.read_file = service, list_files, read_file
+        self.channel, self.submit_options = channel, submit_options
+        self._observed: set[str] = set()
+
+    def scan(self) -> list[IngestionJob]:
+        jobs: list[IngestionJob] = []
+        for remote_path in sorted(self.list_files()):
+            if remote_path in self._observed:
+                continue
+            raw = self.read_file(remote_path)
+            options = dict(self.submit_options)
+            options["metadata"] = {"watcher": "sftp", **dict(options.get("metadata", {}))}
+            jobs.append(self.service.submit_manual(source_uri=f"sftp://{remote_path}", content=raw, channel=self.channel, **options))
+            self._observed.add(remote_path)
+        return jobs
+
+
+class MailDumpWatcher:
+    """Poll a local mail dump, delegating MIME and attachment handling to the service."""
+
+    def __init__(self, service: IngestionService, root: str | Path, **submit_options: Any):
+        self.service, self.root, self.submit_options = service, Path(root), submit_options
+        self._observed: set[str] = set()
+
+    def scan(self) -> list[IngestionJob]:
+        jobs: list[IngestionJob] = []
+        for path in _iter_directory_files(self.root):
+            if path.suffix.lower() != ".eml" or str(path) in self._observed:
+                continue
+            jobs.extend(self.service.submit_mail_drop(path, **self.submit_options))
+            self._observed.add(str(path))
+        return jobs

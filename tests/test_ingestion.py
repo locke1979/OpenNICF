@@ -7,7 +7,15 @@ from xml.sax.saxutils import escape
 
 import pytest
 
-from opennicf import IngestionJob, IngestionQueue, IngestionService, KnowledgePlatform
+from opennicf import (
+    DirectoryWatcher,
+    IngestionJob,
+    IngestionQueue,
+    IngestionService,
+    KnowledgePlatform,
+    MailDumpWatcher,
+    SFTPWatcher,
+)
 
 
 def _build_docx_bytes(paragraphs: list[str]) -> bytes:
@@ -140,4 +148,51 @@ def test_queue_snapshot_restore_and_dead_letter_retry_roundtrip():
     snapshot = queue.snapshot()
     restored = IngestionQueue()
     restored.restore(snapshot)
-    assert restored.snapshot() == snapshot
+    recovered = restored.snapshot()
+    assert recovered["in_progress"] == []
+    assert [item["job_id"] for item in recovered["pending"]] == [job.job_id]
+
+
+def test_queue_state_file_recovers_claimed_job_and_bounds_status(tmp_path):
+    state_path = tmp_path / "ingestion.json"
+    queue = IngestionQueue(state_path=state_path)
+    job = IngestionJob("job-restart", "src", "manual://src", "manual", "text/plain", "hash", b"payload")
+    assert queue.enqueue(job)
+    assert queue.claim() is not None
+
+    restored = IngestionQueue.from_state(state_path)
+    assert restored.status(limit=1)["in_progress"] == 0
+    assert restored.status(limit=1)["pending"] == 1
+    assert restored.claim() is not None
+
+
+def test_watchers_are_idempotent_and_preserve_acl_domain_metadata(tmp_path):
+    platform = KnowledgePlatform.in_memory()
+    service = IngestionService(platform)
+    watched = tmp_path / "watched"
+    watched.mkdir()
+    (watched / "evidence.txt").write_text("watched evidence", encoding="utf-8")
+
+    directory = DirectoryWatcher(service, watched, domain_id="finance", system_id="ledger", acl_scope="restricted")
+    assert len(directory.scan()) == 1
+    assert directory.scan() == []
+    service.run()
+    chunk = next(iter(platform.store.chunks.values()))
+    assert chunk.domain_id == "finance"
+    assert chunk.system_id == "ledger"
+    assert chunk.acl_scope == "restricted"
+
+    remote = SFTPWatcher(service, lambda: ["drop/report.txt"], lambda _: b"remote evidence")
+    assert len(remote.scan()) == 1
+    assert len(remote.scan()) == 0  # queue idempotency, even when the source is polled again
+
+
+def test_parser_version_reprocessing_creates_a_new_version(tmp_path):
+    service = IngestionService(KnowledgePlatform.in_memory())
+    job = service.submit_manual(source_uri="manual://reprocess.txt", content="reparse me")
+    service.run()
+    reprocessed = service.reprocess(job.source_id, parser_version="2")
+    assert len(reprocessed) == 1
+    service.run()
+    versions = [version for version in service.platform.store.source_versions.values() if version.source_id == job.source_id]
+    assert {version.parser_version for version in versions} == {"1", "2"}
