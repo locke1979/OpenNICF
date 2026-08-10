@@ -16,6 +16,7 @@ from .embeddings import (
     PrivacyBoundaryError,
     QwenEmbeddingBackend,
 )
+from .admin import AdminOperation, KnowledgeAdministration, RetirementPolicy
 from .models import (
     ArtifactRecord,
     AuditEvidenceRefRecord,
@@ -51,6 +52,7 @@ from .store import KnowledgePlatform, MemoryKnowledgeStore, PostgresKnowledgeSto
 
 __all__ = [
     "ArtifactRecord",
+    "AdminOperation",
     "AuditEvidenceRefRecord",
     "AuditFindingRecord",
     "AuditReportRecord",
@@ -75,6 +77,7 @@ __all__ = [
     "IntegrationEdgeRecord",
     "KnowledgeNamespaceRecord",
     "KnowledgePlatform",
+    "KnowledgeAdministration",
     "KnowledgeSource",
     "KnowledgeSourceVersion",
     "LocalFirstEmbeddingService",
@@ -88,6 +91,7 @@ __all__ = [
     "QwenEmbeddingBackend",
     "RetrievalEventRecord",
     "RetrievalFilters",
+    "RetirementPolicy",
     "SearchCandidate",
     "SourceKind",
     "VerificationRequestRecord",

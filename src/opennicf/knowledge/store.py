@@ -147,6 +147,9 @@ class KnowledgeStore(Protocol):
     def restore(self, snapshot: dict[str, Any]) -> None:
         raise NotImplementedError
 
+    def record_admin_operation(self, operation: Any) -> None:
+        raise NotImplementedError
+
 
 class MemoryKnowledgeStore:
     """Deterministic in-memory store used for tests and local development."""
@@ -164,6 +167,7 @@ class MemoryKnowledgeStore:
         self.audit_findings: list[AuditFindingRecord] = []
         self.audit_reports: list[AuditReportRecord] = []
         self.verification_requests: list[VerificationRequestRecord] = []
+        self.admin_operations: dict[str, Any] = {}
         self._latest_version_by_source_hash: dict[tuple[str, str], str] = {}
         self._versions_by_source: dict[str, list[str]] = {}
         self._artifact_chunk_ids: dict[str, list[str]] = {}
@@ -318,6 +322,77 @@ class MemoryKnowledgeStore:
     def record_verification_request(self, request: VerificationRequestRecord) -> None:
         self.verification_requests.append(request)
 
+    def record_admin_operation(self, operation: Any) -> None:
+        self.admin_operations[operation.operation_id] = operation
+
+    @staticmethod
+    def _admin_visible(source: KnowledgeSource, filters: RetrievalFilters) -> bool:
+        filters = filters.normalized()
+        if filters.principal_acl_scopes and source.acl_scope not in filters.principal_acl_scopes:
+            return False
+        domains = filters.effective_domain_ids()
+        if domains and source.domain_id not in domains:
+            return False
+        if filters.source_ids and source.source_id not in filters.source_ids:
+            return False
+        if filters.effective_system_ids() and source.system_id not in filters.effective_system_ids():
+            return False
+        if filters.effective_component_ids() and source.component_id not in filters.effective_component_ids():
+            return False
+        if filters.effective_evidence_types() and source.evidence_type not in filters.effective_evidence_types():
+            return False
+        if filters.namespace_ids and source.namespace_id not in filters.namespace_ids:
+            return False
+        if filters.environments and source.environment not in filters.environments:
+            return False
+        return True
+
+    def list_sources(self, filters: RetrievalFilters, *, include_retired: bool = False) -> list[dict[str, Any]]:
+        rows = []
+        for source in self.sources.values():
+            if not self._admin_visible(source, filters):
+                continue
+            metadata = dict(source.metadata)
+            if not include_retired and metadata.get("status") == "retired":
+                continue
+            rows.append({"source_id": source.source_id, "source_uri": source.source_uri, "source_kind": source.source_kind, "channel": source.channel, "namespace_id": source.namespace_id, "domain_id": source.domain_id, "system_id": source.system_id, "component_id": source.component_id, "environment": source.environment, "evidence_type": source.evidence_type, "acl_scope": source.acl_scope, "content_hash": source.content_hash, "updated_at": source.updated_at, "status": metadata.get("status", "active"), "metadata": metadata})
+        return sorted(rows, key=lambda row: row["source_id"])
+
+    def source_status(self, source_id: str, *, filters: RetrievalFilters) -> dict[str, Any]:
+        source = self.sources.get(source_id)
+        if source is None:
+            raise KeyError(f"unknown source: {source_id}")
+        if not self._admin_visible(source, filters):
+            raise PermissionError("source is outside the requested ACL/domain scope")
+        versions = [self.source_versions[version_id] for version_id in self._versions_by_source.get(source_id, [])]
+        chunks = [chunk for chunk in self.chunks.values() if chunk.source_id == source_id]
+        spaces = sorted({record.embedding_space_id or f"{record.model}:{record.dimensions}:v1" for chunk in chunks for (chunk_id, _), record in self.embeddings.items() if chunk_id == chunk.chunk_id})
+        return {"source_id": source_id, "status": source.metadata.get("status", "active"), "versions": len(versions), "chunks": len(chunks), "embedding_space_ids": spaces, "object_present": all(self._object_present(version) for version in versions), "domain_id": source.domain_id, "acl_scope": source.acl_scope, "metadata": dict(source.metadata)}
+
+    def _object_present(self, version: KnowledgeSourceVersion) -> bool:
+        return True
+
+    def provenance(self, source_id: str, *, source_version_id: str | None, filters: RetrievalFilters) -> dict[str, Any]:
+        source = self.sources.get(source_id)
+        if source is None or not self._admin_visible(source, filters):
+            raise KeyError(f"source is unavailable: {source_id}")
+        version_ids = self._versions_by_source.get(source_id, [])
+        version_id = source_version_id or version_ids[-1]
+        version = self.source_versions.get(version_id)
+        if version is None or version.source_id != source_id:
+            raise KeyError(f"unknown source version: {version_id}")
+        artifact = self.artifacts[version.artifact_hash]
+        chunks = [self.chunks[cid] for cid in self._artifact_chunk_ids.get(artifact.artifact_hash, []) if cid in self.chunks]
+        return {"source": asdict(source), "version": asdict(version), "artifact": asdict(artifact), "chunks": [asdict(chunk) for chunk in chunks]}
+
+    def retire_source(self, source_id: str, *, reason: str, actor: str, preserve_provenance: bool = True) -> None:
+        source = self.sources.get(source_id)
+        if source is None:
+            raise KeyError(f"unknown source: {source_id}")
+        metadata = dict(source.metadata)
+        metadata.update({"status": "retired", "retired_at": utcnow().isoformat(), "retired_by": actor, "retirement_reason": reason, "provenance_preserved": preserve_provenance})
+        self.sources[source_id] = replace(source, metadata=metadata, updated_at=utcnow())
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "sources": [asdict(item) for item in self.sources.values()],
@@ -331,6 +406,7 @@ class MemoryKnowledgeStore:
             "audit_findings": [asdict(item) for item in self.audit_findings],
             "audit_reports": [asdict(item) for item in self.audit_reports],
             "verification_requests": [asdict(item) for item in self.verification_requests],
+            "admin_operations": [asdict(item) for item in self.admin_operations.values()],
         }
 
     def restore(self, snapshot: dict[str, Any]) -> None:
@@ -373,6 +449,18 @@ class MemoryKnowledgeStore:
             self.audit_reports.append(_audit_report_from_json(report))
         for request in snapshot.get("verification_requests", []):
             self.verification_requests.append(_verification_request_from_json(request))
+        for operation in snapshot.get("admin_operations", []):
+            from .admin import AdminOperation
+            record = AdminOperation(
+                operation_id=operation["operation_id"],
+                operation=operation["operation"],
+                status=operation["status"],
+                requested_at=datetime.fromisoformat(operation["requested_at"]) if isinstance(operation["requested_at"], str) else operation["requested_at"],
+                actor=operation["actor"],
+                target_id=operation["target_id"],
+                details=dict(operation.get("details", {})),
+            )
+            self.admin_operations[record.operation_id] = record
 
 
 class PostgresKnowledgeStore:
@@ -803,6 +891,90 @@ class PostgresKnowledgeStore:
                         json.dumps(request.metadata, sort_keys=True),
                     ),
                 )
+            conn.commit()
+
+    def record_admin_operation(self, operation: Any) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO knowledge_admin_operations
+                    (operation_id, operation, status, requested_at, actor, target_id, details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (operation_id) DO UPDATE SET status = EXCLUDED.status,
+                    details = EXCLUDED.details""",
+                    (operation.operation_id, operation.operation, operation.status, operation.requested_at, operation.actor, operation.target_id, json.dumps(operation.details, sort_keys=True)),
+                )
+            conn.commit()
+
+    def list_sources(self, filters: RetrievalFilters, *, include_retired: bool = False) -> list[dict[str, Any]]:
+        filters = filters.normalized()
+        clauses = ["1 = 1"]
+        params: list[Any] = []
+        if filters.principal_acl_scopes:
+            clauses.append("acl_scope = ANY(%s)")
+            params.append(list(filters.principal_acl_scopes))
+        domains = filters.effective_domain_ids()
+        if domains:
+            clauses.append("domain_id = ANY(%s)")
+            params.append(list(domains))
+        if filters.effective_system_ids():
+            clauses.append("system_id = ANY(%s)")
+            params.append(list(filters.effective_system_ids()))
+        if filters.effective_component_ids():
+            clauses.append("component_id = ANY(%s)")
+            params.append(list(filters.effective_component_ids()))
+        if filters.effective_evidence_types():
+            clauses.append("evidence_type = ANY(%s)")
+            params.append(list(filters.effective_evidence_types()))
+        if filters.effective_namespace_ids():
+            clauses.append("namespace_id = ANY(%s)")
+            params.append(list(filters.effective_namespace_ids()))
+        if filters.environments:
+            clauses.append("environment = ANY(%s)")
+            params.append(list(filters.environments))
+        if not include_retired:
+            clauses.append("COALESCE(metadata->>'status', 'active') <> 'retired'")
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT source_id, source_uri, source_kind, channel, namespace_id, domain_id, system_id, component_id, environment, evidence_type, acl_scope, content_hash, updated_at, metadata FROM knowledge_sources WHERE {' AND '.join(clauses)} ORDER BY source_id", tuple(params))
+                rows = cur.fetchall()
+        keys = ("source_id", "source_uri", "source_kind", "channel", "namespace_id", "domain_id", "system_id", "component_id", "environment", "evidence_type", "acl_scope", "content_hash", "updated_at", "metadata")
+        return [{**dict(zip(keys, row)), "status": (row[13] or {}).get("status", "active")} for row in rows]
+
+    def source_status(self, source_id: str, *, filters: RetrievalFilters) -> dict[str, Any]:
+        rows = self.list_sources(replace(filters, source_ids=(source_id,)), include_retired=True)
+        if not rows:
+            raise KeyError(f"source is unavailable: {source_id}")
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*), COUNT(DISTINCT c.chunk_id), COALESCE(array_agg(DISTINCT e.embedding_space_id) FILTER (WHERE e.embedding_space_id IS NOT NULL), ARRAY[]::text[]) FROM knowledge_source_versions v LEFT JOIN knowledge_chunks c ON c.source_version_id = v.source_version_id LEFT JOIN knowledge_embeddings e ON e.chunk_id = c.chunk_id WHERE v.source_id = %s", (source_id,))
+                versions, chunks, spaces = cur.fetchone()
+        row = rows[0]
+        return {"source_id": source_id, "status": row["status"], "versions": int(versions), "chunks": int(chunks), "embedding_space_ids": sorted(spaces or []), "object_present": None, "domain_id": row["domain_id"], "acl_scope": row["acl_scope"], "metadata": row["metadata"] or {}}
+
+    def provenance(self, source_id: str, *, source_version_id: str | None, filters: RetrievalFilters) -> dict[str, Any]:
+        rows = self.list_sources(replace(filters, source_ids=(source_id,)), include_retired=True)
+        if not rows:
+            raise KeyError(f"source is unavailable: {source_id}")
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                version_clause = "AND v.source_version_id = %s" if source_version_id else ""
+                params: tuple[Any, ...] = (source_id, source_version_id) if source_version_id else (source_id,)
+                cur.execute(f"SELECT row_to_json(v), row_to_json(a) FROM knowledge_source_versions v JOIN knowledge_artifacts a ON a.artifact_hash = v.artifact_hash WHERE v.source_id = %s {version_clause} ORDER BY v.version_number DESC LIMIT 1", params)
+                row = cur.fetchone()
+                if row is None:
+                    raise KeyError("source version not found")
+                version, artifact = row
+                cur.execute("SELECT row_to_json(c) FROM knowledge_chunks c WHERE c.source_version_id = %s ORDER BY c.ordinal", (version["source_version_id"],))
+                chunks = [item[0] for item in cur.fetchall()]
+        return {"source": rows[0], "version": version, "artifact": artifact, "chunks": chunks}
+
+    def retire_source(self, source_id: str, *, reason: str, actor: str, preserve_provenance: bool = True) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE knowledge_sources SET metadata = metadata || %s::jsonb, updated_at = now() WHERE source_id = %s", (json.dumps({"status": "retired", "retired_at": utcnow().isoformat(), "retired_by": actor, "retirement_reason": reason, "provenance_preserved": preserve_provenance}), source_id))
+                if getattr(cur, "rowcount", 1) == 0:
+                    raise KeyError(f"unknown source: {source_id}")
             conn.commit()
 
     def snapshot(self) -> dict[str, Any]:
