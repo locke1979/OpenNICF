@@ -87,7 +87,8 @@ def _systemctl(*args: str) -> None:
         raise ReleaseError(f"systemctl {args[0]} failed")
 
 
-def readiness(url: str, *, timeout: float = 5.0) -> bool:
+def readiness(url: str, *, timeout: float | None = None) -> bool:
+    timeout = timeout if timeout is not None else float(os.environ.get("OPENNICF_RELEASE_READINESS_TIMEOUT", "15"))
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
