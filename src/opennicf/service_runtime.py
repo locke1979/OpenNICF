@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 
 def _database_check() -> tuple[bool, str]:
-    dsn = os.environ.get("DATABASE_URL", "").strip()
+    dsn = (os.environ.get("OPENNICF_POSTGRES_DSN") or os.environ.get("DATABASE_URL", "")).strip()
     if not dsn:
         return False, "database_dsn_missing"
     try:
@@ -82,9 +84,24 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--service", choices=("knowledge", "ingestion"), required=True)
     args = parser.parse_args(argv)
-    server = ThreadingHTTPServer((os.environ.get("OPENNICF_SERVICE_HOST", "127.0.0.1"), int(os.environ.get("OPENNICF_SERVICE_PORT", "8090"))), _Handler)
-    server.service = args.service
-    server.serve_forever()
+    if args.service == "knowledge":
+        from .knowledge.service import KnowledgeService, serve
+
+        service = KnowledgeService.from_env()
+        server = serve(service)
+    else:
+        server = ThreadingHTTPServer((os.environ.get("OPENNICF_SERVICE_HOST", "127.0.0.1"), int(os.environ.get("OPENNICF_SERVICE_PORT", "8090"))), _Handler)
+        server.service = args.service
+
+    def stop(_signum: int, _frame: Any) -> None:
+        threading.Thread(target=server.shutdown, daemon=True).start()
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()
     return 0
 
 
