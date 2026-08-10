@@ -515,11 +515,13 @@ class LocalFirstEmbeddingService:
         *,
         preferred_backend: EmbeddingBackend | None = None,
         cpu_backend: EmbeddingBackend | None = None,
+        allow_cpu_fallback: bool = True,
         batch_sizer: EmbeddingBatchSizer | None = None,
         providers: Sequence[EmbeddingBackend] | None = None,
         active_space_id: str | None = None,
     ):
         self.preferred_backend = preferred_backend
+        self.allow_cpu_fallback = allow_cpu_fallback
         self.cpu_backend = cpu_backend or HashingEmbeddingBackend()
         self.batch_sizer = batch_sizer or EmbeddingBatchSizer(
             dimensions=self.cpu_backend.info.dimensions
@@ -637,6 +639,8 @@ class LocalFirstEmbeddingService:
                         raise
                     result = backend.embed(batch)
             except (EmbeddingError, MemoryError, RuntimeError):
+                if not self.allow_cpu_fallback:
+                    raise
                 # Retry the batch at size one; a second failure is contained by CPU fallback.
                 if len(batch) > 1:
                     for text in batch:

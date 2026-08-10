@@ -109,8 +109,10 @@ class KnowledgeService:
         embedding = None
         if config.embedding_base_url:
             preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.embedding_model, dimension=config.embedding_dimension)
-            embedding = LocalFirstEmbeddingService(preferred_backend=preferred, cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension))
+            embedding = LocalFirstEmbeddingService(preferred_backend=preferred, cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension), allow_cpu_fallback=not config.production)
         else:
+            if config.production:
+                raise KnowledgeServiceError("Qwen embedding worker URL is required in production")
             # This is an explicit, reported CPU backend. It is not a storage fallback.
             embedding = LocalFirstEmbeddingService(cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension))
         platform = KnowledgePlatform.from_dsn(config.postgres_dsn, object_store_root=config.object_store_root, embeddings=embedding)
