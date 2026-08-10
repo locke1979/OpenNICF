@@ -1402,7 +1402,32 @@ def _split_sql(sql: str) -> list[str]:
     current: list[str] = []
     in_single = False
     in_double = False
+    in_line_comment = False
+    in_block_comment = False
+    previous = ""
     for char in sql:
+        if in_line_comment:
+            current.append(char)
+            if char == "\n":
+                in_line_comment = False
+            previous = char
+            continue
+        if in_block_comment:
+            current.append(char)
+            if previous == "*" and char == "/":
+                in_block_comment = False
+            previous = char
+            continue
+        if not in_single and not in_double and previous == "-" and char == "-":
+            current.append(char)
+            in_line_comment = True
+            previous = char
+            continue
+        if not in_single and not in_double and previous == "/" and char == "*":
+            current.append(char)
+            in_block_comment = True
+            previous = char
+            continue
         if char == "'" and not in_double:
             in_single = not in_single
         elif char == '"' and not in_single:
@@ -1414,6 +1439,7 @@ def _split_sql(sql: str) -> list[str]:
             current = []
         else:
             current.append(char)
+        previous = char
     tail = "".join(current).strip()
     if tail:
         statements.append(tail)
@@ -1908,7 +1934,32 @@ def _split_sql(sql: str) -> list[str]:
     current: list[str] = []
     in_single = False
     in_double = False
+    in_line_comment = False
+    in_block_comment = False
+    previous = ""
     for char in sql:
+        if in_line_comment:
+            current.append(char)
+            if char == "\n":
+                in_line_comment = False
+            previous = char
+            continue
+        if in_block_comment:
+            current.append(char)
+            if previous == "*" and char == "/":
+                in_block_comment = False
+            previous = char
+            continue
+        if not in_single and not in_double and previous == "-" and char == "-":
+            current.append(char)
+            in_line_comment = True
+            previous = char
+            continue
+        if not in_single and not in_double and previous == "/" and char == "*":
+            current.append(char)
+            in_block_comment = True
+            previous = char
+            continue
         if char == "'" and not in_double:
             in_single = not in_single
         elif char == '"' and not in_single:
@@ -1920,6 +1971,7 @@ def _split_sql(sql: str) -> list[str]:
             current = []
         else:
             current.append(char)
+        previous = char
     tail = "".join(current).strip()
     if tail:
         statements.append(tail)
