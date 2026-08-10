@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 import pytest
 
 from opennicf.knowledge import KnowledgePlatform
-from opennicf.knowledge.service import KnowledgeService, KnowledgeServiceConfig, serve
+from opennicf.knowledge.service import KnowledgeService, KnowledgeServiceConfig, _jsonable, serve
 
 
 def _running_service(tmp_path):
@@ -57,6 +57,13 @@ def test_production_configuration_requires_durable_dependencies():
         KnowledgeServiceConfig(environment="production", object_store_root="/tmp/objects").validate()
     with pytest.raises(RuntimeError, match="object-store root"):
         KnowledgeServiceConfig(environment="production", postgres_dsn="postgresql://db").validate()
+
+
+def test_jsonable_preserves_identifiers_but_does_not_expose_raw_bytes():
+    assert _jsonable({"source_id": b"source-1", "content": b"synthetic evidence"}) == {
+        "source_id": "source-1",
+        "content": {"size_bytes": 18, "sha256": "48736e58b409ed0241c8d7bed9dc188a59e13002f48e7492850bec15b59147b6"},
+    }
 
 
 def test_request_body_limit_and_status_report_storage(tmp_path):
