@@ -6,8 +6,8 @@ from __future__ import annotations
 import json
 import os
 import sys
-from urllib.request import Request, urlopen
 from pathlib import Path
+from urllib.request import Request, urlopen
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +23,10 @@ def _flag(name: str, default: str = "ok") -> bool:
 def _embedding_report() -> dict:
     base_url = os.environ.get("OPENNICF_EMBEDDING_BASE_URL", "").rstrip("/")
     if not base_url:
-        return {"reachable": _flag("EMBEDDING_HEALTH"), "provider_healthy": _flag("EMBEDDING_PROVIDER_HEALTH")}
+        return {
+            "reachable": _flag("EMBEDDING_HEALTH"),
+            "provider_healthy": _flag("EMBEDDING_PROVIDER_HEALTH"),
+        }
     headers = {"Accept": "application/json"}
     token = os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN")
     if token:
@@ -32,10 +35,13 @@ def _embedding_report() -> dict:
         request = Request(base_url + "/health", headers=headers)
         with urlopen(request, timeout=5) as response:
             payload = json.loads(response.read().decode())
-        return {"reachable": payload.get("status") == "ok",
-                "provider_healthy": payload.get("status") == "ok" and not payload.get("fallback", False),
-                "cpu_fallback": bool(payload.get("fallback", False))}
-    except Exception:  # dependency probes are represented in the aggregate report
+        return {
+            "reachable": payload.get("status") == "ok",
+            "provider_healthy": payload.get("status") == "ok"
+            and not payload.get("fallback", False),
+            "cpu_fallback": bool(payload.get("fallback", False)),
+        }
+    except Exception:  # noqa: BLE001 - dependency probes become aggregate health state
         return {"reachable": False, "provider_healthy": False, "cpu_fallback": False}
 
 
