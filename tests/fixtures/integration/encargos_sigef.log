@@ -1,0 +1,2 @@
+2026-08-08T12:05:01Z request_id=req-sigef-22 correlation_id=trace-sigef-22 source=SIGEF status=handoff SIGEF batch correlation references SICJUT and SIGEPRA
+2026-08-08T12:05:04Z request_id=req-sigef-22 correlation_id=trace-sigef-22 source=SIGEF status=observed Encargos SIGEF preserves the assignment boundary while correlating with judicial and administrative partners

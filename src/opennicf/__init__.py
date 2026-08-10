@@ -1,5 +1,9 @@
 """OpenNICF package."""
 
+# The public export blocks intentionally follow the package's established
+# grouping rather than ruff's alphabetical import/export ordering.
+# ruff: noqa: I001
+
 from .model_gateway import (
     AuditEvent,
     CircuitBreaker,
@@ -74,6 +78,11 @@ from .domain_agent import (
     create_domain_agent_factory,
     create_contencioso_administrativo_agent,
 )
+from .integration_correlation import (
+    IntegrationCorrelationAgent,
+    IntegrationCorrelationRequest,
+    create_integration_correlation_agent,
+)
 from .encargos_sigef import (
     COLLABORATION_TARGETS,
     ENCARGOS_SIGEF_PROFILE,
@@ -135,7 +144,7 @@ from .qwen_adapter import OpenNICFChatModel
 from .rag import Evidence, EvidenceIndex
 from .tools import OpenNICFTools
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     "AuditEvent",
     "CircuitBreaker",
     "GatewayError",
@@ -210,6 +219,9 @@ __all__ = [
     "DomainProfile",
     "create_domain_agent_factory",
     "create_contencioso_administrativo_agent",
+    "IntegrationCorrelationAgent",
+    "IntegrationCorrelationRequest",
+    "create_integration_correlation_agent",
     "COLLABORATION_TARGETS",
     "ENCARGOS_SIGEF_PROFILE",
     "EncargosSigefDomainAgent",
