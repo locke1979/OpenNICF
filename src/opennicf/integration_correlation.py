@@ -78,6 +78,24 @@ def _normalize_multi_value(value: Any) -> tuple[str, ...]:
     return tuple(str(item).strip() for item in value if str(item).strip())
 
 
+def _normalize_privacy_policy(value: Any) -> PrivacyPolicy:
+    if isinstance(value, PrivacyPolicy):
+        return value
+    if isinstance(value, bool):
+        return PrivacyPolicy.LOCAL_ONLY if value else PrivacyPolicy.LOCAL_PREFERRED
+    if value is None:
+        return PrivacyPolicy.LOCAL_PREFERRED
+    text = str(value).strip()
+    if not text:
+        return PrivacyPolicy.LOCAL_PREFERRED
+    lowered = text.lower()
+    if lowered in {"1", "true", "yes", "y", "local", "local_only"}:
+        return PrivacyPolicy.LOCAL_ONLY
+    if lowered in {"0", "false", "no", "n", "local_preferred", "preferred", "remote_allowed"}:
+        return PrivacyPolicy.LOCAL_PREFERRED if lowered != "remote_allowed" else PrivacyPolicy.REMOTE_ALLOWED
+    return PrivacyPolicy(text)
+
+
 def _normalize_request(value: str | Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(value, str):
         return {"query": value}
@@ -150,6 +168,7 @@ class IntegrationCorrelationRequest:
     evidence_budget: int = 8
     token_budget: int = 12_000
     retrieval_mode: str = "domain_evidence"
+    privacy: PrivacyPolicy = PrivacyPolicy.LOCAL_PREFERRED
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -170,6 +189,7 @@ class IntegrationCorrelationRequest:
             domain_ids = _infer_domains_from_text(question or raw_request)
         evidence_budget = int(data.get("evidence_budget") or data.get("limit") or data.get("max_evidence_packages") or 8)
         token_budget = int(data.get("token_budget") or data.get("estimated_input_tokens") or 12_000)
+        privacy = _normalize_privacy_policy(data.get("privacy") or data.get("privacy_policy") or data.get("local_only"))
         return cls(
             raw_request=raw_request or question,
             question=question or raw_request,
@@ -185,6 +205,7 @@ class IntegrationCorrelationRequest:
             evidence_budget=max(1, evidence_budget),
             token_budget=max(1, token_budget),
             retrieval_mode=str(data.get("retrieval_mode") or data.get("mode") or "domain_evidence"),
+            privacy=privacy,
             metadata={
                 key: value
                 for key, value in data.items()
@@ -219,6 +240,9 @@ class IntegrationCorrelationRequest:
                     "estimated_input_tokens",
                     "retrieval_mode",
                     "mode",
+                    "privacy",
+                    "privacy_policy",
+                    "local_only",
                 }
             },
         )
@@ -245,6 +269,7 @@ class IntegrationCorrelationRequest:
             "evidence_budget": self.evidence_budget,
             "token_budget": self.token_budget,
             "retrieval_mode": self.retrieval_mode,
+            "privacy": self.privacy.value,
             "metadata": self.metadata,
         }
 
@@ -281,6 +306,7 @@ class IntegrationCorrelationAgent:
     ) -> None:
         self.gateway = gateway or ModelGateway.from_env()
         self.knowledge = knowledge or KnowledgePlatform.in_memory()
+        self.privacy = _normalize_privacy_policy(privacy)
         self.domain_factory = domain_factory or DomainAgentFactory(
             gateway=self.gateway,
             knowledge=self.knowledge,
@@ -292,7 +318,7 @@ class IntegrationCorrelationAgent:
         self.model_adapter = OpenNICFChatModel(
             gateway=self.gateway,
             task_class=synthesis_task_class,
-            privacy=privacy,
+            privacy=self.privacy,
             complex_input_chars=6_000,
         )
         self.tools = IntegrationCorrelationTools(self)
@@ -427,7 +453,10 @@ class IntegrationCorrelationAgent:
         token_budget: int,
     ) -> dict[str, Any]:
         started_at = _utcnow()
-        agent = self.domain_factory.create(domain_id)
+        try:
+            agent = self.domain_factory.create(domain_id, privacy=request.privacy)
+        except TypeError:
+            agent = self.domain_factory.create(domain_id)
         retrieval_method = self._choose_retrieval_method(request)
         domain_payload = self._package_request_payload(
             request,
@@ -827,7 +856,7 @@ class IntegrationCorrelationAgent:
             result = self.gateway.chat(
                 messages,
                 task_class=self.model_adapter.task_class,
-                privacy=self.model_adapter.privacy,
+                privacy=request.privacy,
                 complex_task=len(delegations) > 2 or estimated_input_tokens > 2_000,
                 estimated_input_tokens=estimated_input_tokens,
                 source_fan_in=len(delegations),
@@ -939,6 +968,7 @@ class IntegrationCorrelationAgent:
             "estimated_tokens": total_estimated_tokens,
             "estimated_bytes": total_estimated_bytes,
             "created_at": _utcnow().isoformat(),
+            "privacy": parsed.privacy.value,
             "metadata": parsed.metadata,
         }
 
@@ -965,7 +995,7 @@ def create_integration_correlation_agent(
         max_domain_fan_out=max_domain_fan_out,
         max_evidence_budget=max_evidence_budget,
         synthesis_task_class=synthesis_task_class,
-        privacy=privacy,
+        privacy=_normalize_privacy_policy(privacy),
         runtime_factory=runtime_factory,
     )
 

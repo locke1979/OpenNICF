@@ -83,6 +83,7 @@ from .integration_correlation import (
     IntegrationCorrelationRequest,
     create_integration_correlation_agent,
 )
+from .domain_router import DomainRoutePlan, DomainRouter, create_domain_router
 from .encargos_sigef import (
     COLLABORATION_TARGETS,
     ENCARGOS_SIGEF_PROFILE,
@@ -160,6 +161,8 @@ __all__ = [  # noqa: RUF022
     "ToolCall",
     "Usage",
     "OpenNICFChatModel",
+    "DomainRoutePlan",
+    "DomainRouter",
     "Evidence",
     "EvidenceIndex",
     "ArtifactRecord",
@@ -222,6 +225,7 @@ __all__ = [  # noqa: RUF022
     "IntegrationCorrelationAgent",
     "IntegrationCorrelationRequest",
     "create_integration_correlation_agent",
+    "create_domain_router",
     "COLLABORATION_TARGETS",
     "ENCARGOS_SIGEF_PROFILE",
     "EncargosSigefDomainAgent",

@@ -1004,10 +1004,13 @@ class DomainAgent:
         knowledge: KnowledgePlatform | None = None,
         diagnostic_broker: Any | None = None,
         runtime_factory: Callable[[Any, dict[str, Callable[..., Any]]], Any] | None = None,
+        privacy: PrivacyPolicy | str | None = None,
     ) -> None:
-        self.profile = profile.normalized()
         self.gateway = gateway or ModelGateway.from_env()
         self.knowledge = knowledge or KnowledgePlatform.in_memory()
+        if privacy is not None:
+            profile = replace(profile, privacy_policy=PrivacyPolicy(privacy) if isinstance(privacy, str) else privacy)
+        self.profile = profile.normalized()
         self.model_adapter = OpenNICFChatModel(
             gateway=self.gateway,
             task_class=self.profile.task_class,
@@ -1167,7 +1170,7 @@ class DomainAgentFactory:
     def resolve_domain_id(self, domain_id: str) -> str:
         return self.profile_for(domain_id).domain_id
 
-    def create(self, domain_id: str) -> DomainAgent:
+    def create(self, domain_id: str, privacy: PrivacyPolicy | str | None = None) -> DomainAgent:
         resolved_domain_id = self.domain_for_alias(domain_id)
         profile = self.profile_for(resolved_domain_id)
         agent_class = (
@@ -1192,6 +1195,7 @@ class DomainAgentFactory:
             knowledge=self.knowledge,
             diagnostic_broker=self.diagnostic_broker,
             runtime_factory=self._runtime_factory,
+            privacy=privacy,
         )
 
     def domain_for_alias(self, value: str) -> str:
@@ -1238,6 +1242,7 @@ def create_contencioso_administrativo_agent(
     knowledge: KnowledgePlatform | None = None,
     diagnostic_broker: Any | None = None,
     runtime_factory: Callable[[Any, dict[str, Callable[..., Any]]], Any] | None = None,
+    privacy: PrivacyPolicy | str | None = None,
 ) -> ContenciosoAdministrativoDomainAgent:
     """Create the Administrative agent through the shared domain factory."""
     agent = create_domain_agent_factory(
@@ -1245,6 +1250,6 @@ def create_contencioso_administrativo_agent(
         knowledge=knowledge,
         diagnostic_broker=diagnostic_broker,
         runtime_factory=runtime_factory,
-    ).create("contencioso_administrativo")
+    ).create("contencioso_administrativo", privacy=privacy)
     assert isinstance(agent, ContenciosoAdministrativoDomainAgent)
     return agent
