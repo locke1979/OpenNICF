@@ -52,6 +52,15 @@ from .object_store import (
 from .retrieval import HybridRetriever, cosine_similarity
 from .store import KnowledgePlatform, MemoryKnowledgeStore, PostgresKnowledgeStore
 
+_BENCHMARK_EXPORTS = {"BenchmarkManifestError", "RetrievalBenchmark", "compact_hits", "load_manifest"}
+
+
+def __getattr__(name):
+    if name in _BENCHMARK_EXPORTS:
+        from . import benchmark
+        return getattr(benchmark, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 __all__ = [
     "AdminOperation",
     "ArtifactRecord",
@@ -59,6 +68,7 @@ __all__ = [
     "AuditFindingRecord",
     "AuditReportRecord",
     "AuditTimelineEventRecord",
+    "BenchmarkManifestError",
     "ChunkRecord",
     "CodeRelationshipRecord",
     "CodeSymbolRecord",
@@ -94,11 +104,14 @@ __all__ = [
     "PrivacyBoundaryError",
     "QwenEmbeddingBackend",
     "RetirementPolicy",
+    "RetrievalBenchmark",
     "RetrievalEventRecord",
     "RetrievalFilters",
     "SearchCandidate",
     "SourceKind",
     "VerificationRequestRecord",
     "build_namespace_record",
+    "compact_hits",
     "cosine_similarity",
+    "load_manifest",
 ]

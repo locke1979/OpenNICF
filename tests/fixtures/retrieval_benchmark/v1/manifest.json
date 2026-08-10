@@ -1,0 +1,30 @@
+{
+  "manifest_version": 1,
+  "fixture_set": "opennicf-retrieval-representative-v1",
+  "description": "Sanitized, provenance-safe retrieval workload for OpenNICF Phase 2 issue 52.",
+  "default_filters": {"principal_acl_scopes": ["internal"], "domain_ids": ["retrieval_benchmark"]},
+  "fixtures": [
+    {"fixture_id": "technical-pt", "path": "technical_pt.md", "source_id": "bench-technical-pt", "source_type": "document", "domain_id": "retrieval_benchmark", "system_id": "docs", "acl_scope": "internal", "language": "pt-BR", "mime_type": "text/markdown", "content_sha256": "4ce3662bafe7e31211122e5eace57fb2da097bcc4f490dc9c94e1f6ebb6da5f3"},
+    {"fixture_id": "technical-en", "path": "technical_en.md", "source_id": "bench-technical-en", "source_type": "document", "domain_id": "retrieval_benchmark", "system_id": "docs", "acl_scope": "internal", "language": "en-US", "mime_type": "text/markdown", "content_sha256": "2c8b6d7ac3d8c9ff2dd280c73eb571312593e93436fa325d07d4fcb277a8f28f"},
+    {"fixture_id": "java-service", "path": "OrderService.java", "source_id": "bench-java-service", "source_type": "code", "domain_id": "retrieval_benchmark", "system_id": "order-service", "acl_scope": "internal", "language": "java", "content_sha256": "828a80db278bff2065d1a0f98fc3b148690299f2b8528fd4b3356fdda081c7e4"},
+    {"fixture_id": "sql-routine", "path": "operations.sql", "source_id": "bench-sql-routine", "source_type": "code", "domain_id": "retrieval_benchmark", "system_id": "order-db", "acl_scope": "internal", "language": "sql", "content_sha256": "33beeec093da9b5e0e8a94c3d91d5f38210186f904c19ca2e115c45281af6cd1"},
+    {"fixture_id": "powershell-deploy", "path": "Deploy.ps1", "source_id": "bench-powershell-deploy", "source_type": "code", "domain_id": "retrieval_benchmark", "system_id": "deployment", "acl_scope": "internal", "language": "powershell", "content_sha256": "f5cdf962eadb6b8579816659901278be76711570c07715a0beb812648f36faba"},
+    {"fixture_id": "application-log", "path": "application.log", "source_id": "bench-application-log", "source_type": "logs", "domain_id": "retrieval_benchmark", "system_id": "order-service", "acl_scope": "internal", "language": "log", "content_sha256": "e1a58e1720d6c71d3de2da0641337dd4c67aed178e5b23ee7c4c6b0f520a134e"},
+    {"fixture_id": "splunk-events", "path": "splunk_events.csv", "source_id": "bench-splunk-events", "source_type": "logs", "domain_id": "retrieval_benchmark", "system_id": "observability", "acl_scope": "internal", "language": "csv", "mime_type": "text/csv", "content_sha256": "d13c66b6adb83f946ab2f533c60eb50a7b28e06d8a68fdff9b0f60542fd9a49b"},
+    {"fixture_id": "database-schema", "path": "schema.sql", "source_id": "bench-database-schema", "source_type": "schema", "domain_id": "retrieval_benchmark", "system_id": "order-db", "acl_scope": "internal", "language": "sql", "content_sha256": "5c376bce17e6ce6ae19b54204ffb9db5af3c94b2a7f41d126bdb47fa5c6d6107"},
+    {"fixture_id": "integration-doc", "path": "integration.md", "source_id": "bench-integration-doc", "source_type": "integration", "domain_id": "retrieval_benchmark", "system_id": "order-service", "acl_scope": "internal", "language": "en-US", "mime_type": "text/markdown", "content_sha256": "fc421bb9134fd0f966aacdff2e5f5e84b91c8d6e1b7a291d5cab29f532dede0e"},
+    {"fixture_id": "query-output", "path": "query_output.txt", "source_id": "bench-query-output", "source_type": "query_output", "domain_id": "retrieval_benchmark", "system_id": "order-db", "acl_scope": "internal", "language": "text", "content_sha256": "fd4b5aacd90c24be1bc4ca30cf6115819b1081cc028063680418735e4d05d175"}
+  ],
+  "queries": [
+    {"query_id": "pt-reindex", "text": "reindexação incremental documentos portugueses", "relevant_source_ids": ["bench-technical-pt"], "modes": ["lexical", "vector", "hybrid"]},
+    {"query_id": "en-compaction", "text": "context compaction provenance evidence", "relevant_source_ids": ["bench-technical-en"], "modes": ["lexical", "vector", "hybrid"]},
+    {"query_id": "java-total", "text": "calculateTotal", "relevant_source_ids": ["bench-java-service"], "relevant_symbols": ["calculateTotal"]},
+    {"query_id": "sql-refresh", "text": "refresh order totals procedure", "relevant_source_ids": ["bench-sql-routine"], "relevant_symbols": ["refresh_order_totals"]},
+    {"query_id": "powershell-rollback", "text": "Invoke-Rollback", "relevant_source_ids": ["bench-powershell-deploy"], "relevant_symbols": ["Invoke-Rollback"]},
+    {"query_id": "log-timeout", "text": "gateway timeout request trace", "relevant_source_ids": ["bench-application-log"], "modes": ["lexical", "vector", "hybrid"]},
+    {"query_id": "splunk-denial", "text": "ACL denied export", "relevant_source_ids": ["bench-splunk-events"], "modes": ["lexical", "vector", "hybrid"]},
+    {"query_id": "schema-artifact", "text": "artifact hash source version", "relevant_source_ids": ["bench-database-schema"], "modes": ["lexical", "vector", "hybrid"]},
+    {"query_id": "integration-correlation", "text": "correlation id retry endpoint", "relevant_source_ids": ["bench-integration-doc"], "modes": ["lexical", "vector", "hybrid"]},
+    {"query_id": "query-acl", "text": "acl scope chunk ordinal", "relevant_source_ids": ["bench-query-output"], "modes": ["lexical", "vector", "hybrid"]}
+  ]
+}

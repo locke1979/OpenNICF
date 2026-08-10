@@ -1,0 +1,3 @@
+2026-08-08T10:15:00Z level=INFO request_id=req-17 trace_id=trace-91 route=/orders
+2026-08-08T10:15:01Z level=WARN request_id=req-17 trace_id=trace-91 message="gateway timeout" retry=1
+2026-08-08T10:15:02Z level=INFO request_id=req-17 trace_id=trace-91 message="retry succeeded"

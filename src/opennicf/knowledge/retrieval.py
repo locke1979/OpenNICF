@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from hashlib import sha256
 from math import sqrt
-from typing import Any, Iterable
 
 from .embeddings import EmbeddingSpaceMismatch, LocalFirstEmbeddingService
 from .models import EvidenceHit, RetrievalEventRecord, RetrievalFilters, SearchCandidate
@@ -22,9 +23,29 @@ def cosine_similarity(left: Iterable[float], right: Iterable[float]) -> float:
     return dot / (left_norm * right_norm)
 
 
+_LEXICAL_TOKEN_RE = re.compile(r"[\w]+(?:[./:-][\w]+)*", re.UNICODE)
+_LEXICAL_COMPONENT_RE = re.compile(r"[._/:+-]+")
+
+
+def _lexical_terms(text: str) -> set[str]:
+    """Return whole terms and identifier components for evidence text.
+
+    Evidence frequently stores fields as ``source_version_id`` while users
+    ask for the human-readable components. Keeping the complete identifier
+    preserves exact-match behavior and adding components makes schema, log,
+    and query-output retrieval usable without a separate analyzer.
+    """
+    terms: set[str] = set()
+    for token in _LEXICAL_TOKEN_RE.findall(text):
+        normalized = token.casefold()
+        terms.add(normalized)
+        terms.update(component for component in _LEXICAL_COMPONENT_RE.split(normalized) if component)
+    return terms
+
+
 def _lexical_score(query: str, text: str) -> float:
-    query_terms = {term.lower() for term in query.split() if term.strip()}
-    text_terms = {term.lower() for term in text.split() if term.strip()}
+    query_terms = _lexical_terms(query)
+    text_terms = _lexical_terms(text)
     if not query_terms:
         return 0.0
     return len(query_terms & text_terms) / len(query_terms)
@@ -137,7 +158,6 @@ class HybridRetriever:
         scored.sort(key=lambda item: (-item.score, item.chunk_ordinal, item.chunk_id))
 
         if filters.neighbor_window > 0 and scored:
-            candidate_map = {candidate.chunk.chunk_id: candidate for candidate in candidates}
             by_source: dict[str, list[SearchCandidate]] = {}
             for candidate in candidates:
                 by_source.setdefault(candidate.chunk.source_version_id, []).append(candidate)
@@ -184,7 +204,7 @@ class HybridRetriever:
                 unique[hit.chunk_id] = hit
         final_hits = sorted(unique.values(), key=lambda item: (-item.score, item.chunk_ordinal, item.chunk_id))[: filters.limit]
         event = RetrievalEventRecord(
-            event_id=sha256(f"{query}:{len(final_hits)}".encode("utf-8")).hexdigest(),
+            event_id=sha256(f"{query}:{len(final_hits)}".encode()).hexdigest(),
             query_hash=sha256(query.encode("utf-8")).hexdigest(),
             filters={
                 "principal_acl_scopes": sorted(filters.principal_acl_scopes),
