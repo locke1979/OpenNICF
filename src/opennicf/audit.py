@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from hashlib import sha256
 import csv
@@ -338,6 +338,23 @@ class GenericCodeAnalyzer:
         observations: list[AuditObservation] = []
         code_paths = {hit.locator for hit in hits}
         for hit in hits:
+            indexed_symbols = tuple(hit.metadata.get("symbol_names", ()))
+            if indexed_symbols:
+                observations.append(
+                    AuditObservation(
+                        classification="fact",
+                        statement=f"Persistent code index resolves symbols {', '.join(indexed_symbols[:8])} in {hit.locator}.",
+                        confidence=0.9,
+                        evidence_refs=(_ref_for_hit(hit, "code-symbol-index", "observed"),),
+                        systems=(hit.system,) if hit.system else (),
+                        components=indexed_symbols[:8],
+                        verification_status="observed",
+                        supporting_evidence=(hit.chunk_id,),
+                        provenance_refs=(hit.locator,),
+                        source_type_analyzers=("code", "symbol-index"),
+                        metadata={"parser_version": hit.parser_version, "symbol_count": len(indexed_symbols)},
+                    )
+                )
             matched_frames = [frame for frame in _extract_stack_frames(hit.text) if _frame_matches_paths(frame, code_paths)]
             if matched_frames:
                 observations.append(
@@ -582,6 +599,28 @@ class FailureAuditEngine:
                 hits_by_type[hit.source_type].append(hit)
 
         observations: list[AuditObservation] = []
+        indexed_symbols = (
+            self.platform.search_code_symbols(
+                "",
+                filters=RetrievalFilters(
+                    principal_acl_scopes=filters.principal_acl_scopes,
+                    systems=filters.systems,
+                    source_types=("code",),
+                    since=filters.since,
+                    until=filters.until,
+                    limit=filters.limit,
+                ),
+            )
+            if hasattr(self.platform, "search_code_symbols")
+            else []
+        )
+        symbols_by_chunk: dict[str, list[str]] = defaultdict(list)
+        for symbol in indexed_symbols:
+            symbols_by_chunk[symbol.chunk_id].append(symbol.qualified_name)
+        if symbols_by_chunk:
+            all_hits = [replace(hit, metadata={**hit.metadata, "symbol_names": tuple(symbols_by_chunk.get(hit.chunk_id, ()))}) for hit in all_hits]
+            for source_type, hits in list(hits_by_type.items()):
+                hits_by_type[source_type] = [replace(hit, metadata={**hit.metadata, "symbol_names": tuple(symbols_by_chunk.get(hit.chunk_id, ()))}) for hit in hits]
         for analyzer in self.analyzers:
             analyzer_hits = [hit for source_type in analyzer.source_types for hit in hits_by_type.get(source_type, [])]
             observations.extend(analyzer.analyze(parsed, analyzer_hits))

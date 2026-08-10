@@ -127,6 +127,61 @@ class EmbeddingRecord:
 
 
 @dataclass(frozen=True)
+class CodeSymbolRecord:
+    """Persistent, provenance-bearing symbol extracted from a source version."""
+
+    symbol_id: str
+    source_id: str
+    source_version_id: str
+    artifact_hash: str
+    chunk_id: str
+    name: str
+    qualified_name: str
+    kind: str
+    signature: str
+    locator: str
+    line_start: int
+    line_end: int
+    parser_name: str
+    parser_version: str
+    source_hash: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
+    environment: str
+    evidence_type: str
+    acl_scope: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class CodeRelationshipRecord:
+    """A directed relationship between symbols or a symbol and an external ref."""
+
+    relationship_id: str
+    source_symbol_id: str
+    target_name: str
+    relation_type: str
+    source_id: str
+    source_version_id: str
+    artifact_hash: str
+    chunk_id: str
+    locator: str
+    parser_name: str
+    parser_version: str
+    source_hash: str
+    namespace_id: str
+    domain_id: str
+    system_id: str
+    component_id: str
+    environment: str
+    evidence_type: str
+    acl_scope: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class AuditEvidenceRefRecord:
     reference_id: str
     source_id: str
@@ -340,3 +395,5 @@ class IngestBundle:
     created: bool
     namespaces: tuple["KnowledgeNamespaceRecord", ...] = ()
     integration_edges: tuple["IntegrationEdgeRecord", ...] = ()
+    symbols: tuple[CodeSymbolRecord, ...] = ()
+    relationships: tuple[CodeRelationshipRecord, ...] = ()
