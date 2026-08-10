@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install -e '.[test]' ruff pip-audit pyyaml
+      - run: python -m pip install -e '.[test]' 'setuptools>=83.0.0' ruff pip-audit pyyaml
       - name: Compile, import, and diff check
         run: |
           python -m compileall -q src tests
