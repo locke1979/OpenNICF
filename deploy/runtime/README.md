@@ -30,6 +30,12 @@ The installer retains `/opt`, `/etc`, and `/var` as production defaults, while
 `OPENNICF_LOG_ROOT` allow an isolated runner to validate installation without
 root access.
 
-The service templates intentionally reference `opennicf.service_runtime`, a
-bounded health/runtime entrypoint. Database, object-store, and embedding
-configuration is supplied only through protected environment files.
+The service templates intentionally reference `opennicf.service_runtime`. The
+knowledge service is a long-running, bounded HTTP administration service with
+live/readiness/status endpoints and provenance-aware source, artifact,
+reparse, reindex, re-embed, migration-status, and retry operations. Database,
+object-store, and embedding configuration is supplied only through protected
+environment files. In production, startup fails closed unless PostgreSQL with
+pgvector and the configured object store are available; it never silently
+falls back to an in-memory knowledge store. See
+[`docs/knowledge-service.md`](../../docs/knowledge-service.md).
