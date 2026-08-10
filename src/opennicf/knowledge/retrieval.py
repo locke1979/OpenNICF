@@ -98,6 +98,20 @@ class HybridRetriever:
         query_result = self.embeddings.embed([query], purpose="retrieval_query", prefer_gpu=True, space_id=active_space_id)
         query_vector = query_result.vectors[0] if query_result.vectors else ()
         candidates = self.store.search_candidates(filters)
+        stored_embeddings = getattr(self.store, "embeddings", None)
+        if stored_embeddings is not None and filters.embedding_space_id:
+            mismatched_chunks = [
+                candidate.chunk.chunk_id
+                for candidate in candidates
+                if candidate.embedding is None
+                and any(chunk_id == candidate.chunk.chunk_id for chunk_id, _ in stored_embeddings)
+            ]
+            if mismatched_chunks:
+                available = sorted({space_id for chunk_id, space_id in stored_embeddings if chunk_id in mismatched_chunks})
+                raise EmbeddingSpaceMismatch(
+                    f"query space {filters.embedding_space_id} has no compatible index for chunks "
+                    f"{mismatched_chunks[:3]}; available spaces={available}"
+                )
         allowed_domains = filters.effective_domain_ids()
         allowed_systems = filters.effective_system_ids()
         allowed_components = filters.effective_component_ids()
