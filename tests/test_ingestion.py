@@ -13,7 +13,6 @@ from opennicf import (
     IngestionQueue,
     IngestionService,
     KnowledgePlatform,
-    MailDumpWatcher,
     SFTPWatcher,
 )
 

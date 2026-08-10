@@ -1049,7 +1049,7 @@ class KnowledgePlatform:
 
     @staticmethod
     def _source_version_id(source_id: str, content_hash: str, parser_version: str = "1") -> str:
-        digest = sha256(f"source-version:{source_id}:{content_hash}:{parser_version}".encode("utf-8")).hexdigest()
+        digest = sha256(f"source-version:{source_id}:{content_hash}:{parser_version}".encode()).hexdigest()
         return f"srcver_{digest}"
 
     @staticmethod

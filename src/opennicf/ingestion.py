@@ -2,30 +2,30 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime, timezone
-from email import policy
-from email.message import Message
-from email.parser import BytesParser
-from hashlib import sha256
 import base64
 import csv
 import io
 import json
 import mimetypes
-from pathlib import Path, PurePosixPath
 import posixpath
 import re
 import tarfile
-from typing import Any, Callable, Iterable, Sequence
 import zipfile
+from collections.abc import Callable, Iterable, Sequence
+from dataclasses import asdict, dataclass, field, replace
+from datetime import UTC, datetime
+from email import policy
+from email.message import Message
+from email.parser import BytesParser
+from hashlib import sha256
+from pathlib import Path, PurePosixPath
+from typing import Any
+from xml.etree import ElementTree as ET
 
 import yaml
-from xml.etree import ElementTree as ET
 
 from .knowledge import IngestBundle, KnowledgePlatform, ParsedBlock
 from .knowledge.namespaces import sanitize_metadata
-
 
 ARCHIVE_SUFFIXES = {".zip", ".tar", ".tgz", ".tar.gz", ".7z"}
 DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -153,7 +153,7 @@ class IngestionQueue:
         dead = DeadLetterEntry(
             job=replace(job, state="dead-letter"),
             reason=reason,
-            failed_at=datetime.now(timezone.utc).isoformat(),
+            failed_at=datetime.now(UTC).isoformat(),
             retryable=retryable,
         )
         self.dead_letters.append(dead)
@@ -197,7 +197,7 @@ class IngestionQueue:
         return retried
 
     @classmethod
-    def from_state(cls, state_path: str | Path, *, max_attempts: int = 3) -> "IngestionQueue":
+    def from_state(cls, state_path: str | Path, *, max_attempts: int = 3) -> IngestionQueue:
         queue = cls(state_path=state_path, max_attempts=max_attempts)
         if queue.state_path and queue.state_path.exists():
             queue.restore(json.loads(queue.state_path.read_text(encoding="utf-8")))
@@ -300,9 +300,15 @@ def _bundle_to_json(bundle: IngestBundle) -> dict[str, Any]:
 
 
 def _bundle_from_json(data: dict[str, Any]) -> IngestBundle:
-    from .knowledge import ArtifactRecord, ChunkRecord, EmbeddingRecord, KnowledgeSource, KnowledgeSourceVersion
-    from .knowledge.object_store import ObjectReference
+    from .knowledge import (
+        ArtifactRecord,
+        ChunkRecord,
+        EmbeddingRecord,
+        KnowledgeSource,
+        KnowledgeSourceVersion,
+    )
     from .knowledge.namespaces import IntegrationEdgeRecord, KnowledgeNamespaceRecord
+    from .knowledge.object_store import ObjectReference
 
     return IngestBundle(
         source=KnowledgeSource(**data["source"]),
@@ -485,7 +491,7 @@ def _pdf_blocks(data: bytes, *, prefix: str | None = None) -> list[ParsedBlock]:
     blocks: list[ParsedBlock] = []
     for index, page_blob in enumerate(pages, start=1):
         page_texts: list[str] = []
-        for match in re.finditer(r"\((.*?)\)\s*(?:Tj|TJ)", page_blob, re.S):
+        for match in re.finditer(r"\((.*?)\)\s*(?:Tj|TJ)", page_blob, re.DOTALL):
             raw = match.group(1)
             raw = raw.replace(r"\(", "(").replace(r"\)", ")").replace(r"\\", "\\")
             if raw.strip():
@@ -529,7 +535,7 @@ def _xlsx_blocks(data: bytes, *, prefix: str | None = None) -> list[ParsedBlock]
                     if cell_type == "s":
                         try:
                             value = shared_strings[int(value)]
-                        except Exception:
+                        except Exception:  # noqa: BLE001, S110 - malformed spreadsheet cells remain literal
                             pass
                     values.append(value)
                 if values:
@@ -887,7 +893,7 @@ class IngestionService:
         source_uri = source_uri or str(file_path)
         source_id = source_id or _stable_source_id(channel, source_uri)
         mime_type = _canonical_mime(file_path, None)
-        suffix = file_path.suffix.lower()
+        file_path.suffix.lower()
         if _is_archive_path(file_path):
             member_jobs: list[IngestionJob] = []
             for member_path, member_bytes in self._expand_archive(file_path, raw_bytes):
@@ -1275,7 +1281,7 @@ class IngestionService:
             outcome = IngestionOutcome(job_id=job.job_id, created=any(bundle.created for bundle in bundles), bundles=tuple(bundles), content_hash=job.content_hash, metadata=dict(job.metadata))
             self.queue.ack(job, outcome)
             return outcome
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - ingestion boundary records failure in the queue
             self.queue.fail(job, str(exc), retryable=False)
             return None
 
@@ -1347,7 +1353,7 @@ def _parse_binary_or_text(path: Path, data: bytes) -> tuple[list[ParsedBlock], s
     suffix = _archive_suffix(path)
     if suffix == ".docx":
         return _docx_blocks(data, prefix=path.name), "docx-parser", "1", "document"
-    mime_type, source_type, blocks, _ = _infer_blocks_from_bytes(path, data)
+    _mime_type, source_type, blocks, _ = _infer_blocks_from_bytes(path, data)
     parser_name = f"{source_type}-parser"
     parser_version = "1"
     if not blocks and _looks_like_text(data):
