@@ -24,7 +24,7 @@ from xml.etree import ElementTree as ET
 
 import yaml
 
-from .knowledge import IngestBundle, KnowledgePlatform, ParsedBlock
+from .knowledge import FilesystemObjectStore, IngestBundle, KnowledgePlatform, ParsedBlock
 from .knowledge.namespaces import sanitize_metadata
 
 ARCHIVE_SUFFIXES = {".zip", ".tar", ".tgz", ".tar.gz", ".7z"}
@@ -51,6 +51,20 @@ TEXT_SUFFIXES = {
     ".sh",
     ".ps1",
 }
+
+
+LIFECYCLE_STATES = (
+    "received",
+    "validated",
+    "stored",
+    "parsed",
+    "chunked",
+    "embedded",
+    "indexed",
+    "failed",
+    "quarantined",
+    "retry",
+)
 
 
 @dataclass(frozen=True)
@@ -84,8 +98,10 @@ class IngestionJob:
     acl_scope: str = "internal"
     parser_hint: str | None = None
     parser_version: str | None = None
-    state: str = "queued"
+    state: str = "received"
     attempts: int = 0
+    landing_object_key: str | None = None
+    local_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -105,6 +121,32 @@ class IngestionOutcome:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class LifecycleEvent:
+    state: str
+    at: str
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+class FilesystemLandingStore:
+    """Durable first landing area for received bytes.
+
+    Landing is content addressed and immutable.  The knowledge object store is
+    still the authority for stored artifacts; this small boundary makes receipt
+    durable before validation/parsing starts and allows a restart to recover the
+    exact bytes that were acknowledged by the application.
+    """
+
+    def __init__(self, root: str | Path):
+        self._store = FilesystemObjectStore(root)
+
+    def put(self, content: bytes, *, mime_type: str, metadata: dict[str, Any] | None = None):
+        return self._store.put_bytes(content, mime_type=mime_type, metadata=metadata)
+
+    def get(self, object_key: str) -> bytes:
+        return self._store.get_bytes(object_key)
+
+
 class IngestionQueue:
     """Deterministic, restartable queue with a dead-letter queue."""
 
@@ -117,39 +159,66 @@ class IngestionQueue:
         self.dead_letters: list[DeadLetterEntry] = []
         self._seen: set[str] = set()
         self.jobs: dict[str, IngestionJob] = {}
+        self.lifecycle: dict[str, list[LifecycleEvent]] = {}
 
     def _persist(self) -> None:
         if self.state_path is None:
             return
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
-        temporary.write_text(json.dumps(self.snapshot(), sort_keys=True), encoding="utf-8")
+        temporary.write_text(json.dumps(self.snapshot(), sort_keys=True, default=_json_default), encoding="utf-8")
         temporary.replace(self.state_path)
 
     def enqueue(self, job: IngestionJob) -> bool:
         if job.job_id in self._seen:
             return False
+        job = replace(job, state="received")
         self.pending.append(job)
         self._seen.add(job.job_id)
         self.jobs[job.job_id] = job
+        self._event(job.job_id, "received")
         self._persist()
         return True
+
+    def _event(self, job_id: str, state: str, details: dict[str, Any] | None = None) -> None:
+        if state not in LIFECYCLE_STATES:
+            raise ValueError(f"unknown ingestion lifecycle state: {state}")
+        self.lifecycle.setdefault(job_id, []).append(
+            LifecycleEvent(state, datetime.now(UTC).isoformat(), dict(details or {}))
+        )
+
+    def transition(self, job_id: str, state: str, *, details: dict[str, Any] | None = None) -> IngestionJob:
+        job = self.jobs[job_id]
+        updated = replace(job, state=state)
+        self.jobs[job_id] = updated
+        self.pending = [updated if item.job_id == job_id else item for item in self.pending]
+        self.in_progress = {key: (updated if key == job_id else item) for key, item in self.in_progress.items()}
+        self._event(job_id, state, details)
+        self._persist()
+        return updated
 
     def claim(self) -> IngestionJob | None:
         if not self.pending:
             return None
         job = self.pending.pop(0)
-        self.in_progress[job.job_id] = replace(job, state="running", attempts=job.attempts + 1)
+        # ``running`` remains an operational queue state; lifecycle events are
+        # reserved for durable evidence milestones.
+        claimed = replace(job, state="running", attempts=job.attempts + 1)
+        self.in_progress[job.job_id] = claimed
+        self.jobs[job.job_id] = claimed
         self._persist()
         return self.in_progress[job.job_id]
 
     def ack(self, job: IngestionJob, outcome: IngestionOutcome) -> None:
         self.in_progress.pop(job.job_id, None)
         self.completed[job.job_id] = outcome
+        self.jobs[job.job_id] = replace(job, state="indexed")
         self._persist()
 
     def fail(self, job: IngestionJob, reason: str, *, retryable: bool = True) -> None:
         self.in_progress.pop(job.job_id, None)
+        self.jobs[job.job_id] = replace(job, state="failed")
+        self._event(job.job_id, "failed", {"reason": reason[:240], "retryable": retryable})
         dead = DeadLetterEntry(
             job=replace(job, state="dead-letter"),
             reason=reason,
@@ -158,15 +227,24 @@ class IngestionQueue:
         )
         self.dead_letters.append(dead)
         if retryable and job.attempts < self.max_attempts:
-            self.pending.append(replace(job, state="queued"))
+            retry = replace(job, state="retry")
+            self.pending.append(retry)
+            self.jobs[job.job_id] = retry
+            self._event(job.job_id, "retry", {"attempt": job.attempts + 1})
+        else:
+            self.jobs[job.job_id] = replace(job, state="quarantined")
+            self._event(job.job_id, "quarantined")
         self._persist()
 
     def retry_dead_letter(self, job_id: str) -> bool:
         for index, entry in enumerate(list(self.dead_letters)):
             if entry.job.job_id == job_id:
                 self.dead_letters.pop(index)
-                self.pending.append(replace(entry.job, state="queued"))
+                retry = replace(entry.job, state="retry")
+                self.pending.append(retry)
+                self.jobs[job_id] = retry
                 self._seen.add(job_id)
+                self._event(job_id, "retry", {"manual": True})
                 self._persist()
                 return True
         return False
@@ -180,11 +258,16 @@ class IngestionQueue:
             "in_progress": len(self.in_progress),
             "completed": len(self.completed),
             "dead_letters": len(self.dead_letters),
+            "states": {state: sum(1 for job in self.jobs.values() if job.state == state) for state in LIFECYCLE_STATES},
             "jobs": [
                 {"job_id": job.job_id, "source_id": job.source_id, "state": job.state, "attempts": job.attempts}
                 for job in jobs[:bound]
             ],
             "dead_letter_jobs": [entry.job.job_id for entry in self.dead_letters[:bound]],
+            "lifecycle": {
+                job_id: [asdict(event) for event in events[-bound:]]
+                for job_id, events in list(self.lifecycle.items())[:bound]
+            },
         }
 
     def retry_dead_letters(self, *, limit: int = 10) -> int:
@@ -211,6 +294,7 @@ class IngestionQueue:
             "dead_letters": [_dead_letter_to_json(entry) for entry in self.dead_letters],
             "seen": sorted(self._seen),
             "jobs": {job_id: _job_to_json(job) for job_id, job in self.jobs.items()},
+            "lifecycle": {job_id: [asdict(event) for event in events] for job_id, events in self.lifecycle.items()},
         }
 
     def restore(self, snapshot: dict[str, Any]) -> None:
@@ -229,6 +313,10 @@ class IngestionQueue:
         self.dead_letters = [_dead_letter_from_json(entry) for entry in snapshot.get("dead_letters", [])]
         self._seen = set(snapshot.get("seen", []))
         self.jobs = {job_id: _job_from_json(job) for job_id, job in snapshot.get("jobs", {}).items()}
+        self.lifecycle = {
+            job_id: [LifecycleEvent(**event) for event in events]
+            for job_id, events in snapshot.get("lifecycle", {}).items()
+        }
         for job in [*self.pending, *self.in_progress.values()]:
             self.jobs.setdefault(job.job_id, job)
         for entry in self.dead_letters:
@@ -240,6 +328,12 @@ def _job_to_json(job: IngestionJob) -> dict[str, Any]:
     data = asdict(job)
     data["raw_bytes"] = base64.b64encode(job.raw_bytes).decode("ascii")
     return data
+
+
+def _json_default(value: Any) -> str:
+    if isinstance(value, datetime):
+        return value.isoformat()
+    raise TypeError(f"unsupported ingestion state value: {type(value).__name__}")
 
 
 def _job_from_json(data: dict[str, Any]) -> IngestionJob:
@@ -310,12 +404,29 @@ def _bundle_from_json(data: dict[str, Any]) -> IngestBundle:
     from .knowledge.namespaces import IntegrationEdgeRecord, KnowledgeNamespaceRecord
     from .knowledge.object_store import ObjectReference
 
+    source = dict(data["source"])
+    for key in ("created_at", "updated_at"):
+        if isinstance(source.get(key), str):
+            source[key] = datetime.fromisoformat(source[key])
+    version = dict(data["version"])
+    if isinstance(version.get("ingest_timestamp"), str):
+        version["ingest_timestamp"] = datetime.fromisoformat(version["ingest_timestamp"])
+    artifact = dict(data["artifact"])
+    if isinstance(artifact.get("created_at"), str):
+        artifact["created_at"] = datetime.fromisoformat(artifact["created_at"])
+    embeddings = []
+    for embedding in data.get("embeddings", []):
+        item = dict(embedding)
+        if isinstance(item.get("created_at"), str):
+            item["created_at"] = datetime.fromisoformat(item["created_at"])
+        item["vector"] = tuple(item.get("vector", ()))
+        embeddings.append(EmbeddingRecord(**item))
     return IngestBundle(
-        source=KnowledgeSource(**data["source"]),
-        version=KnowledgeSourceVersion(**data["version"]),
-        artifact=ArtifactRecord(**data["artifact"]),
+        source=KnowledgeSource(**source),
+        version=KnowledgeSourceVersion(**version),
+        artifact=ArtifactRecord(**artifact),
         chunks=tuple(ChunkRecord(**chunk) for chunk in data.get("chunks", [])),
-        embeddings=tuple(EmbeddingRecord(**embedding) for embedding in data.get("embeddings", [])),
+        embeddings=tuple(embeddings),
         object_reference=ObjectReference(**data["object_reference"]),
         created=bool(data["created"]),
         namespaces=tuple(KnowledgeNamespaceRecord(**namespace) for namespace in data.get("namespaces", [])),
@@ -718,11 +829,14 @@ class IngestionService:
         queue: IngestionQueue | None = None,
         limits: IngestionLimits | None = None,
         malware_scanner: Callable[[bytes, dict[str, Any]], None] | None = None,
+        landing_root: str | Path | None = None,
     ):
         self.platform = platform
         self.queue = queue or IngestionQueue()
         self.limits = limits or IngestionLimits()
         self.malware_scanner = malware_scanner or (lambda _content, _metadata: None)
+        inferred_landing = self.queue.state_path.parent / "landing" if self.queue.state_path else None
+        self.landing = FilesystemLandingStore(landing_root or inferred_landing) if (landing_root or inferred_landing) else None
 
     def status(self, *, limit: int = 100) -> dict[str, Any]:
         return self.queue.status(limit=limit)
@@ -762,11 +876,13 @@ class IngestionService:
         acl_scope: str,
         parser_hint: str | None,
         parser_version: str | None = None,
+        local_only: bool = False,
         metadata: dict[str, Any] | None = None,
     ) -> IngestionJob:
         content_hash = sha256(raw_bytes).hexdigest()
         job_id = _stable_hash(channel, source_id, content_hash, parser_hint or source_type, parser_version or "detected")
         sanitized_metadata, _ = sanitize_metadata(metadata)
+        local_only = local_only or bool(sanitized_metadata.get("local_only", False))
         effective_domain_id = domain_id or domain
         effective_system_id = system_id or system
         effective_component_id = component_id or sanitized_metadata.get("component_id") or f"{effective_system_id}_component"
@@ -792,7 +908,20 @@ class IngestionService:
             acl_scope=acl_scope,
             parser_hint=parser_hint,
             parser_version=parser_version,
+            local_only=local_only,
         )
+
+    def _enqueue(self, job: IngestionJob) -> IngestionJob:
+        """Land bytes before making the job visible to the queue."""
+        if self.landing is not None:
+            reference = self.landing.put(
+                job.raw_bytes,
+                mime_type=job.mime_type,
+                metadata={"job_id": job.job_id, "source_id": job.source_id, "local_only": job.local_only},
+            )
+            job = replace(job, landing_object_key=reference.object_key)
+        self.queue.enqueue(job)
+        return job
 
     def _validate_payload_size(self, raw_bytes: bytes, *, label: str) -> None:
         if len(raw_bytes) > self.limits.max_bytes:
@@ -818,6 +947,7 @@ class IngestionService:
         acl_scope: str = "internal",
         parser_hint: str | None = None,
         parser_version: str | None = None,
+        local_only: bool = False,
         metadata: dict[str, Any] | None = None,
     ) -> IngestionJob:
         raw_bytes = content.encode("utf-8") if isinstance(content, str) else bytes(content)
@@ -842,8 +972,9 @@ class IngestionService:
             parser_hint=parser_hint,
             parser_version=parser_version,
             metadata=metadata,
+            local_only=local_only,
         )
-        self.queue.enqueue(job)
+        job = self._enqueue(job)
         return job
 
     def submit_file(
@@ -863,6 +994,7 @@ class IngestionService:
         acl_scope: str = "internal",
         metadata: dict[str, Any] | None = None,
         parser_version: str | None = None,
+        local_only: bool = False,
     ) -> list[IngestionJob]:
         file_path = Path(path)
         if file_path.is_dir():
@@ -883,6 +1015,7 @@ class IngestionService:
                         environment=environment,
                         acl_scope=acl_scope,
                         metadata={"parent_directory": str(file_path), **dict(metadata or {})},
+                        local_only=local_only,
                     )
                 )
             return jobs
@@ -919,11 +1052,12 @@ class IngestionService:
                     evidence_type=evidence_type,
                     environment=environment,
                     acl_scope=acl_scope,
-                        parser_hint=member_source_type,
-                        parser_version=parser_version,
+                    parser_hint=member_source_type,
+                    parser_version=parser_version,
+                    local_only=local_only,
                         metadata={"archive_path": str(file_path), "member_path": member_path.as_posix(), **member_metadata, **dict(metadata or {})},
                 )
-                self.queue.enqueue(job)
+                job = self._enqueue(job)
                 member_jobs.append(job)
             return member_jobs
         source_type, source_kind = _classify_suffix(file_path)
@@ -946,9 +1080,10 @@ class IngestionService:
             acl_scope=acl_scope,
             parser_hint=source_type,
             parser_version=parser_version,
+            local_only=local_only,
             metadata={**parsed_metadata, **dict(metadata or {})},
         )
-        self.queue.enqueue(job)
+        job = self._enqueue(job)
         return [job]
 
     def _submit_conversation_message(
@@ -1276,13 +1411,23 @@ class IngestionService:
         if job is None:
             return None
         try:
-            self.malware_scanner(job.raw_bytes, job.metadata)
+            raw_bytes = self.landing.get(job.landing_object_key) if self.landing and job.landing_object_key else job.raw_bytes
+            if sha256(raw_bytes).hexdigest() != job.content_hash:
+                raise ValueError("landed content hash mismatch")
+            self.malware_scanner(raw_bytes, job.metadata)
+            job = self.queue.transition(job.job_id, "validated", details={"attempt": job.attempts})
+            job = self.queue.transition(job.job_id, "stored", details={"landing_object_key": job.landing_object_key})
+            job = replace(job, raw_bytes=raw_bytes)
             bundles = self._process_job(job)
+            self.queue.transition(job.job_id, "parsed")
+            self.queue.transition(job.job_id, "chunked", details={"chunks": sum(len(bundle.chunks) for bundle in bundles)})
+            self.queue.transition(job.job_id, "embedded", details={"embeddings": sum(len(bundle.embeddings) for bundle in bundles)})
+            self.queue.transition(job.job_id, "indexed")
             outcome = IngestionOutcome(job_id=job.job_id, created=any(bundle.created for bundle in bundles), bundles=tuple(bundles), content_hash=job.content_hash, metadata=dict(job.metadata))
             self.queue.ack(job, outcome)
             return outcome
         except Exception as exc:  # noqa: BLE001 - ingestion boundary records failure in the queue
-            self.queue.fail(job, str(exc), retryable=False)
+            self.queue.fail(job, str(exc), retryable=True)
             return None
 
     def run(self, *, max_jobs: int | None = None) -> list[IngestionOutcome]:
@@ -1318,7 +1463,7 @@ class IngestionService:
             source_type=source_type,
             parser_name=parser_name,
             parser_version=parser_version,
-            metadata={**job.metadata, "content_hash": job.content_hash, "channel": job.channel},
+            metadata={**job.metadata, "content_hash": job.content_hash, "channel": job.channel, "local_only": job.local_only},
         )
         return [bundle]
 
