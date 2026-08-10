@@ -1,18 +1,38 @@
 """Memory and PostgreSQL knowledge stores."""
 
+# The PostgreSQL adapter retains two legacy method definitions for compatibility
+# with the original store implementation; the later definitions are intentional.
+# ruff: noqa: F811
+
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime, timezone
-from hashlib import sha256
-import importlib.resources as resources
 import json
 import os
-from pathlib import Path
-from typing import Any, Callable, Iterable, Protocol, Sequence
 import uuid
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import asdict, replace
+from datetime import datetime
+from hashlib import sha256
+from typing import Any, Protocol
 
 from .embeddings import EmbeddingError, EmbeddingResult, LocalFirstEmbeddingService
+from .models import (
+    ArtifactRecord,
+    AuditEvidenceRefRecord,
+    AuditFindingRecord,
+    AuditReportRecord,
+    ChunkRecord,
+    EmbeddingRecord,
+    IngestBundle,
+    KnowledgeSource,
+    KnowledgeSourceVersion,
+    ParsedBlock,
+    RetrievalEventRecord,
+    RetrievalFilters,
+    SearchCandidate,
+    VerificationRequestRecord,
+    utcnow,
+)
 from .namespaces import (
     IntegrationEdgeRecord,
     KnowledgeNamespaceRecord,
@@ -21,26 +41,11 @@ from .namespaces import (
     sanitize_metadata,
     sanitize_text,
 )
-from .models import (
-    ArtifactRecord,
-    AuditEvidenceRefRecord,
-    AuditFindingRecord,
-    AuditReportRecord,
-    VerificationRequestRecord,
-    ChunkRecord,
-    EmbeddingRecord,
-    EvidenceHit,
-    IngestBundle,
-    KnowledgeSource,
-    KnowledgeSourceVersion,
-    ParsedBlock,
-    RetrievalEventRecord,
-    RetrievalFilters,
-    SearchCandidate,
-    SourceKind,
-    utcnow,
+from .object_store import (
+    FilesystemObjectStore,
+    MemoryObjectStore,
+    ObjectStore,
 )
-from .object_store import FilesystemObjectStore, MemoryObjectStore, ObjectReference, ObjectStore
 
 
 def _uuid(prefix: str) -> str:
@@ -147,6 +152,9 @@ class KnowledgeStore(Protocol):
     def restore(self, snapshot: dict[str, Any]) -> None:
         raise NotImplementedError
 
+    def record_admin_operation(self, operation: Any) -> None:
+        raise NotImplementedError
+
 
 class MemoryKnowledgeStore:
     """Deterministic in-memory store used for tests and local development."""
@@ -164,6 +172,7 @@ class MemoryKnowledgeStore:
         self.audit_findings: list[AuditFindingRecord] = []
         self.audit_reports: list[AuditReportRecord] = []
         self.verification_requests: list[VerificationRequestRecord] = []
+        self.admin_operations: dict[str, Any] = {}
         self._latest_version_by_source_hash: dict[tuple[str, str], str] = {}
         self._versions_by_source: dict[str, list[str]] = {}
         self._artifact_chunk_ids: dict[str, list[str]] = {}
@@ -318,6 +327,75 @@ class MemoryKnowledgeStore:
     def record_verification_request(self, request: VerificationRequestRecord) -> None:
         self.verification_requests.append(request)
 
+    def record_admin_operation(self, operation: Any) -> None:
+        self.admin_operations[operation.operation_id] = operation
+
+    @staticmethod
+    def _admin_visible(source: KnowledgeSource, filters: RetrievalFilters) -> bool:
+        filters = filters.normalized()
+        if filters.principal_acl_scopes and source.acl_scope not in filters.principal_acl_scopes:
+            return False
+        domains = filters.effective_domain_ids()
+        if domains and source.domain_id not in domains:
+            return False
+        if filters.source_ids and source.source_id not in filters.source_ids:
+            return False
+        if filters.effective_system_ids() and source.system_id not in filters.effective_system_ids():
+            return False
+        if filters.effective_component_ids() and source.component_id not in filters.effective_component_ids():
+            return False
+        if filters.effective_evidence_types() and source.evidence_type not in filters.effective_evidence_types():
+            return False
+        if filters.namespace_ids and source.namespace_id not in filters.namespace_ids:
+            return False
+        return not (filters.environments and source.environment not in filters.environments)
+
+    def list_sources(self, filters: RetrievalFilters, *, include_retired: bool = False) -> list[dict[str, Any]]:
+        rows = []
+        for source in self.sources.values():
+            if not self._admin_visible(source, filters):
+                continue
+            metadata = dict(source.metadata)
+            if not include_retired and metadata.get("status") == "retired":
+                continue
+            rows.append({"source_id": source.source_id, "source_uri": source.source_uri, "source_kind": source.source_kind, "channel": source.channel, "namespace_id": source.namespace_id, "domain_id": source.domain_id, "system_id": source.system_id, "component_id": source.component_id, "environment": source.environment, "evidence_type": source.evidence_type, "acl_scope": source.acl_scope, "content_hash": source.content_hash, "updated_at": source.updated_at, "status": metadata.get("status", "active"), "metadata": metadata})
+        return sorted(rows, key=lambda row: row["source_id"])
+
+    def source_status(self, source_id: str, *, filters: RetrievalFilters) -> dict[str, Any]:
+        source = self.sources.get(source_id)
+        if source is None:
+            raise KeyError(f"unknown source: {source_id}")
+        if not self._admin_visible(source, filters):
+            raise PermissionError("source is outside the requested ACL/domain scope")
+        versions = [self.source_versions[version_id] for version_id in self._versions_by_source.get(source_id, [])]
+        chunks = [chunk for chunk in self.chunks.values() if chunk.source_id == source_id]
+        spaces = sorted({record.embedding_space_id or f"{record.model}:{record.dimensions}:v1" for chunk in chunks for (chunk_id, _), record in self.embeddings.items() if chunk_id == chunk.chunk_id})
+        return {"source_id": source_id, "status": source.metadata.get("status", "active"), "versions": len(versions), "chunks": len(chunks), "embedding_space_ids": spaces, "object_present": all(self._object_present(version) for version in versions), "domain_id": source.domain_id, "acl_scope": source.acl_scope, "metadata": dict(source.metadata)}
+
+    def _object_present(self, version: KnowledgeSourceVersion) -> bool:
+        return True
+
+    def provenance(self, source_id: str, *, source_version_id: str | None, filters: RetrievalFilters) -> dict[str, Any]:
+        source = self.sources.get(source_id)
+        if source is None or not self._admin_visible(source, filters):
+            raise KeyError(f"source is unavailable: {source_id}")
+        version_ids = self._versions_by_source.get(source_id, [])
+        version_id = source_version_id or version_ids[-1]
+        version = self.source_versions.get(version_id)
+        if version is None or version.source_id != source_id:
+            raise KeyError(f"unknown source version: {version_id}")
+        artifact = self.artifacts[version.artifact_hash]
+        chunks = [self.chunks[cid] for cid in self._artifact_chunk_ids.get(artifact.artifact_hash, []) if cid in self.chunks]
+        return {"source": asdict(source), "version": asdict(version), "artifact": asdict(artifact), "chunks": [asdict(chunk) for chunk in chunks]}
+
+    def retire_source(self, source_id: str, *, reason: str, actor: str, preserve_provenance: bool = True) -> None:
+        source = self.sources.get(source_id)
+        if source is None:
+            raise KeyError(f"unknown source: {source_id}")
+        metadata = dict(source.metadata)
+        metadata.update({"status": "retired", "retired_at": utcnow().isoformat(), "retired_by": actor, "retirement_reason": reason, "provenance_preserved": preserve_provenance})
+        self.sources[source_id] = replace(source, metadata=metadata, updated_at=utcnow())
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "sources": [asdict(item) for item in self.sources.values()],
@@ -331,6 +409,7 @@ class MemoryKnowledgeStore:
             "audit_findings": [asdict(item) for item in self.audit_findings],
             "audit_reports": [asdict(item) for item in self.audit_reports],
             "verification_requests": [asdict(item) for item in self.verification_requests],
+            "admin_operations": [asdict(item) for item in self.admin_operations.values()],
         }
 
     def restore(self, snapshot: dict[str, Any]) -> None:
@@ -373,6 +452,18 @@ class MemoryKnowledgeStore:
             self.audit_reports.append(_audit_report_from_json(report))
         for request in snapshot.get("verification_requests", []):
             self.verification_requests.append(_verification_request_from_json(request))
+        for operation in snapshot.get("admin_operations", []):
+            from .admin import AdminOperation
+            record = AdminOperation(
+                operation_id=operation["operation_id"],
+                operation=operation["operation"],
+                status=operation["status"],
+                requested_at=datetime.fromisoformat(operation["requested_at"]) if isinstance(operation["requested_at"], str) else operation["requested_at"],
+                actor=operation["actor"],
+                target_id=operation["target_id"],
+                details=dict(operation.get("details", {})),
+            )
+            self.admin_operations[record.operation_id] = record
 
 
 class PostgresKnowledgeStore:
@@ -383,7 +474,7 @@ class PostgresKnowledgeStore:
         self._migration_package = migration_package
 
     @classmethod
-    def from_dsn(cls, dsn: str, *, migration_package: str = "opennicf.knowledge.migrations") -> "PostgresKnowledgeStore":
+    def from_dsn(cls, dsn: str, *, migration_package: str = "opennicf.knowledge.migrations") -> PostgresKnowledgeStore:
         def factory():
             try:
                 import psycopg
@@ -397,7 +488,11 @@ class PostgresKnowledgeStore:
         return self._connection_factory()
 
     def migrate(self) -> list[int]:
-        from .migration_utils import iter_migration_files, migration_checksum, migration_version
+        from .migration_utils import (
+            iter_migration_files,
+            migration_checksum,
+            migration_version,
+        )
 
         applied: list[int] = []
         with self._connect() as conn:
@@ -461,7 +556,7 @@ class PostgresKnowledgeStore:
             conn.commit()
 
     def next_version_number(self, source_id: str, content_hash: str) -> int:
-        with self._connect() as conn:
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT version_number FROM knowledge_source_versions WHERE source_id = %s AND content_hash = %s",
@@ -479,10 +574,9 @@ class PostgresKnowledgeStore:
     def search_candidates(self, filters: RetrievalFilters) -> list[SearchCandidate]:
         filters = filters.normalized()
         sql, params = _build_search_sql(filters)
-        with self._connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql, params)
-                rows = cur.fetchall()
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(sql, params)
+            rows = cur.fetchall()
         candidates: list[SearchCandidate] = []
         for row in rows:
             row = tuple(value.decode("utf-8") if isinstance(value, bytes) else value for value in row)
@@ -805,6 +899,90 @@ class PostgresKnowledgeStore:
                 )
             conn.commit()
 
+    def record_admin_operation(self, operation: Any) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO knowledge_admin_operations
+                    (operation_id, operation, status, requested_at, actor, target_id, details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (operation_id) DO UPDATE SET status = EXCLUDED.status,
+                    details = EXCLUDED.details""",
+                    (operation.operation_id, operation.operation, operation.status, operation.requested_at, operation.actor, operation.target_id, json.dumps(operation.details, sort_keys=True)),
+                )
+            conn.commit()
+
+    def list_sources(self, filters: RetrievalFilters, *, include_retired: bool = False) -> list[dict[str, Any]]:
+        filters = filters.normalized()
+        clauses = ["1 = 1"]
+        params: list[Any] = []
+        if filters.principal_acl_scopes:
+            clauses.append("acl_scope = ANY(%s)")
+            params.append(list(filters.principal_acl_scopes))
+        domains = filters.effective_domain_ids()
+        if domains:
+            clauses.append("domain_id = ANY(%s)")
+            params.append(list(domains))
+        if filters.effective_system_ids():
+            clauses.append("system_id = ANY(%s)")
+            params.append(list(filters.effective_system_ids()))
+        if filters.effective_component_ids():
+            clauses.append("component_id = ANY(%s)")
+            params.append(list(filters.effective_component_ids()))
+        if filters.effective_evidence_types():
+            clauses.append("evidence_type = ANY(%s)")
+            params.append(list(filters.effective_evidence_types()))
+        if filters.effective_namespace_ids():
+            clauses.append("namespace_id = ANY(%s)")
+            params.append(list(filters.effective_namespace_ids()))
+        if filters.environments:
+            clauses.append("environment = ANY(%s)")
+            params.append(list(filters.environments))
+        if not include_retired:
+            clauses.append("COALESCE(metadata->>'status', 'active') <> 'retired'")
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT source_id, source_uri, source_kind, channel, namespace_id, domain_id, system_id, component_id, environment, evidence_type, acl_scope, content_hash, updated_at, metadata FROM knowledge_sources WHERE {' AND '.join(clauses)} ORDER BY source_id", tuple(params))
+                rows = cur.fetchall()
+        keys = ("source_id", "source_uri", "source_kind", "channel", "namespace_id", "domain_id", "system_id", "component_id", "environment", "evidence_type", "acl_scope", "content_hash", "updated_at", "metadata")
+        return [{**dict(zip(keys, row)), "status": (row[13] or {}).get("status", "active")} for row in rows]
+
+    def source_status(self, source_id: str, *, filters: RetrievalFilters) -> dict[str, Any]:
+        rows = self.list_sources(replace(filters, source_ids=(source_id,)), include_retired=True)
+        if not rows:
+            raise KeyError(f"source is unavailable: {source_id}")
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*), COUNT(DISTINCT c.chunk_id), COALESCE(array_agg(DISTINCT e.embedding_space_id) FILTER (WHERE e.embedding_space_id IS NOT NULL), ARRAY[]::text[]) FROM knowledge_source_versions v LEFT JOIN knowledge_chunks c ON c.source_version_id = v.source_version_id LEFT JOIN knowledge_embeddings e ON e.chunk_id = c.chunk_id WHERE v.source_id = %s", (source_id,))
+                versions, chunks, spaces = cur.fetchone()
+        row = rows[0]
+        return {"source_id": source_id, "status": row["status"], "versions": int(versions), "chunks": int(chunks), "embedding_space_ids": sorted(spaces or []), "object_present": None, "domain_id": row["domain_id"], "acl_scope": row["acl_scope"], "metadata": row["metadata"] or {}}
+
+    def provenance(self, source_id: str, *, source_version_id: str | None, filters: RetrievalFilters) -> dict[str, Any]:
+        rows = self.list_sources(replace(filters, source_ids=(source_id,)), include_retired=True)
+        if not rows:
+            raise KeyError(f"source is unavailable: {source_id}")
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
+            with conn.cursor() as cur:
+                version_clause = "AND v.source_version_id = %s" if source_version_id else ""
+                params: tuple[Any, ...] = (source_id, source_version_id) if source_version_id else (source_id,)
+                cur.execute(f"SELECT row_to_json(v), row_to_json(a) FROM knowledge_source_versions v JOIN knowledge_artifacts a ON a.artifact_hash = v.artifact_hash WHERE v.source_id = %s {version_clause} ORDER BY v.version_number DESC LIMIT 1", params)
+                row = cur.fetchone()
+                if row is None:
+                    raise KeyError("source version not found")
+                version, artifact = row
+                cur.execute("SELECT row_to_json(c) FROM knowledge_chunks c WHERE c.source_version_id = %s ORDER BY c.ordinal", (version["source_version_id"],))
+                chunks = [item[0] for item in cur.fetchall()]
+        return {"source": rows[0], "version": version, "artifact": artifact, "chunks": chunks}
+
+    def retire_source(self, source_id: str, *, reason: str, actor: str, preserve_provenance: bool = True) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE knowledge_sources SET metadata = metadata || %s::jsonb, updated_at = now() WHERE source_id = %s", (json.dumps({"status": "retired", "retired_at": utcnow().isoformat(), "retired_by": actor, "retirement_reason": reason, "provenance_preserved": preserve_provenance}), source_id))
+                if getattr(cur, "rowcount", 1) == 0:
+                    raise KeyError(f"unknown source: {source_id}")
+            conn.commit()
+
     def snapshot(self) -> dict[str, Any]:
         raise RuntimeError("PostgresKnowledgeStore snapshots are produced by database backups, not in-process export")
 
@@ -829,7 +1007,7 @@ class KnowledgePlatform:
         self.retriever = HybridRetriever(store, self.embeddings)
 
     @classmethod
-    def in_memory(cls, *, root: str | None = None) -> "KnowledgePlatform":
+    def in_memory(cls, *, root: str | None = None) -> KnowledgePlatform:
         object_store = FilesystemObjectStore(root) if root else MemoryObjectStore()
         return cls(MemoryKnowledgeStore(), object_store)
 
@@ -841,7 +1019,7 @@ class KnowledgePlatform:
         object_store_root: str,
         embeddings: LocalFirstEmbeddingService | None = None,
         migration_package: str = "opennicf.knowledge.migrations",
-    ) -> "KnowledgePlatform":
+    ) -> KnowledgePlatform:
         """Build the production platform from injected runtime configuration."""
         return cls(
             PostgresKnowledgeStore.from_dsn(dsn, migration_package=migration_package),
@@ -856,7 +1034,7 @@ class KnowledgePlatform:
         dsn_var: str = "OPENNICF_POSTGRES_DSN",
         object_store_var: str = "OPENNICF_OBJECT_STORE_ROOT",
         embeddings: LocalFirstEmbeddingService | None = None,
-    ) -> "KnowledgePlatform":
+    ) -> KnowledgePlatform:
         """Build from protected environment variables without logging their values."""
         dsn = os.environ.get(dsn_var)
         object_store_root = os.environ.get(object_store_var)
@@ -868,12 +1046,12 @@ class KnowledgePlatform:
 
     @staticmethod
     def _source_version_id(source_id: str, content_hash: str) -> str:
-        digest = sha256(f"source-version:{source_id}:{content_hash}".encode("utf-8")).hexdigest()
+        digest = sha256(f"source-version:{source_id}:{content_hash}".encode()).hexdigest()
         return f"srcver_{digest}"
 
     @staticmethod
     def _artifact_hash(content_hash: str, parser_version: str) -> str:
-        return sha256(f"{content_hash}:{parser_version}".encode("utf-8")).hexdigest()
+        return sha256(f"{content_hash}:{parser_version}".encode()).hexdigest()
 
     def ingest(
         self,
@@ -974,7 +1152,7 @@ class KnowledgePlatform:
         if hasattr(self.store, "next_version_number"):
             version_number = int(self.store.next_version_number(source_id, content_hash))
         elif hasattr(self.store, "source_versions"):
-            version_number = len([version for version in getattr(self.store, "source_versions").values() if version.source_id == source_id]) + 1
+            version_number = len([version for version in self.store.source_versions.values() if version.source_id == source_id]) + 1
         version = KnowledgeSourceVersion(
             source_version_id=self._source_version_id(source_id, content_hash),
             source_id=source_id,
@@ -1027,9 +1205,9 @@ class KnowledgePlatform:
         chunks: list[ChunkRecord] = []
         embeddings: list[EmbeddingRecord] = []
         for ordinal, block in enumerate(sanitized_blocks):
-            chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode("utf-8")).hexdigest()
+            chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode()).hexdigest()
             chunk_id = f"chunk_{chunk_digest}"
-            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block.text}".encode("utf-8")).hexdigest()
+            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block.text}".encode()).hexdigest()
             if block.locator:
                 locator = sanitize_text(block.locator, redacted_values)
             elif explicit_locator:

@@ -1,5 +1,6 @@
 """Knowledge platform primitives for OpenNICF."""
 
+from .admin import AdminOperation, KnowledgeAdministration, RetirementPolicy
 from .embeddings import (
     EmbeddingBackend,
     EmbeddingBatchSizer,
@@ -50,6 +51,7 @@ from .retrieval import HybridRetriever, cosine_similarity
 from .store import KnowledgePlatform, MemoryKnowledgeStore, PostgresKnowledgeStore
 
 __all__ = [
+    "AdminOperation",
     "ArtifactRecord",
     "AuditEvidenceRefRecord",
     "AuditFindingRecord",
@@ -73,6 +75,7 @@ __all__ = [
     "HybridRetriever",
     "IngestBundle",
     "IntegrationEdgeRecord",
+    "KnowledgeAdministration",
     "KnowledgeNamespaceRecord",
     "KnowledgePlatform",
     "KnowledgeSource",
@@ -86,6 +89,7 @@ __all__ = [
     "PostgresKnowledgeStore",
     "PrivacyBoundaryError",
     "QwenEmbeddingBackend",
+    "RetirementPolicy",
     "RetrievalEventRecord",
     "RetrievalFilters",
     "SearchCandidate",

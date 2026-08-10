@@ -14,8 +14,11 @@ from opennicf.knowledge import (
     PostgresKnowledgeStore,
     RetrievalFilters,
 )
-from opennicf.knowledge.migrations import iter_migration_files, migration_checksum, migration_version
-
+from opennicf.knowledge.migrations import (
+    iter_migration_files,
+    migration_checksum,
+    migration_version,
+)
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "knowledge"
 
@@ -87,7 +90,7 @@ def test_memory_platform_import_versioning_acl_and_provenance_roundtrip(tmp_path
     assert changed.version.version_number == 2
     assert len(platform.store.source_versions) == 2
 
-    public = platform.ingest(
+    platform.ingest(
         source_id="log-1",
         source_uri="tests/fixtures/knowledge/logs.txt",
         content=_load("logs.txt"),
@@ -187,13 +190,14 @@ def test_fixture_queries_import_and_search_grounded_chunks():
 
 def test_migrations_are_source_controlled_and_versioned():
     files = iter_migration_files()
-    assert [migration_version(path.name) for path in files] == [1, 2, 3, 4, 5]
+    assert [migration_version(path.name) for path in files] == [1, 2, 3, 4, 5, 6]
     assert [path.name for path in files] == [
         "0001_initial.sql",
         "0002_hybrid_retrieval.sql",
         "0003_audit_engine.sql",
         "0004_knowledge_namespaces.sql",
         "0005_embedding_spaces.sql",
+        "0006_knowledge_administration.sql",
     ]
     assert all(migration_checksum(path) for path in files)
 
@@ -232,7 +236,7 @@ def test_postgres_migrations_apply_in_order():
 
     store = PostgresKnowledgeStore(lambda: Connection())
     applied = store.migrate()
-    assert applied == [1, 2, 3, 4, 5]
+    assert applied == [1, 2, 3, 4, 5, 6]
     assert any("CREATE EXTENSION IF NOT EXISTS vector" in statement for statement in executed)
     assert any("knowledge_sources" in statement for statement in executed)
 
