@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tarfile
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -89,12 +90,16 @@ def _systemctl(*args: str) -> None:
 
 def readiness(url: str, *, timeout: float | None = None) -> bool:
     timeout = timeout if timeout is not None else float(os.environ.get("OPENNICF_RELEASE_READINESS_TIMEOUT", "15"))
+    deadline = time.monotonic() + timeout
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return 200 <= response.status < 300
-    except (OSError, urllib.error.URLError):
-        return False
+    while True:
+        try:
+            with urllib.request.urlopen(request, timeout=min(5.0, max(0.1, deadline - time.monotonic()))) as response:
+                return 200 <= response.status < 300
+        except (OSError, urllib.error.URLError):
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(0.25)
 
 
 def _switch(root: Path, version: str) -> None:
