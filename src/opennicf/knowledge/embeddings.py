@@ -297,11 +297,7 @@ class GeminiEmbeddingBackend:
 
 
 class HttpEmbeddingBackend:
-    """Provider-neutral client for the OpenNICF local embedding worker.
-
-    The URL is deployment configuration.  No transport or Tailscale identity
-    is encoded in the provider abstraction.
-    """
+    """Provider-neutral client for the OpenNICF local embedding worker."""
 
     def __init__(self, base_url: str | None = None, *, service_token: str | None = None,
                  timeout: float = 30.0, model: str = "Qwen/Qwen3-Embedding-0.6B",
@@ -310,11 +306,9 @@ class HttpEmbeddingBackend:
         self.service_token = service_token or os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN")
         self.timeout = timeout
         self.dimension = dimension
-        self._info = EmbeddingModelInfo(
-            model=model, dimensions=dimension, device="remote-local", backend="opennicf-http",
-            embedding_space_id=_space_id(model, dimension, model_revision), provider="LOCAL",
-            model_revision=model_revision,
-        )
+        self._info = EmbeddingModelInfo(model=model, dimensions=dimension, device="remote-local",
+            backend="opennicf-http", embedding_space_id=_space_id(model, dimension, model_revision),
+            provider="LOCAL", model_revision=model_revision)
 
     @property
     def info(self) -> EmbeddingModelInfo:

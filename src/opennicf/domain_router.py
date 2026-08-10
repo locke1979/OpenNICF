@@ -131,6 +131,8 @@ class DomainRoutePlan:
     classification: dict[str, Any] = field(default_factory=dict)
     correlation: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    reason: str = ""
+    confidence: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -146,6 +148,8 @@ class DomainRoutePlan:
             "classification": self.classification,
             "correlation": self.correlation,
             "metadata": self.metadata,
+            "reason": self.reason,
+            "confidence": self.confidence,
         }
 
 
@@ -300,6 +304,16 @@ class DomainRouter:
             classification=classification,
             correlation=correlation,
             metadata=dict(parsed.metadata),
+            reason=(
+                "deterministic domain/system alias match"
+                if route_source == "deterministic_alias"
+                else "QwenAgent classification constrained to the registered domain allow-list"
+            ),
+            confidence=(
+                1.0
+                if route_source == "deterministic_alias"
+                else float(classification.get("confidence", classification.get("score", 0.0)) or 0.0)
+            ),
         )
 
     def route(self, request: str | Mapping[str, Any]) -> dict[str, Any]:
@@ -332,6 +346,8 @@ class DomainRouter:
                     "status": result.get("status"),
                 },
                 metadata=plan.metadata,
+                reason=plan.reason,
+                confidence=plan.confidence,
             )
 
         response = plan.to_dict()

@@ -582,6 +582,11 @@ class DomainTools:
             domain=candidate.chunk.domain,
             system=candidate.chunk.system,
             neighboring_chunk_ids=neighboring_chunk_ids,
+            embedding_space_id=(
+                candidate.embedding.embedding_space_id
+                if candidate.embedding is not None
+                else self.platform.embeddings.active_space_id
+            ),
             metadata=metadata,
         )
 
@@ -611,6 +616,7 @@ class DomainTools:
                                 "retrieval_mode": retrieval_mode,
                                 "score": hit.score,
                                 "semantic_score": hit.semantic_score,
+                                "embedding_space_id": hit.embedding_space_id,
                                 "lexical_score": hit.lexical_score,
                                 "domain_id": hit.domain_id,
                                 "namespace_id": hit.namespace_id,
@@ -648,6 +654,7 @@ class DomainTools:
                     "score": primary.score,
                     "lexical_score": primary.lexical_score,
                     "semantic_score": primary.semantic_score,
+                    "embedding_space_id": primary.embedding_space_id,
                     "estimated_tokens": estimated_tokens,
                     "estimated_bytes": estimated_bytes,
                     "neighboring_chunk_ids": list(dict.fromkeys(chunk_id for hit in bucket for chunk_id in hit.neighboring_chunk_ids)),
@@ -660,6 +667,7 @@ class DomainTools:
                         "evidence_type": primary.evidence_type,
                         "source_type": primary.source_type,
                         "integration_edges": list(primary.metadata.get("integration_edges", [])),
+                        "embedding_space_id": primary.embedding_space_id,
                     },
                 }
             )
