@@ -323,6 +323,8 @@ DEFAULT_DOMAIN_PROFILES: dict[str, DomainProfile] = {
         name="Contraordenação",
         description="Administrative offense matters and supporting evidence.",
         owned_systems=("contraordenacional_casework", "contraordenacional_evidence"),
+        system_aliases=("sco",),
+        aliases=("sco", "SCO"),
         integration_boundary_aliases=("administrative-offense", "administrative-penalty"),
         permitted_evidence_classes=("document", "log", "code", "schema", "query-output"),
         system_prompt="You are the contraordenacional domain agent. Stay inside the contraordenacional evidence namespace.",
@@ -333,6 +335,7 @@ DEFAULT_DOMAIN_PROFILES: dict[str, DomainProfile] = {
         description="Administrative litigation matters and supporting evidence.",
         owned_systems=CONTENCIOSO_ADMINISTRATIVO_SYSTEMS,
         retrieval_system_ids=CONTENCIOSO_ADMINISTRATIVO_SYSTEMS,
+        aliases=("administrative", "Administrative"),
         system_aliases=(
             "sicat",
             "sicatpf",
@@ -362,7 +365,7 @@ DEFAULT_DOMAIN_PROFILES: dict[str, DomainProfile] = {
         description="Judicial litigation matters and supporting evidence.",
         owned_systems=("SICJUT", "SICJUTPF", "SICJUTINDBAT"),
         owned_components=("CJTCAADWS", "ISICJUTWS", "WSAFTAF", "WSCEXECF"),
-        aliases=CONTENCIOSO_JUDICIAL_ALIASES,
+        aliases=("judicial", "Judicial", *CONTENCIOSO_JUDICIAL_ALIASES),
         delegated_domains=CONTENCIOSO_JUDICIAL_DELEGATED_DOMAINS,
         integration_boundary_aliases=("judicial-litigation", "SIGEPRA", "SIGEF", "Encargos"),
         permitted_evidence_classes=("document", "log", "code", "schema", "query-output"),
@@ -1137,6 +1140,9 @@ class DomainAgentFactory:
 
     def profile_for(self, domain_id: str) -> DomainProfile:
         normalized = str(domain_id).strip().lower().replace("_", "-")
+        exact = str(domain_id).strip()
+        if exact in self.profiles:
+            return self.profiles[exact]
         for candidate_id, profile in self.profiles.items():
             aliases = tuple(
                 str(alias).lower().replace("_", "-")
@@ -1150,7 +1156,7 @@ class DomainAgentFactory:
             if normalized == candidate_id.replace("_", "-") or normalized in aliases:
                 return profile
         try:
-            return self.profiles[domain_id]
+            return self.profiles[normalized.replace("-", "_")]
         except KeyError as exc:
             raise KeyError(f"unknown domain_id: {domain_id}") from exc
 

@@ -74,6 +74,11 @@ from .domain_agent import (
     create_domain_agent_factory,
     create_contencioso_administrativo_agent,
 )
+from .integration_correlation import (
+    IntegrationCorrelationAgent,
+    IntegrationCorrelationRequest,
+    create_integration_correlation_agent,
+)
 from .encargos_sigef import (
     COLLABORATION_TARGETS,
     ENCARGOS_SIGEF_PROFILE,
@@ -210,6 +215,9 @@ __all__ = [
     "DomainProfile",
     "create_domain_agent_factory",
     "create_contencioso_administrativo_agent",
+    "IntegrationCorrelationAgent",
+    "IntegrationCorrelationRequest",
+    "create_integration_correlation_agent",
     "COLLABORATION_TARGETS",
     "ENCARGOS_SIGEF_PROFILE",
     "EncargosSigefDomainAgent",

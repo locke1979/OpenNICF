@@ -1,0 +1,2 @@
+2026-08-08T12:04:01Z request_id=req-judicial-22 correlation_id=trace-admin-22 source=SICJUT status=handoff Judicial litigation coordinates with SIGEPRA and SIGEF
+2026-08-08T12:04:05Z request_id=req-judicial-22 correlation_id=trace-admin-22 source=SICJUT status=observed Judicial ownership stays scoped to the SICJUT evidence namespace
