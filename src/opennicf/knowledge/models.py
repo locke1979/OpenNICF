@@ -263,6 +263,57 @@ class VerificationRequestRecord:
 
 
 @dataclass(frozen=True)
+class AuditWorkflowRecord:
+    """Durable checkpoint for a resumable audit run.
+
+    The workflow record contains identifiers and bounded state only.  Evidence
+    text remains in the immutable evidence store or a separately ACL-scoped
+    package artifact; it is never interpreted as an instruction.
+    """
+
+    audit_id: str
+    request_hash: str
+    request_payload: dict[str, Any]
+    scope: str
+    domain_ids: tuple[str, ...]
+    system_ids: tuple[str, ...]
+    component_ids: tuple[str, ...]
+    acl_scopes: tuple[str, ...]
+    status: str
+    evidence_refs: tuple[AuditEvidenceRefRecord, ...] = ()
+    finding_ids: tuple[str, ...] = ()
+    missing_evidence: tuple[str, ...] = ()
+    diagnostic_request_ids: tuple[str, ...] = ()
+    timeline_event_ids: tuple[str, ...] = ()
+    report_artifact_ids: tuple[str, ...] = ()
+    manifest_artifact_id: str | None = None
+    manifest_hash: str | None = None
+    last_error: str | None = None
+    resume_count: int = 0
+    created_at: datetime = field(default_factory=utcnow)
+    updated_at: datetime = field(default_factory=utcnow)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AuditArtifactRecord:
+    """Immutable, ACL/domain-scoped report or evidence-package artifact."""
+
+    artifact_id: str
+    audit_id: str
+    artifact_type: str
+    backend: str
+    object_key: str
+    content_hash: str
+    mime_type: str
+    size_bytes: int
+    acl_scopes: tuple[str, ...]
+    domain_ids: tuple[str, ...]
+    created_at: datetime = field(default_factory=utcnow)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class RetrievalEventRecord:
     event_id: str
     query_hash: str

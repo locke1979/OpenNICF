@@ -73,3 +73,25 @@ model as the deployment gates:
 Validate backups monthly and after schema changes. The inventory in
 `docs/config-inventory.json` is the runtime bootstrap contract for the secret
 set, while `deploy/config-inventory` can re-render it from the code path.
+
+### Resumable audit workflow
+
+`PersistentAuditWorkflow` stores audit scope, domain/system scope, ACL scopes,
+evidence references, findings, missing evidence, diagnostic request IDs,
+status checkpoints, and report artifact IDs in PostgreSQL (migration `0008`).
+The memory store and backup/restore path carry the same records for local
+recovery tests. A pending controlled diagnostic leaves the audit in
+`waiting_for_diagnostic`; `resume()` records only a status and result hash,
+then deterministically reuses the persisted request and evidence scope.
+
+Human reports contain the executive summary, timeline, evidence, technical
+analysis, fact/inference/hypothesis classification, missing evidence,
+verification/remediation guidance, and an appendix manifest. Machine reports,
+human reports, compact integration-correlation packages, and manifests are
+immutable object-store artifacts. Artifact access requires both the persisted
+ACL scope and domain scope.
+
+Evidence text is untrusted content. It is never parsed as workflow scope,
+authorization, or a diagnostic operation; diagnostic operations remain fixed
+to the broker's read-only allow-list. Use `get_audit_evidence_package` to pass
+the bounded, provenance-only package to IntegrationCorrelationAgent.

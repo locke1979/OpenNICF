@@ -60,6 +60,7 @@ class AuditRequest:
 
     raw_request: str
     scope: str | None = None
+    domain_ids: tuple[str, ...] = ()
     systems: tuple[str, ...] = ()
     components: tuple[str, ...] = ()
     start_time: datetime | None = None
@@ -85,6 +86,7 @@ class AuditRequest:
             return cls(
                 raw_request=text,
                 scope=_first_text_match(text, ("scope", "for", "about")) or None,
+                domain_ids=tuple(_split_comma_values(_first_text_match(text, ("domain", "domains")))),
                 systems=tuple(_split_comma_values(_first_text_match(text, ("system", "systems")))),
                 components=tuple(_split_comma_values(_first_text_match(text, ("component", "components")))),
                 symptoms=tuple(_split_comma_values(_first_text_match(text, ("symptom", "symptoms", "failure", "error")))),
@@ -100,8 +102,9 @@ class AuditRequest:
 
         data = dict(value)
         return cls(
-            raw_request=str(data.get("query") or data.get("request") or data.get("scope") or ""),
+            raw_request=str(data.get("query") or data.get("request") or data.get("raw_request") or data.get("scope") or ""),
             scope=data.get("scope"),
+            domain_ids=_normalize_tuple(data.get("domain_ids") or data.get("domains")),
             systems=_normalize_tuple(data.get("systems")),
             components=_normalize_tuple(data.get("components")),
             start_time=_as_utc(data.get("start_time") or data.get("from")),
@@ -111,12 +114,12 @@ class AuditRequest:
             correlation_ids=_normalize_tuple(data.get("correlation_ids") or data.get("request_ids")),
             source_types=_normalize_tuple(data.get("source_types") or data.get("evidence_types")),
             require_live_verification=bool(data.get("require_live_verification") or data.get("live_verification_required")),
-            metadata={k: v for k, v in data.items() if k not in {"query", "request", "scope", "systems", "components", "start_time", "from", "end_time", "to", "symptoms", "issues", "requested_outputs", "outputs", "correlation_ids", "request_ids", "source_types", "evidence_types", "require_live_verification", "live_verification_required"}},
+            metadata={k: v for k, v in data.items() if k not in {"query", "request", "scope", "domain_ids", "domains", "systems", "components", "start_time", "from", "end_time", "to", "symptoms", "issues", "requested_outputs", "outputs", "correlation_ids", "request_ids", "source_types", "evidence_types", "require_live_verification", "live_verification_required"}},
         )
 
     @property
     def search_terms(self) -> str:
-        parts = [self.raw_request, self.scope or "", *self.systems, *self.components, *self.symptoms]
+        parts = [self.raw_request, self.scope or "", *self.domain_ids, *self.systems, *self.components, *self.symptoms]
         return " ".join(part for part in parts if part).strip()
 
 
@@ -154,6 +157,7 @@ class AuditReport:
             "request": {
                 "raw_request": self.request.raw_request,
                 "scope": self.request.scope,
+                "domain_ids": list(self.request.domain_ids),
                 "systems": list(self.request.systems),
                 "components": list(self.request.components),
                 "start_time": self.request.start_time.isoformat() if self.request.start_time else None,
@@ -547,6 +551,18 @@ class LocalFailureAuditBroker:
         }
 
 
+@dataclass(frozen=True)
+class AuditEvidenceCollection:
+    """Immutable evidence checkpoint used by the resumable workflow."""
+
+    request: AuditRequest
+    query: str
+    filters: RetrievalFilters
+    source_types: tuple[str, ...]
+    hits: tuple[EvidenceHit, ...]
+    hits_by_type: dict[str, tuple[EvidenceHit, ...]]
+
+
 class FailureAuditEngine:
     """Coordinate evidence retrieval, source-type analyzers, and report generation."""
 
@@ -561,24 +577,31 @@ class FailureAuditEngine:
         self.broker = broker or LocalFailureAuditBroker()
         self.analyzers = tuple(analyzers or _default_analyzers())
 
-    def analyze(self, request: str | Mapping[str, Any]) -> AuditReport:
-        parsed = AuditRequest.from_input(request)
+    def collect_evidence(
+        self,
+        request: str | Mapping[str, Any] | AuditRequest,
+        *,
+        principal_acl_scopes: frozenset[str] | None = None,
+        domain_ids: Sequence[str] = (),
+    ) -> AuditEvidenceCollection:
+        parsed = request if isinstance(request, AuditRequest) else AuditRequest.from_input(request)
         query = parsed.search_terms or parsed.raw_request or "failure audit"
         filters = RetrievalFilters(
-            principal_acl_scopes=frozenset({"internal"}),
+            principal_acl_scopes=principal_acl_scopes or frozenset({"internal"}),
+            domain_ids=tuple(domain_ids) or parsed.domain_ids,
             systems=parsed.systems,
             source_types=parsed.source_types,
             since=parsed.start_time,
             until=parsed.end_time,
             limit=24,
         )
-
         source_types = parsed.source_types or self._discover_source_types()
         hits_by_type: dict[str, list[EvidenceHit]] = defaultdict(list)
         all_hits: list[EvidenceHit] = []
         for source_type in source_types:
             type_filters = RetrievalFilters(
                 principal_acl_scopes=filters.principal_acl_scopes,
+                domain_ids=filters.domain_ids,
                 systems=filters.systems,
                 source_types=(source_type,),
                 since=filters.since,
@@ -589,12 +612,43 @@ class FailureAuditEngine:
             for hit in hits:
                 hits_by_type[hit.source_type].append(hit)
                 all_hits.append(hit)
-
         if not all_hits:
-            # Search the broad corpus once so a structured request still sees evidence.
             all_hits = self.platform.search(query, filters=filters, route="local")
             for hit in all_hits:
                 hits_by_type[hit.source_type].append(hit)
+        return AuditEvidenceCollection(
+            request=parsed,
+            query=query,
+            filters=filters,
+            source_types=source_types,
+            hits=tuple(all_hits),
+            hits_by_type={key: tuple(value) for key, value in hits_by_type.items()},
+        )
+
+    def analyze(
+        self,
+        request: str | Mapping[str, Any],
+        *,
+        principal_acl_scopes: frozenset[str] | None = None,
+        domain_ids: Sequence[str] = (),
+        audit_id: str | None = None,
+        collection: AuditEvidenceCollection | None = None,
+        diagnostic_results: Sequence[Mapping[str, Any]] = (),
+        existing_verification_requests: Sequence[VerificationRequestRecord] = (),
+    ) -> AuditReport:
+        collection = collection or self.collect_evidence(
+            request,
+            principal_acl_scopes=principal_acl_scopes,
+            domain_ids=domain_ids,
+        )
+        parsed = collection.request
+        query = collection.query
+        filters = collection.filters
+        source_types = collection.source_types
+        all_hits = list(collection.hits)
+        hits_by_type: dict[str, list[EvidenceHit]] = {
+            key: list(value) for key, value in collection.hits_by_type.items()
+        }
 
         observations: list[AuditObservation] = []
         indexed_symbols = (
@@ -626,10 +680,40 @@ class FailureAuditEngine:
         timeline = self._build_timeline(all_hits)
         findings = self._build_findings(parsed, observations, timeline)
         findings.extend(self._derive_cross_source_findings(parsed, findings, hits_by_type))
+        for result in diagnostic_results:
+            result_hash = str(result.get("result_hash") or sha256(json.dumps(dict(result), sort_keys=True, default=_json_default).encode()).hexdigest())
+            request_id = str(result.get("request_id") or "unknown")
+            status = str(result.get("status") or "completed")
+            findings.append(
+                AuditFindingRecord(
+                    finding_id=_stable_id("finding", "diagnostic", request_id, result_hash),
+                    classification="fact",
+                    statement=f"Controlled diagnostic request {request_id} returned status '{status}'; the raw result remains an external evidence payload.",
+                    confidence=0.9 if status in {"completed", "succeeded"} else 0.5,
+                    evidence_refs=(AuditEvidenceRefRecord(
+                        reference_id=_stable_id("eref", "diagnostic", request_id, result_hash),
+                        source_id=f"diagnostic:{request_id}",
+                        source_version_id="diagnostic-result",
+                        source_type="controlled-diagnostic",
+                        locator=f"diagnostic:{request_id}",
+                        role="controlled-diagnostic-result",
+                        provenance_ref=f"diagnostic:{request_id}",
+                        excerpt_hash=result_hash,
+                        statement=f"status={status}",
+                        metadata={"untrusted_content": True},
+                    ),),
+                    verification_status="verified" if status in {"completed", "succeeded"} else "failed",
+                    provenance_refs=(f"diagnostic:{request_id}",),
+                    source_type_analyzers=("controlled-diagnostic",),
+                    metadata={"result_hash": result_hash},
+                )
+            )
         verification_requests: list[VerificationRequestRecord] = []
         unresolved_hypotheses = [finding.statement for finding in findings if finding.classification in {"hypothesis", "missing_evidence"}]
         recommended_verification_steps: list[str] = []
-        if parsed.require_live_verification or any(finding.classification == "missing_evidence" for finding in findings):
+        if existing_verification_requests:
+            verification_requests.extend(existing_verification_requests)
+        elif parsed.require_live_verification or any(finding.classification == "missing_evidence" for finding in findings):
             recommendation = "Request controlled on-prem verification for the missing live database evidence through the broker interface."
             recommended_verification_steps.append(recommendation)
             request_payload = {
@@ -646,7 +730,7 @@ class FailureAuditEngine:
             broker_result = self.broker.request(request_payload)
             verification_request = VerificationRequestRecord(
                 request_id=str(broker_result.get("request_id") or _stable_id("verify", query)),
-                audit_id=_stable_id("audit", query, parsed.scope or "", ",".join(parsed.systems)),
+                audit_id=audit_id or _stable_id("audit", query, parsed.scope or "", ",".join(parsed.systems), ",".join(parsed.correlation_ids)),
                 finding_id=next((finding.finding_id for finding in findings if finding.classification == "missing_evidence"), None),
                 broker_name=str(broker_result.get("broker", getattr(self.broker, "name", "broker"))),
                 request_payload=dict(broker_result.get("payload") or request_payload),
@@ -659,7 +743,7 @@ class FailureAuditEngine:
 
         causal_chains = self._build_causal_chains(findings, timeline)
         report = AuditReport(
-            audit_id=_stable_id("audit", query, parsed.scope or "", ",".join(parsed.systems), ",".join(parsed.correlation_ids)),
+            audit_id=audit_id or _stable_id("audit", query, parsed.scope or "", ",".join(parsed.systems), ",".join(parsed.correlation_ids)),
             request=parsed,
             findings=tuple(findings),
             timeline=tuple(timeline),

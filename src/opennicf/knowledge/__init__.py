@@ -19,10 +19,12 @@ from .embeddings import (
 )
 from .models import (
     ArtifactRecord,
+    AuditArtifactRecord,
     AuditEvidenceRefRecord,
     AuditFindingRecord,
     AuditReportRecord,
     AuditTimelineEventRecord,
+    AuditWorkflowRecord,
     ChunkRecord,
     CodeRelationshipRecord,
     CodeSymbolRecord,
@@ -64,10 +66,12 @@ def __getattr__(name):
 __all__ = [
     "AdminOperation",
     "ArtifactRecord",
+    "AuditArtifactRecord",
     "AuditEvidenceRefRecord",
     "AuditFindingRecord",
     "AuditReportRecord",
     "AuditTimelineEventRecord",
+    "AuditWorkflowRecord",
     "BenchmarkManifestError",
     "ChunkRecord",
     "CodeRelationshipRecord",

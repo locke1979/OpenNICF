@@ -20,9 +20,11 @@ from .code_index import build_code_index
 from .embeddings import EmbeddingError, EmbeddingResult, LocalFirstEmbeddingService
 from .models import (
     ArtifactRecord,
+    AuditArtifactRecord,
     AuditEvidenceRefRecord,
     AuditFindingRecord,
     AuditReportRecord,
+    AuditWorkflowRecord,
     ChunkRecord,
     CodeRelationshipRecord,
     CodeSymbolRecord,
@@ -150,6 +152,18 @@ class KnowledgeStore(Protocol):
     def record_verification_request(self, request: VerificationRequestRecord) -> None:
         raise NotImplementedError
 
+    def record_audit_workflow(self, workflow: AuditWorkflowRecord) -> None:
+        raise NotImplementedError
+
+    def get_audit_workflow(self, audit_id: str) -> AuditWorkflowRecord | None:
+        raise NotImplementedError
+
+    def record_audit_artifact(self, artifact: AuditArtifactRecord) -> None:
+        raise NotImplementedError
+
+    def list_audit_artifacts(self, audit_id: str) -> list[AuditArtifactRecord]:
+        raise NotImplementedError
+
     def snapshot(self) -> dict[str, Any]:
         raise NotImplementedError
 
@@ -182,6 +196,8 @@ class MemoryKnowledgeStore:
         self.audit_findings: list[AuditFindingRecord] = []
         self.audit_reports: list[AuditReportRecord] = []
         self.verification_requests: list[VerificationRequestRecord] = []
+        self.audit_workflows: dict[str, AuditWorkflowRecord] = {}
+        self.audit_artifacts: dict[str, AuditArtifactRecord] = {}
         self.admin_operations: dict[str, Any] = {}
         self.symbols: dict[str, CodeSymbolRecord] = {}
         self.relationships: dict[str, CodeRelationshipRecord] = {}
@@ -368,6 +384,21 @@ class MemoryKnowledgeStore:
     def record_verification_request(self, request: VerificationRequestRecord) -> None:
         self.verification_requests.append(request)
 
+    def record_audit_workflow(self, workflow: AuditWorkflowRecord) -> None:
+        self.audit_workflows[workflow.audit_id] = workflow
+
+    def get_audit_workflow(self, audit_id: str) -> AuditWorkflowRecord | None:
+        return self.audit_workflows.get(audit_id)
+
+    def record_audit_artifact(self, artifact: AuditArtifactRecord) -> None:
+        self.audit_artifacts[artifact.artifact_id] = artifact
+
+    def list_audit_artifacts(self, audit_id: str) -> list[AuditArtifactRecord]:
+        return sorted(
+            (item for item in self.audit_artifacts.values() if item.audit_id == audit_id),
+            key=lambda item: (item.artifact_type, item.artifact_id),
+        )
+
     def record_admin_operation(self, operation: Any) -> None:
         self.admin_operations[operation.operation_id] = operation
 
@@ -450,6 +481,8 @@ class MemoryKnowledgeStore:
             "audit_findings": [asdict(item) for item in self.audit_findings],
             "audit_reports": [asdict(item) for item in self.audit_reports],
             "verification_requests": [asdict(item) for item in self.verification_requests],
+            "audit_workflows": [asdict(item) for item in self.audit_workflows.values()],
+            "audit_artifacts": [asdict(item) for item in self.audit_artifacts.values()],
             "admin_operations": [asdict(item) for item in self.admin_operations.values()],
             "symbols": [asdict(item) for item in self.symbols.values()],
             "relationships": [asdict(item) for item in self.relationships.values()],
@@ -495,6 +528,12 @@ class MemoryKnowledgeStore:
             self.audit_reports.append(_audit_report_from_json(report))
         for request in snapshot.get("verification_requests", []):
             self.verification_requests.append(_verification_request_from_json(request))
+        for workflow in snapshot.get("audit_workflows", []):
+            record = _audit_workflow_from_json(workflow)
+            self.audit_workflows[record.audit_id] = record
+        for artifact in snapshot.get("audit_artifacts", []):
+            record = _audit_artifact_from_json(artifact)
+            self.audit_artifacts[record.artifact_id] = record
         for operation in snapshot.get("admin_operations", []):
             from .admin import AdminOperation
             record = AdminOperation(
@@ -918,6 +957,136 @@ class PostgresKnowledgeStore:
                     ),
                 )
             conn.commit()
+
+    def record_audit_workflow(self, workflow: AuditWorkflowRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO knowledge_audit_workflows (
+                        audit_id, request_hash, request_payload, scope, domain_ids, system_ids,
+                        component_ids, acl_scopes, status, evidence_refs, finding_ids,
+                        missing_evidence, diagnostic_request_ids, timeline_event_ids,
+                        report_artifact_ids, manifest_artifact_id, manifest_hash, last_error,
+                        resume_count, created_at, updated_at, metadata
+                    ) VALUES (%s, %s, %s::jsonb, %s, %s::jsonb, %s::jsonb, %s::jsonb,
+                              %s::jsonb, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
+                              %s::jsonb, %s::jsonb, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (audit_id) DO UPDATE SET
+                        request_hash = EXCLUDED.request_hash,
+                        request_payload = EXCLUDED.request_payload,
+                        scope = EXCLUDED.scope,
+                        domain_ids = EXCLUDED.domain_ids,
+                        system_ids = EXCLUDED.system_ids,
+                        component_ids = EXCLUDED.component_ids,
+                        acl_scopes = EXCLUDED.acl_scopes,
+                        status = EXCLUDED.status,
+                        evidence_refs = EXCLUDED.evidence_refs,
+                        finding_ids = EXCLUDED.finding_ids,
+                        missing_evidence = EXCLUDED.missing_evidence,
+                        diagnostic_request_ids = EXCLUDED.diagnostic_request_ids,
+                        timeline_event_ids = EXCLUDED.timeline_event_ids,
+                        report_artifact_ids = EXCLUDED.report_artifact_ids,
+                        manifest_artifact_id = EXCLUDED.manifest_artifact_id,
+                        manifest_hash = EXCLUDED.manifest_hash,
+                        last_error = EXCLUDED.last_error,
+                        resume_count = EXCLUDED.resume_count,
+                        updated_at = EXCLUDED.updated_at,
+                        metadata = EXCLUDED.metadata
+                    """,
+                    (
+                        workflow.audit_id,
+                        workflow.request_hash,
+                        json.dumps(workflow.request_payload, sort_keys=True),
+                        workflow.scope,
+                        json.dumps(list(workflow.domain_ids), sort_keys=True),
+                        json.dumps(list(workflow.system_ids), sort_keys=True),
+                        json.dumps(list(workflow.component_ids), sort_keys=True),
+                        json.dumps(list(workflow.acl_scopes), sort_keys=True),
+                        workflow.status,
+                        json.dumps([asdict(ref) for ref in workflow.evidence_refs], sort_keys=True, default=str),
+                        json.dumps(list(workflow.finding_ids), sort_keys=True),
+                        json.dumps(list(workflow.missing_evidence), sort_keys=True),
+                        json.dumps(list(workflow.diagnostic_request_ids), sort_keys=True),
+                        json.dumps(list(workflow.timeline_event_ids), sort_keys=True),
+                        json.dumps(list(workflow.report_artifact_ids), sort_keys=True),
+                        workflow.manifest_artifact_id,
+                        workflow.manifest_hash,
+                        workflow.last_error,
+                        workflow.resume_count,
+                        workflow.created_at,
+                        workflow.updated_at,
+                        json.dumps(workflow.metadata, sort_keys=True, default=str),
+                    ),
+                )
+            conn.commit()
+
+    def get_audit_workflow(self, audit_id: str) -> AuditWorkflowRecord | None:
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """SELECT audit_id, request_hash, request_payload, scope, domain_ids, system_ids,
+                   component_ids, acl_scopes, status, evidence_refs, finding_ids, missing_evidence,
+                   diagnostic_request_ids, timeline_event_ids, report_artifact_ids,
+                   manifest_artifact_id, manifest_hash, last_error, resume_count, created_at,
+                   updated_at, metadata FROM knowledge_audit_workflows WHERE audit_id = %s""",
+                (audit_id,),
+            )
+            row = cur.fetchone()
+        if row is None:
+            return None
+        keys = (
+            "audit_id", "request_hash", "request_payload", "scope", "domain_ids", "system_ids",
+            "component_ids", "acl_scopes", "status", "evidence_refs", "finding_ids",
+            "missing_evidence", "diagnostic_request_ids", "timeline_event_ids", "report_artifact_ids",
+            "manifest_artifact_id", "manifest_hash", "last_error", "resume_count", "created_at",
+            "updated_at", "metadata",
+        )
+        payload = dict(zip(keys, row, strict=True))
+        payload["evidence_refs"] = tuple(_audit_evidence_ref_from_json(item) for item in (payload["evidence_refs"] or []))
+        for key in keys[4:8] + keys[9:15]:
+            payload[key] = tuple(payload[key] or [])
+        payload["request_payload"] = payload["request_payload"] or {}
+        payload["metadata"] = payload["metadata"] or {}
+        return AuditWorkflowRecord(**payload)
+
+    def record_audit_artifact(self, artifact: AuditArtifactRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO knowledge_audit_artifacts (
+                        artifact_id, audit_id, artifact_type, backend, object_key, content_hash,
+                        mime_type, size_bytes, acl_scopes, domain_ids, created_at, metadata
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s::jsonb)
+                    ON CONFLICT (artifact_id) DO UPDATE SET metadata = EXCLUDED.metadata""",
+                    (
+                        artifact.artifact_id, artifact.audit_id, artifact.artifact_type,
+                        artifact.backend, artifact.object_key, artifact.content_hash,
+                        artifact.mime_type, artifact.size_bytes, json.dumps(list(artifact.acl_scopes)),
+                        json.dumps(list(artifact.domain_ids)), artifact.created_at,
+                        json.dumps(artifact.metadata, sort_keys=True, default=str),
+                    ),
+                )
+            conn.commit()
+
+    def list_audit_artifacts(self, audit_id: str) -> list[AuditArtifactRecord]:
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """SELECT artifact_id, audit_id, artifact_type, backend, object_key, content_hash,
+                   mime_type, size_bytes, acl_scopes, domain_ids, created_at, metadata
+                   FROM knowledge_audit_artifacts WHERE audit_id = %s
+                   ORDER BY artifact_type, artifact_id""",
+                (audit_id,),
+            )
+            rows = cur.fetchall()
+        return [
+            AuditArtifactRecord(
+                artifact_id=row[0], audit_id=row[1], artifact_type=row[2], backend=row[3],
+                object_key=row[4], content_hash=row[5], mime_type=row[6], size_bytes=row[7],
+                acl_scopes=tuple(row[8] or []), domain_ids=tuple(row[9] or []),
+                created_at=row[10], metadata=row[11] or {},
+            )
+            for row in rows
+        ]
 
     def record_audit_report(self, report: AuditReportRecord) -> None:
         with self._connect() as conn:
@@ -1828,10 +1997,14 @@ def _time_range_from_json(data: Any) -> tuple[datetime | None, datetime | None] 
         end = data.get("end")
     else:
         start, end = data
-    return (
-        datetime.fromisoformat(start) if start else None,
-        datetime.fromisoformat(end) if end else None,
-    )
+    def _coerce(value: Any) -> datetime | None:
+        if not value:
+            return None
+        if isinstance(value, datetime):
+            return value
+        return datetime.fromisoformat(value)
+
+    return (_coerce(start), _coerce(end))
 
 
 def _audit_evidence_ref_from_json(data: dict[str, Any]) -> AuditEvidenceRefRecord:
@@ -1901,6 +2074,39 @@ def _verification_request_from_json(data: dict[str, Any]) -> VerificationRequest
         created_at=datetime.fromisoformat(data["created_at"]) if isinstance(data.get("created_at"), str) else data.get("created_at", utcnow()),
         metadata=dict(data.get("metadata", {})),
     )
+
+
+def _audit_workflow_from_json(data: dict[str, Any]) -> AuditWorkflowRecord:
+    payload = dict(data)
+    for key in ("created_at", "updated_at"):
+        value = payload.get(key)
+        if isinstance(value, str):
+            payload[key] = datetime.fromisoformat(value)
+    payload["evidence_refs"] = tuple(
+        _audit_evidence_ref_from_json(item) for item in payload.get("evidence_refs", ())
+    )
+    for key in (
+        "domain_ids",
+        "system_ids",
+        "component_ids",
+        "acl_scopes",
+        "finding_ids",
+        "missing_evidence",
+        "diagnostic_request_ids",
+        "timeline_event_ids",
+        "report_artifact_ids",
+    ):
+        payload[key] = tuple(payload.get(key, ()))
+    return AuditWorkflowRecord(**payload)
+
+
+def _audit_artifact_from_json(data: dict[str, Any]) -> AuditArtifactRecord:
+    payload = dict(data)
+    if isinstance(payload.get("created_at"), str):
+        payload["created_at"] = datetime.fromisoformat(payload["created_at"])
+    payload["acl_scopes"] = tuple(payload.get("acl_scopes", ()))
+    payload["domain_ids"] = tuple(payload.get("domain_ids", ()))
+    return AuditArtifactRecord(**payload)
 
 
 def _split_sql(sql: str) -> list[str]:

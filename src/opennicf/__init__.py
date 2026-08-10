@@ -22,10 +22,12 @@ from .model_gateway import (
 )
 from .knowledge import (
     ArtifactRecord,
+    AuditArtifactRecord,
     AuditEvidenceRefRecord,
     AuditFindingRecord,
     AuditReportRecord,
     AuditTimelineEventRecord,
+    AuditWorkflowRecord,
     ChunkRecord,
     EmbeddingRecord,
     EvidenceHit,
@@ -52,11 +54,19 @@ from .knowledge import (
     VerificationRequestRecord,
 )
 from .audit import (
+    AuditEvidenceCollection,
     AuditRequest,
     AuditReport,
     FailureAuditBroker,
     FailureAuditEngine,
     LocalFailureAuditBroker,
+)
+from .audit_workflow import (
+    AUDIT_STATUSES,
+    AuditWorkflow,
+    AuditWorkflowError,
+    AuditWorkflowResult,
+    PersistentAuditWorkflow,
 )
 from .ingestion import (
     DeadLetterEntry,
@@ -177,10 +187,12 @@ __all__ = [  # noqa: RUF022
     "Evidence",
     "EvidenceIndex",
     "ArtifactRecord",
+    "AuditArtifactRecord",
     "AuditEvidenceRefRecord",
     "AuditFindingRecord",
     "AuditReportRecord",
     "AuditTimelineEventRecord",
+    "AuditWorkflowRecord",
     "ChunkRecord",
     "EmbeddingRecord",
     "EvidenceHit",
@@ -206,10 +218,16 @@ __all__ = [  # noqa: RUF022
     "SourceKind",
     "VerificationRequestRecord",
     "AuditRequest",
+    "AuditEvidenceCollection",
     "AuditReport",
     "FailureAuditBroker",
     "FailureAuditEngine",
     "LocalFailureAuditBroker",
+    "AUDIT_STATUSES",
+    "AuditWorkflow",
+    "AuditWorkflowError",
+    "AuditWorkflowResult",
+    "PersistentAuditWorkflow",
     "DeadLetterEntry",
     "DirectoryWatcher",
     "IngestionJob",
