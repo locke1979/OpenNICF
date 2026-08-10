@@ -49,7 +49,7 @@ def test_qwen_oom_retries_and_cpu_fallback():
         preferred_backend=QwenEmbeddingBackend(loader=loader, batch_size=2),
         cpu_backend=HashingEmbeddingBackend(dimensions=768),
     )
-    result = service.embed(["a", "b"], prefer_gpu=True)
+    result = service.embed(["a", "b"], prefer_gpu=True, available_vram_bytes=1_000_000)
     assert result.fallback is True
     assert len(result.vectors) == 2
     assert attempts == [2, 1, 1]

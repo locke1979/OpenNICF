@@ -265,7 +265,7 @@ class GeminiEmbeddingBackend:
 
     def _call(self, text: str, purpose: str) -> Sequence[float]:
         key = self._api_key or os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-        if not key:
+        if not key and self._transport is None:
             raise EmbeddingError("Google embedding credentials are not configured")
         payload = {"model": self.model, "content": {"parts": [{"text": text}]}, "output_dimensionality": self.dimension,
                    "task_type": "RETRIEVAL_QUERY" if purpose == "retrieval_query" else "RETRIEVAL_DOCUMENT"}
