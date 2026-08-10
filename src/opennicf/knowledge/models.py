@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(frozen=True)
@@ -296,7 +296,7 @@ class RetrievalFilters:
     limit: int = 10
     neighbor_window: int = 1
 
-    def normalized(self) -> "RetrievalFilters":
+    def normalized(self) -> RetrievalFilters:
         principal_domain_id = self.principal_domain_id.strip() if self.principal_domain_id else None
         return RetrievalFilters(
             principal_acl_scopes=frozenset(scope for scope in self.principal_acl_scopes if scope),
@@ -391,9 +391,9 @@ class IngestBundle:
     artifact: ArtifactRecord
     chunks: tuple[ChunkRecord, ...]
     embeddings: tuple[EmbeddingRecord, ...]
-    object_reference: "ObjectReference"
+    object_reference: "ObjectReference"  # noqa: UP037, F821
     created: bool
-    namespaces: tuple["KnowledgeNamespaceRecord", ...] = ()
-    integration_edges: tuple["IntegrationEdgeRecord", ...] = ()
+    namespaces: tuple["KnowledgeNamespaceRecord", ...] = ()  # noqa: UP037, F821
+    integration_edges: tuple["IntegrationEdgeRecord", ...] = ()  # noqa: UP037, F821
     symbols: tuple[CodeSymbolRecord, ...] = ()
     relationships: tuple[CodeRelationshipRecord, ...] = ()

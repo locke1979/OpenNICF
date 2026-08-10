@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime, timezone
-from hashlib import sha256
 import csv
 import io
 import json
 import re
-from typing import Any, Iterable, Mapping, Protocol, Sequence, Literal
+from collections import defaultdict
+from collections.abc import Mapping, Sequence
+from dataclasses import asdict, dataclass, field, replace
+from datetime import UTC, datetime
+from hashlib import sha256
+from typing import Any, Literal, Protocol
 
 from .knowledge import (
     AuditEvidenceRefRecord,
@@ -21,8 +22,6 @@ from .knowledge import (
     RetrievalFilters,
     VerificationRequestRecord,
 )
-from .knowledge.models import AuditTimelineEventRecord
-
 
 AuditClassification = Literal["fact", "inference", "hypothesis", "missing_evidence", "recommendation"]
 
@@ -39,20 +38,20 @@ def _as_utc(value: str | datetime | None) -> datetime | None:
     if value is None:
         return None
     if isinstance(value, datetime):
-        return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return value.astimezone(UTC) if value.tzinfo else value.replace(tzinfo=UTC)
     normalized = value.replace("Z", "+00:00") if isinstance(value, str) else value
-    return datetime.fromisoformat(normalized).astimezone(timezone.utc)
+    return datetime.fromisoformat(normalized).astimezone(UTC)
 
 
-_CORRELATION_RE = re.compile(r"(?:correlation[_-]?id|request[_-]?id|trace[_-]?id|session[_-]?id)\s*[:=]\s*([A-Za-z0-9._:-]+)", re.I)
+_CORRELATION_RE = re.compile(r"(?:correlation[_-]?id|request[_-]?id|trace[_-]?id|session[_-]?id)\s*[:=]\s*([A-Za-z0-9._:-]+)", re.IGNORECASE)
 _STACK_FRAME_RE = re.compile(r'(?:File\s+"(?P<file>[^"]+)",\s*line\s*(?P<line>\d+)|(?P<path>[A-Za-z0-9_./\\-]+\.(?:py|java|cs|go|js|ts|rb|php|sql)):(?P<path_line>\d+))')
 _TIMESTAMP_RE = re.compile(
     r"(?P<ts>\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)"
 )
-_ERROR_RE = re.compile(r"\b(ERROR|FATAL|EXCEPTION|TRACEBACK|FAIL(?:ED|URE)?)\b", re.I)
-_SQLSTATE_RE = re.compile(r"SQLSTATE\s+([A-Z0-9]+)", re.I)
+_ERROR_RE = re.compile(r"\b(ERROR|FATAL|EXCEPTION|TRACEBACK|FAIL(?:ED|URE)?)\b", re.IGNORECASE)
+_SQLSTATE_RE = re.compile(r"SQLSTATE\s+([A-Z0-9]+)", re.IGNORECASE)
 _PATH_RE = re.compile(r"(?P<path>[A-Za-z0-9_./\\-]+\.(?:py|java|cs|go|js|ts|rb|sql|xml|wsdl|md))")
-_ZERO_ROWS_RE = re.compile(r"\b0\s+rows?\b|\bno rows?\b", re.I)
+_ZERO_ROWS_RE = re.compile(r"\b0\s+rows?\b|\bno rows?\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -73,7 +72,7 @@ class AuditRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_input(cls, value: str | Mapping[str, Any]) -> "AuditRequest":
+    def from_input(cls, value: str | Mapping[str, Any]) -> AuditRequest:
         if isinstance(value, str):
             text = value.strip()
             lower = text.lower()
@@ -252,7 +251,6 @@ class StructuredLogAnalyzer:
     def analyze(self, request: AuditRequest, hits: Sequence[EvidenceHit]) -> list[AuditObservation]:
         if not hits:
             return []
-        statements = [hit.text for hit in hits]
         correlation_ids = sorted({cid for hit in hits for cid in _extract_correlation_ids(hit.text)} | set(request.correlation_ids))
         timestamps = [ts for hit in hits for ts in _extract_timestamps(hit.text)]
         time_range = (min(timestamps), max(timestamps)) if timestamps else None
@@ -780,7 +778,7 @@ class FailureAuditEngine:
                     provenance_ref=f"{hit.source_id}:{hit.locator}",
                 )
             )
-        timeline.sort(key=lambda point: (point.timestamp or datetime.min.replace(tzinfo=timezone.utc), point.source_id, point.locator))
+        timeline.sort(key=lambda point: (point.timestamp or datetime.min.replace(tzinfo=UTC), point.source_id, point.locator))
         return timeline
 
     def _build_causal_chains(self, findings: Sequence[AuditFindingRecord], timeline: Sequence[AuditTimelinePoint]) -> list[str]:
@@ -1059,7 +1057,7 @@ def _frame_matches_paths(frame: Mapping[str, str], paths: set[str]) -> bool:
 
 def _extract_schema_objects(text: str) -> list[str]:
     objects: list[str] = []
-    for match in re.finditer(r"\b(?:CREATE|ALTER|DROP|SELECT|INSERT|UPDATE|DELETE)\s+(?:TABLE|INDEX|VIEW|FUNCTION|PROC(?:EDURE)?)?\s*(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z0-9_.]+)", text, re.I):
+    for match in re.finditer(r"\b(?:CREATE|ALTER|DROP|SELECT|INSERT|UPDATE|DELETE)\s+(?:TABLE|INDEX|VIEW|FUNCTION|PROC(?:EDURE)?)?\s*(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z0-9_.]+)", text, re.IGNORECASE):
         objects.append(match.group(1))
     for match in re.finditer(r"\b([A-Za-z0-9_]+)\s*\(", text):
         if match.group(1).lower() not in {"create", "alter", "drop", "select", "insert", "update", "delete"}:
