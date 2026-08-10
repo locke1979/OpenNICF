@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_root="${OPENNICF_RUNTIME_ROOT:-/opt/opennicf}"
+service="${1:-}"
+health_url="${2:-}"
+[[ -n "$service" && -n "$health_url" ]] || { echo 'usage: rollback SERVICE HEALTH_URL' >&2; exit 2; }
+PYTHONPATH="$runtime_root/current/src" python3 -m opennicf.release rollback "$runtime_root" "$service" "$health_url"

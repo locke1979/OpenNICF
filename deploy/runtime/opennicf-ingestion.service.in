@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenNICF ingestion service
+After=network-online.target opennicf-knowledge.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=opennicf
+Group=opennicf
+EnvironmentFile=/etc/opennicf/ingestion.env
+WorkingDirectory=/opt/opennicf/current
+Environment=PYTHONPATH=/opt/opennicf/current/src
+ExecStart=/usr/bin/python3 -m opennicf.service_runtime --service ingestion
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/opennicf /var/log/opennicf
+
+[Install]
+WantedBy=multi-user.target
