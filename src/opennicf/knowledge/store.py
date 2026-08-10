@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Protocol, Sequence
 import uuid
 
-from .embeddings import EmbeddingResult, LocalFirstEmbeddingService
+from .embeddings import EmbeddingError, EmbeddingResult, LocalFirstEmbeddingService
 from .namespaces import (
     IntegrationEdgeRecord,
     KnowledgeNamespaceRecord,
@@ -560,12 +560,17 @@ class PostgresKnowledgeStore:
             )
             embedding = EmbeddingRecord(
                 chunk_id=row[0],
-                model=row[64],
-                dimensions=row[65],
-                device=row[66],
-                vector=_parse_vector_value(row[67]),
-                created_at=row[68],
-                metadata=row[69] or {},
+                embedding_space_id=row[64],
+                provider=row[65],
+                model=row[66],
+                model_revision=row[67],
+                dimensions=row[68],
+                normalized=row[69],
+                purpose=row[70],
+                device=row[71],
+                vector=_parse_vector_value(row[72]),
+                created_at=row[73],
+                metadata=row[74] or {},
             )
             candidates.append(SearchCandidate(chunk=chunk, source=source, version=version, artifact=artifact, embedding=embedding))
         return candidates
@@ -1413,9 +1418,16 @@ def _upsert_embedding(cur, embedding: EmbeddingRecord) -> None:
     cur.execute(
         """
         INSERT INTO knowledge_embeddings (
-            chunk_id, model, dimensions, device, vector, created_at, metadata
-        ) VALUES (%s, %s, %s, %s, %s::vector, %s, %s::jsonb)
-        ON CONFLICT (chunk_id, model, dimensions) DO UPDATE SET
+            chunk_id, embedding_space_id, provider, model, model_revision,
+            dimensions, normalized, purpose, device, vector, created_at, metadata
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::vector, %s, %s::jsonb)
+        ON CONFLICT (chunk_id, embedding_space_id) DO UPDATE SET
+            provider = EXCLUDED.provider,
+            model = EXCLUDED.model,
+            model_revision = EXCLUDED.model_revision,
+            dimensions = EXCLUDED.dimensions,
+            normalized = EXCLUDED.normalized,
+            purpose = EXCLUDED.purpose,
             device = EXCLUDED.device,
             vector = EXCLUDED.vector,
             created_at = EXCLUDED.created_at,
@@ -1423,8 +1435,13 @@ def _upsert_embedding(cur, embedding: EmbeddingRecord) -> None:
         """,
         (
             embedding.chunk_id,
+            embedding.embedding_space_id or f"{embedding.model}:{embedding.dimensions}:v1",
+            embedding.provider,
             embedding.model,
+            embedding.model_revision,
             embedding.dimensions,
+            embedding.normalized,
+            embedding.purpose,
             embedding.device,
             _vector_literal(embedding.vector),
             embedding.created_at,
@@ -1468,6 +1485,11 @@ def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
     if filters.source_ids:
         clauses.append("c.source_id = ANY(%s)")
         params.append(list(filters.source_ids))
+    if filters.embedding_space_id:
+        # Space selection is part of the candidate relation, before any
+        # vector score/order is evaluated; equal dimensions are irrelevant.
+        clauses.append("e.embedding_space_id = %s")
+        params.append(filters.embedding_space_id)
     if filters.since:
         clauses.append("v.ingest_timestamp >= %s")
         params.append(filters.since)
@@ -1488,7 +1510,9 @@ def _build_search_sql(filters: RetrievalFilters) -> tuple[str, tuple[Any, ...]]:
             v.ingest_timestamp, v.parser_version, v.storage_backend, v.object_key, v.metadata,
             a.artifact_hash, a.source_version_id, a.object_key, a.storage_backend, a.mime_type, a.size_bytes,
             a.parser_name, a.parser_version, a.created_at, a.metadata,
-            e.model, e.dimensions, e.device, e.vector, e.created_at, e.metadata
+            e.embedding_space_id, e.provider, e.model, e.model_revision,
+            e.dimensions, e.normalized, e.purpose, e.device, e.vector,
+            e.created_at, e.metadata
         FROM knowledge_chunks c
         JOIN knowledge_sources s ON s.source_id = c.source_id
         JOIN knowledge_source_versions v ON v.source_version_id = c.source_version_id

@@ -19,11 +19,14 @@ instructions and document behavior remain inside the adapter. Gemini adapters
 use runtime-only credentials and enforce the same normalized 768-d contract.
 `local_only` evidence fails closed before any Google request.
 
-PostgreSQL stores `embedding_space_id` and registers spaces separately. Each
-space receives its own partial ANN index; retrieval applies ACL/domain/system
-filters, selects the explicit active space, then performs hybrid lexical,
-symbol, and vector retrieval. Cross-space comparison raises an error even
-when dimensions match.
+PostgreSQL stores `embedding_space_id` and registers spaces separately. The
+legacy unbounded pgvector column is preserved without an unsafe in-place
+`vector(768)` cast or HNSW index; its compatibility path uses a space index
+and an explicit relation predicate. A validated deployment may create a
+dimension-specific ANN table/index per registered space. Retrieval applies
+ACL/domain/system filters, selects the explicit active space, then performs
+hybrid lexical, symbol, and vector retrieval. Cross-space comparison raises
+an error even when dimensions match.
 
 Migration registers a target space, re-embeds chunks in resumable idempotent
 batches, preserves provenance, builds and validates its ANN index, and only

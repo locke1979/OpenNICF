@@ -371,13 +371,13 @@ class LocalFirstEmbeddingService:
                     if "purpose" not in str(exc):
                         raise
                     result = backend.embed(batch)
-            except (MemoryError, RuntimeError) as exc:
+            except (EmbeddingError, MemoryError, RuntimeError) as exc:
                 # Retry the batch at size one; a second failure is contained by CPU fallback.
                 if len(batch) > 1:
                     for text in batch:
                         try:
                             vectors.extend(backend.embed([text], purpose=purpose).vectors)
-                        except (MemoryError, RuntimeError):
+                        except (EmbeddingError, MemoryError, RuntimeError):
                             vectors.extend(self.cpu_backend.embed([text], purpose=purpose).vectors)
                             fallback = True
                 else:
@@ -389,11 +389,15 @@ class LocalFirstEmbeddingService:
             metadata.update(result.metadata)
             fallback = fallback or result.fallback
         info = backend.info if not fallback else self.cpu_backend.info
+        result_space_id = self._provider_space_id(backend) if not fallback else self._provider_space_id(self.cpu_backend)
+        if fallback:
+            metadata.setdefault("fallback_reason", "preferred_embedding_runtime_unavailable_or_oom")
+            metadata["fallback_space_id"] = result_space_id
         return EmbeddingResult(model=info.model, dimensions=info.dimensions, device=info.device, vectors=tuple(vectors),
                                fallback=fallback or info.fallback, metadata=metadata,
-                               embedding_space_id=self._provider_space_id(backend) if not fallback else self._provider_space_id(self.cpu_backend),
-                               provider=backend.info.provider if not fallback else self.cpu_backend.info.provider,
-                               model_revision=backend.info.model_revision, normalized=True, purpose=purpose)
+                               embedding_space_id=result_space_id,
+                               provider=info.provider,
+                               model_revision=info.model_revision, normalized=info.normalized, purpose=purpose)
 
     def describe(self) -> dict[str, Any]:
         info = self.info()

@@ -13,6 +13,8 @@ from opennicf.knowledge import (
     PrivacyBoundaryError,
     QwenEmbeddingBackend,
 )
+from opennicf.knowledge.models import EmbeddingRecord, RetrievalFilters
+from opennicf.knowledge.store import _build_search_sql, _upsert_embedding
 
 
 def norm(vector):
@@ -101,3 +103,46 @@ def test_space_switch_requires_validated_corpus_and_migration_is_idempotent():
     assert len(persisted) == 2
     migration.activate()
     assert service.active_space_id == gemini.info.embedding_space_id
+
+
+def test_unavailable_qwen_runtime_uses_consistent_cpu_space_metadata():
+    service = LocalFirstEmbeddingService(
+        preferred_backend=QwenEmbeddingBackend(loader=lambda *_a, **_k: (_ for _ in ()).throw(EmbeddingError("unavailable"))),
+        cpu_backend=HashingEmbeddingBackend(model="cpu-fallback", dimensions=8),
+    )
+    result = service.embed(["synthetic"], available_vram_bytes=1_000_000)
+    assert result.fallback is True
+    assert result.model == "cpu-fallback"
+    assert result.provider == "LOCAL"
+    assert result.model_revision == "v1"
+    assert result.embedding_space_id == "cpu-fallback:8:v1"
+    assert result.metadata["fallback_space_id"] == result.embedding_space_id
+
+
+def test_postgres_upsert_and_search_sql_are_space_scoped():
+    class Cursor:
+        def __init__(self):
+            self.statement = ""
+            self.params = ()
+
+        def execute(self, statement, params):
+            self.statement, self.params = statement, params
+
+    cursor = Cursor()
+    record = EmbeddingRecord(
+        chunk_id="chunk-1", embedding_space_id="gemini-embedding-001:768:v1", provider="GOOGLE",
+        model="gemini-embedding-001", model_revision="v1", dimensions=768, normalized=True,
+        purpose="retrieval_document", device="remote", vector=(1.0, 0.0), metadata={"synthetic": True},
+    )
+    _upsert_embedding(cursor, record)
+    assert "embedding_space_id" in cursor.statement
+    assert "provider" in cursor.statement
+    assert "model_revision" in cursor.statement
+    assert "ON CONFLICT (chunk_id, embedding_space_id)" in cursor.statement
+    assert record.embedding_space_id in cursor.params
+
+    sql, params = _build_search_sql(RetrievalFilters(embedding_space_id=record.embedding_space_id))
+    assert "e.embedding_space_id = %s" in sql
+    assert record.embedding_space_id in params
+    for field in ("e.provider", "e.model_revision", "e.normalized", "e.purpose"):
+        assert field in sql

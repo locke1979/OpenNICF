@@ -18,17 +18,13 @@ ALTER TABLE knowledge_embeddings
 CREATE UNIQUE INDEX IF NOT EXISTS knowledge_embeddings_chunk_space_uidx
     ON knowledge_embeddings (chunk_id, embedding_space_id);
 
--- ANN graphs are isolated per semantic space; new spaces receive their own
--- partial index during registration/migration.
-CREATE INDEX IF NOT EXISTS knowledge_embeddings_qwen3_768_hnsw_idx
-    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops)
-    WHERE normalized = TRUE AND embedding_space_id = 'Qwen/Qwen3-Embedding-0.6B:768:v1';
-CREATE INDEX IF NOT EXISTS knowledge_embeddings_gemini_001_768_hnsw_idx
-    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops)
-    WHERE normalized = TRUE AND embedding_space_id = 'gemini-embedding-001:768:v1';
-CREATE INDEX IF NOT EXISTS knowledge_embeddings_gemini_2_768_hnsw_idx
-    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops)
-    WHERE normalized = TRUE AND embedding_space_id = 'gemini-embedding-2:768:v1';
+-- The legacy vector column is intentionally unbounded. Do not cast or build
+-- a vector(768) ANN index in-place: existing rows may have other dimensions.
+-- Space-scoped ANN tables/indexes are registered by the deployment migration
+-- after validating the target dimension; this B-tree keeps legacy lookups
+-- safe and makes the space predicate explicit on the compatibility path.
+CREATE INDEX IF NOT EXISTS knowledge_embeddings_space_idx
+    ON knowledge_embeddings (embedding_space_id, chunk_id);
 
 CREATE TABLE IF NOT EXISTS knowledge_embedding_spaces (
     embedding_space_id TEXT PRIMARY KEY,
