@@ -85,7 +85,7 @@ _TEXT_BYTE_FIELDS = frozenset({
     "channel", "namespace_id", "domain_id", "system_id", "component_id",
     "environment", "evidence_type", "acl_scope", "content_hash", "artifact_hash",
     "chunk_id", "locator", "object_key", "mime_type", "model", "provider",
-    "device", "embedding_space_id", "status",
+    "device", "embedding_space_id", "embedding_space_ids", "status",
 })
 
 
