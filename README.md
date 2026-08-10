@@ -14,3 +14,6 @@ router with `LMSTUDIO_*` and `LITELLM_*` variables, and register only validated
 OpenNICF tools with QwenAgent. Failure audits use the brokered verification
 boundary and evidence-grounded reports described in `docs/architecture.md`.
 See the ADR and `AGENTS.md`.
+
+The versioned retrieval evaluation workload and its provenance-backed result
+manifest are documented in [`docs/retrieval-benchmark.md`](docs/retrieval-benchmark.md).

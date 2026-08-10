@@ -1,0 +1,3 @@
+_time,host,source,event_type,request_id,acl_result
+2026-08-08T10:17:00Z,orders-01,access-gateway,export,req-23,ACL denied
+2026-08-08T10:17:04Z,orders-01,access-gateway,export,req-23,ACL allowed
