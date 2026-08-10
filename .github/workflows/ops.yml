@@ -1,0 +1,67 @@
+name: OpenNICF operations gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[test]' ruff pip-audit pyyaml
+      - name: Compile, import, and diff check
+        run: |
+          python -m compileall -q src tests
+          python - <<'PY'
+          import opennicf
+          import opennicf.ops
+          PY
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            base="origin/${GITHUB_BASE_REF}"
+          else
+            base="HEAD^"
+          fi
+          git diff --check "$base"...HEAD
+          mapfile -t changed_py < <(git diff --name-only --diff-filter=ACMRTUXB "$base"...HEAD -- '*.py')
+          if [ "${#changed_py[@]}" -gt 0 ]; then
+            ruff check "${changed_py[@]}"
+          fi
+      - name: Unit and deterministic operations acceptance tests
+        run: python -m pytest
+      - name: Dependency audit
+        run: pip-audit
+      - name: Secret scan
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            python tools/secret_scan.py "origin/${GITHUB_BASE_REF}"
+          else
+            python tools/secret_scan.py HEAD^
+          fi
+      - name: IaC and schema checks
+        run: |
+          python -m json.tool docs/config-inventory.json >/dev/null
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          for path in Path(".github/workflows").glob("*.yml"):
+              assert isinstance(yaml.safe_load(path.read_text()), dict), path
+          PY
+      - name: Build versioned source artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: tar --sort=name --mtime='UTC 1970-01-01' -czf "opennicf-${GITHUB_SHA}.tar.gz" src pyproject.toml docs deploy
+      - name: Upload versioned artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: opennicf-${{ github.sha }}
+          path: opennicf-${{ github.sha }}.tar.gz

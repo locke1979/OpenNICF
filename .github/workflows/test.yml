@@ -1,5 +1,7 @@
 name: test
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -10,4 +12,3 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install -e '.[test]'
       - run: python -m pytest
-
