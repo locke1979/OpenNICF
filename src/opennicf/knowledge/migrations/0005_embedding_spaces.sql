@@ -54,4 +54,15 @@ CREATE TABLE IF NOT EXISTS knowledge_embedding_migrations (
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
+-- Registration is metadata-only and is safe for legacy rows of any vector
+-- length. Dimension-specific ANN materialization happens only after a target
+-- space has been validated by the deployment workflow.
+INSERT INTO knowledge_embedding_spaces (
+    embedding_space_id, provider, model, model_revision, dimension, normalized, purpose
+) VALUES
+    ('Qwen/Qwen3-Embedding-0.6B:768:v1', 'LOCAL', 'Qwen/Qwen3-Embedding-0.6B', 'v1', 768, TRUE, 'retrieval_document'),
+    ('gemini-embedding-001:768:v1', 'GOOGLE', 'gemini-embedding-001', 'v1', 768, TRUE, 'retrieval_document'),
+    ('gemini-embedding-2:768:v1', 'GOOGLE', 'gemini-embedding-2', 'v1', 768, TRUE, 'retrieval_document')
+ON CONFLICT (embedding_space_id) DO NOTHING;
+
 COMMIT;
