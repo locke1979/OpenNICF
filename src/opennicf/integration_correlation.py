@@ -574,6 +574,15 @@ class IntegrationCorrelationAgent:
                     "package_count": retrieval.get("package_count", len(packages)),
                     "estimated_tokens": max(1, int(retrieval.get("estimated_tokens", 0) or 0)),
                     "estimated_bytes": max(1, int(retrieval.get("estimated_bytes", 0) or 0)),
+                    "embedding_space_id": next(
+                        (
+                            package.get("embedding_space_id")
+                            or package.get("metadata", {}).get("embedding_space_id")
+                            for package in packages
+                            if isinstance(package, Mapping)
+                        ),
+                        self.knowledge.embeddings.active_space_id,
+                    ),
                 },
                 "component_ownership": {
                     "owned_systems": list(agent.profile.owned_systems),
@@ -969,6 +978,7 @@ class IntegrationCorrelationAgent:
             "estimated_bytes": total_estimated_bytes,
             "created_at": _utcnow().isoformat(),
             "privacy": parsed.privacy.value,
+            "embedding_space_id": self.knowledge.embeddings.active_space_id,
             "metadata": parsed.metadata,
         }
 
