@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 from math import sqrt
 from typing import Any, Iterable
 
-from .embeddings import EmbeddingResult, LocalFirstEmbeddingService
+from .embeddings import EmbeddingSpaceMismatch, LocalFirstEmbeddingService
 from .models import EvidenceHit, RetrievalEventRecord, RetrievalFilters, SearchCandidate
 
 
@@ -50,6 +50,12 @@ class HybridRetriever:
             model = self.embeddings.info().model
             dimensions = self.embeddings.info().dimensions
         else:
+            query_space = self.embeddings.space()
+            candidate_space_id = embedding.embedding_space_id or f"{embedding.model}:{embedding.dimensions}:v1"
+            if candidate_space_id != query_space.embedding_space_id:
+                raise EmbeddingSpaceMismatch(
+                    f"query space {query_space.embedding_space_id} cannot search {candidate_space_id}"
+                )
             semantic_score = cosine_similarity(query_vector, embedding.vector)
             model = embedding.model
             dimensions = embedding.dimensions
@@ -79,6 +85,7 @@ class HybridRetriever:
             dimensions=dimensions,
             chunk_id=candidate.chunk.chunk_id,
             chunk_ordinal=candidate.chunk.ordinal,
+            embedding_space_id=(embedding.embedding_space_id if embedding else self.embeddings.active_space_id),
             domain=candidate.chunk.domain,
             system=candidate.chunk.system,
             metadata=dict(candidate.chunk.metadata),
@@ -86,7 +93,9 @@ class HybridRetriever:
 
     def search(self, query: str, *, filters: RetrievalFilters | None = None, route: str | None = None) -> list[EvidenceHit]:
         filters = (filters or RetrievalFilters()).normalized()
-        query_result = self.embeddings.embed([query], prefer_gpu=True)
+        active_space_id = filters.embedding_space_id or self.embeddings.active_space_id
+        filters = replace(filters, embedding_space_id=active_space_id)
+        query_result = self.embeddings.embed([query], purpose="retrieval_query", prefer_gpu=True, space_id=active_space_id)
         query_vector = query_result.vectors[0] if query_result.vectors else ()
         candidates = self.store.search_candidates(filters)
         allowed_domains = filters.effective_domain_ids()
@@ -178,6 +187,7 @@ class HybridRetriever:
                 "source_types": list(filters.source_types),
                 "source_ids": list(filters.source_ids),
                 "limit": filters.limit,
+                "embedding_space_id": filters.embedding_space_id,
                 "neighbor_window": filters.neighbor_window,
             },
             selected_chunks=tuple(hit.chunk_id for hit in final_hits),
