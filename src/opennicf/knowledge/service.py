@@ -126,6 +126,24 @@ class KnowledgeService:
         self.platform.store.migrate()
         if not Path(self.config.object_store_root).is_dir() or not os.access(self.config.object_store_root, os.W_OK):
             raise KnowledgeServiceError("object store is not writable")
+        if self.config.production:
+            try:
+                probe = self.platform.embeddings.embed(
+                    ["opennicf-readiness-probe"],
+                    purpose="retrieval_document",
+                    dimension=self.config.embedding_dimension,
+                    privacy_policy="local_only",
+                )
+            except Exception as exc:  # noqa: BLE001 - readiness must fail closed
+                raise KnowledgeServiceError("Qwen embedding dependency is not ready") from exc
+            expected_space = f"{self.config.embedding_model}:{self.config.embedding_dimension}:v1"
+            if (
+                probe.fallback
+                or probe.provider != "LOCAL"
+                or probe.embedding_space_id != expected_space
+                or not probe.normalized
+            ):
+                raise KnowledgeServiceError("Qwen embedding semantic contract is not ready")
         self.ready = True
 
     def status(self) -> dict[str, Any]:
