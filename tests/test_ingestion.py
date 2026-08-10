@@ -195,3 +195,58 @@ def test_parser_version_reprocessing_creates_a_new_version(tmp_path):
     service.run()
     versions = [version for version in service.platform.store.source_versions.values() if version.source_id == job.source_id]
     assert {version.parser_version for version in versions} == {"1", "2"}
+
+
+def test_filesystem_landing_and_lifecycle_are_restart_safe(tmp_path):
+    state_path = tmp_path / "state.json"
+    landing = tmp_path / "landing"
+    platform = KnowledgePlatform.in_memory()
+    service = IngestionService(
+        platform,
+        queue=IngestionQueue(state_path=state_path),
+        landing_root=landing,
+    )
+    job = service.submit_manual(
+        source_uri="manual://local-evidence",
+        content="local-only evidence",
+        domain_id="finance",
+        system_id="ledger",
+        acl_scope="restricted",
+        local_only=True,
+    )
+    assert job.landing_object_key
+    assert (landing / job.landing_object_key).read_text(encoding="utf-8") == "local-only evidence"
+
+    # A fresh service reconstructs the queue and reads the landed bytes rather
+    # than depending on an in-process parser or queue object.
+    restarted = IngestionService(
+        platform,
+        queue=IngestionQueue.from_state(state_path),
+        landing_root=landing,
+    )
+    outcome = restarted.process_next()
+    assert outcome is not None
+    states = [event.state for event in restarted.queue.lifecycle[job.job_id]]
+    assert states == ["received", "validated", "stored", "parsed", "chunked", "embedded", "indexed"]
+    status = restarted.status(limit=1)
+    assert status["states"]["indexed"] == 1
+    chunk = next(iter(platform.store.chunks.values()))
+    assert (chunk.domain_id, chunk.system_id, chunk.acl_scope) == ("finance", "ledger", "restricted")
+    assert platform.store.sources[job.source_id].metadata["local_only"] is True
+
+
+def test_failed_jobs_are_retryable_then_quarantined_and_status_is_bounded():
+    service = IngestionService(
+        KnowledgePlatform.in_memory(),
+        queue=IngestionQueue(max_attempts=2),
+        malware_scanner=lambda _content, _metadata: (_ for _ in ()).throw(ValueError("scan failed")),
+    )
+    job = service.submit_manual(source_uri="manual://bad", content="bad evidence")
+    assert service.run() == []
+    assert service.run() == []
+    assert service.queue.jobs[job.job_id].state == "quarantined"
+    states = [event.state for event in service.queue.lifecycle[job.job_id]]
+    assert states == ["received", "failed", "retry", "failed", "quarantined"]
+    status = service.status(limit=0)
+    assert len(status["jobs"]) <= 1
+    assert status["states"]["quarantined"] == 1
