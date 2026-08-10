@@ -119,6 +119,11 @@ class EmbeddingRecord:
     vector: tuple[float, ...]
     created_at: datetime = field(default_factory=utcnow)
     metadata: dict[str, Any] = field(default_factory=dict)
+    embedding_space_id: str = ""
+    provider: str = "LOCAL"
+    model_revision: str = "v1"
+    normalized: bool = True
+    purpose: str = "retrieval_document"
 
 
 @dataclass(frozen=True)
@@ -230,6 +235,7 @@ class RetrievalFilters:
     environments: tuple[str, ...] = ()
     source_types: tuple[str, ...] = ()
     source_ids: tuple[str, ...] = ()
+    embedding_space_id: str | None = None
     since: datetime | None = None
     until: datetime | None = None
     limit: int = 10
@@ -251,6 +257,7 @@ class RetrievalFilters:
             environments=tuple(environment for environment in self.environments if environment),
             source_types=tuple(source_type for source_type in self.source_types if source_type),
             source_ids=tuple(source_id for source_id in self.source_ids if source_id),
+            embedding_space_id=self.embedding_space_id or None,
             since=self.since,
             until=self.until,
             limit=max(1, int(self.limit)),
@@ -315,6 +322,7 @@ class EvidenceHit:
     dimensions: int
     chunk_id: str
     chunk_ordinal: int
+    embedding_space_id: str = ""
     domain: str = ""
     system: str = ""
     neighboring_chunk_ids: tuple[str, ...] = ()

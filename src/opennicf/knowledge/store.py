@@ -158,7 +158,8 @@ class MemoryKnowledgeStore:
         self.namespaces: dict[str, KnowledgeNamespaceRecord] = {}
         self.integration_edges: dict[str, IntegrationEdgeRecord] = {}
         self.chunks: dict[str, ChunkRecord] = {}
-        self.embeddings: dict[str, EmbeddingRecord] = {}
+        # One immutable chunk may have one vector per semantic embedding space.
+        self.embeddings: dict[tuple[str, str], EmbeddingRecord] = {}
         self.retrieval_events: list[RetrievalEventRecord] = []
         self.audit_findings: list[AuditFindingRecord] = []
         self.audit_reports: list[AuditReportRecord] = []
@@ -173,7 +174,8 @@ class MemoryKnowledgeStore:
         self.chunks[chunk.chunk_id] = chunk
         self._artifact_chunk_ids.setdefault(chunk.artifact_hash, []).append(chunk.chunk_id)
         if embedding is not None:
-            self.embeddings[chunk.chunk_id] = embedding
+            space_id = embedding.embedding_space_id or f"{embedding.model}:{embedding.dimensions}:v1"
+            self.embeddings[(chunk.chunk_id, space_id)] = embedding
 
     def _store_namespace(self, namespace: KnowledgeNamespaceRecord, *, artifact_hash: str) -> None:
         metadata = dict(namespace.metadata)
@@ -200,9 +202,9 @@ class MemoryKnowledgeStore:
                 for chunk_id in self._artifact_chunk_ids.get(existing_artifact.artifact_hash, [])
             )
             existing_embeddings = tuple(
-                self.embeddings[chunk.chunk_id]
+                self.embeddings[(chunk.chunk_id, space_id)]
                 for chunk in existing_chunks
-                if chunk.chunk_id in self.embeddings
+                for space_id in {sid for cid, sid in self.embeddings if cid == chunk.chunk_id}
             )
             existing_namespaces = tuple(
                 self.namespaces[namespace_id]
@@ -285,11 +287,17 @@ class MemoryKnowledgeStore:
                     source=source,
                     version=version,
                     artifact=artifact,
-                    embedding=self.embeddings.get(chunk_id),
+                    embedding=self._embedding_for(chunk_id, filters.embedding_space_id),
                 )
             )
         candidates.sort(key=lambda candidate: (candidate.chunk.source_version_id, candidate.chunk.ordinal, candidate.chunk.chunk_id))
         return candidates
+
+    def _embedding_for(self, chunk_id: str, space_id: str | None) -> EmbeddingRecord | None:
+        matches = [record for (cid, sid), record in self.embeddings.items() if cid == chunk_id and (space_id is None or sid == space_id)]
+        if len(matches) > 1 and space_id is None:
+            raise RuntimeError("embedding space must be explicit when a chunk has multiple vectors")
+        return matches[0] if matches else None
 
     def record_retrieval_event(self, event: RetrievalEventRecord) -> None:
         self.retrieval_events.append(event)
@@ -348,7 +356,8 @@ class MemoryKnowledgeStore:
             self._artifact_chunk_ids.setdefault(record.artifact_hash, []).append(record.chunk_id)
         for embedding in snapshot.get("embeddings", []):
             record = EmbeddingRecord(**embedding)
-            self.embeddings[record.chunk_id] = record
+            space_id = record.embedding_space_id or f"{record.model}:{record.dimensions}:v1"
+            self.embeddings[(record.chunk_id, space_id)] = record
         for event in snapshot.get("retrieval_events", []):
             self.retrieval_events.append(RetrievalEventRecord(**event))
         for finding in snapshot.get("audit_findings", []):
@@ -992,6 +1001,7 @@ class KnowledgePlatform:
         chunk_texts = [block.text for block in sanitized_blocks]
         embedding_result = self.embeddings.embed(
             chunk_texts,
+            purpose="retrieval_document",
             prefer_gpu=True,
             available_memory_bytes=available_memory_bytes,
             available_vram_bytes=available_vram_bytes,
@@ -1047,7 +1057,12 @@ class KnowledgePlatform:
                     dimensions=embedding_result.dimensions,
                     device=embedding_result.device,
                     vector=embedding_result.vectors[ordinal] if ordinal < len(embedding_result.vectors) else (),
-                    metadata={"fallback": embedding_result.fallback, **sanitized_metadata},
+                    metadata={"fallback": embedding_result.fallback, **embedding_result.metadata, **sanitized_metadata},
+                    embedding_space_id=embedding_result.embedding_space_id,
+                    provider=embedding_result.provider,
+                    model_revision=embedding_result.model_revision,
+                    normalized=embedding_result.normalized,
+                    purpose=embedding_result.purpose,
                 )
             )
         bundle = IngestBundle(
