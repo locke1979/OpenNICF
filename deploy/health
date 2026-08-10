@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from urllib.request import Request, urlopen
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,8 +20,34 @@ def _flag(name: str, default: str = "ok") -> bool:
     return os.environ.get(name, default).lower() == "ok"
 
 
+def _embedding_report() -> dict:
+    base_url = os.environ.get("OPENNICF_EMBEDDING_BASE_URL", "").rstrip("/")
+    if not base_url:
+        return {
+            "reachable": _flag("EMBEDDING_HEALTH"),
+            "provider_healthy": _flag("EMBEDDING_PROVIDER_HEALTH"),
+        }
+    headers = {"Accept": "application/json"}
+    token = os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        request = Request(base_url + "/health", headers=headers)
+        with urlopen(request, timeout=5) as response:
+            payload = json.loads(response.read().decode())
+        return {
+            "reachable": payload.get("status") == "ok",
+            "provider_healthy": payload.get("status") == "ok"
+            and not payload.get("fallback", False),
+            "cpu_fallback": bool(payload.get("fallback", False)),
+        }
+    except Exception:  # noqa: BLE001 - dependency probes become aggregate health state
+        return {"reachable": False, "provider_healthy": False, "cpu_fallback": False}
+
+
 def main() -> int:
     correlation_id = os.environ.get("CORRELATION_ID") or f"health-{uuid4()}"
+    embedding = _embedding_report()
     report = check_health(
         "opennicf",
         [
@@ -28,6 +55,8 @@ def main() -> int:
             ("lmstudio", lambda: _flag("LM_STUDIO_HEALTH")),
             ("litellm", lambda: _flag("LITELLM_HEALTH")),
             ("broker", lambda: _flag("BROKER_HEALTH")),
+            ("embedding-service", lambda: embedding["reachable"]),
+            ("embedding-provider", lambda: embedding["provider_healthy"]),
         ],
         release_id=os.environ.get("RELEASE_ID"),
     )

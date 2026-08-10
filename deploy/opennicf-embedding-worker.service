@@ -1,0 +1,24 @@
+[Unit]
+Description=OpenNICF local embedding worker
+After=network-online.target tailscaled.service
+Wants=network-online.target
+Requires=tailscaled.service
+
+[Service]
+Type=simple
+User=opennicf
+Group=opennicf
+WorkingDirectory=/opt/opennicf
+EnvironmentFile=/etc/opennicf/embedding-worker.env
+Environment=PYTHONPATH=/opt/opennicf/src
+ExecStart=/usr/bin/python3 -m opennicf.embedding_service
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/opennicf
+
+[Install]
+WantedBy=multi-user.target

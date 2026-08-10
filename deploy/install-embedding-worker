@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo "run as root (for example: sudo $0)" >&2
+  exit 1
+fi
+
+ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+install -d -o root -g root -m 0755 /opt/opennicf /etc/opennicf /var/lib/opennicf
+id -u opennicf >/dev/null 2>&1 || useradd --system --home /var/lib/opennicf --shell /usr/sbin/nologin opennicf
+install -d -o opennicf -g opennicf -m 0750 /opt/opennicf/src
+rsync -a --delete --exclude .git "$ROOT/src/" /opt/opennicf/src/
+install -o root -g root -m 0644 "$ROOT/deploy/opennicf-embedding-worker.service" /etc/systemd/system/opennicf-embedding-worker.service
+if [[ ! -f /etc/opennicf/embedding-worker.env ]]; then
+  install -o root -g root -m 0600 "$ROOT/deploy/embedding-worker.env.example" /etc/opennicf/embedding-worker.env
+  sed -i "s/^OPENNICF_EMBEDDING_HOST=.*/OPENNICF_EMBEDDING_HOST=$(tailscale ip -4)/" /etc/opennicf/embedding-worker.env
+  token=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
+  sed -i "s/^OPENNICF_EMBEDDING_SERVICE_TOKEN=.*/OPENNICF_EMBEDDING_SERVICE_TOKEN=$token/" /etc/opennicf/embedding-worker.env
+fi
+chown -R opennicf:opennicf /opt/opennicf /var/lib/opennicf
+python3 -m compileall -q /opt/opennicf/src
+systemctl daemon-reload
+systemctl enable --now opennicf-embedding-worker.service
