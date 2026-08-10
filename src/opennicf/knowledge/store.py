@@ -1,18 +1,38 @@
 """Memory and PostgreSQL knowledge stores."""
 
+# The PostgreSQL adapter retains two legacy method definitions for compatibility
+# with the original store implementation; the later definitions are intentional.
+# ruff: noqa: F811
+
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime, timezone
-from hashlib import sha256
-import importlib.resources as resources
 import json
 import os
-from pathlib import Path
-from typing import Any, Callable, Iterable, Protocol, Sequence
 import uuid
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import asdict, replace
+from datetime import datetime
+from hashlib import sha256
+from typing import Any, Protocol
 
 from .embeddings import EmbeddingError, EmbeddingResult, LocalFirstEmbeddingService
+from .models import (
+    ArtifactRecord,
+    AuditEvidenceRefRecord,
+    AuditFindingRecord,
+    AuditReportRecord,
+    ChunkRecord,
+    EmbeddingRecord,
+    IngestBundle,
+    KnowledgeSource,
+    KnowledgeSourceVersion,
+    ParsedBlock,
+    RetrievalEventRecord,
+    RetrievalFilters,
+    SearchCandidate,
+    VerificationRequestRecord,
+    utcnow,
+)
 from .namespaces import (
     IntegrationEdgeRecord,
     KnowledgeNamespaceRecord,
@@ -21,26 +41,11 @@ from .namespaces import (
     sanitize_metadata,
     sanitize_text,
 )
-from .models import (
-    ArtifactRecord,
-    AuditEvidenceRefRecord,
-    AuditFindingRecord,
-    AuditReportRecord,
-    VerificationRequestRecord,
-    ChunkRecord,
-    EmbeddingRecord,
-    EvidenceHit,
-    IngestBundle,
-    KnowledgeSource,
-    KnowledgeSourceVersion,
-    ParsedBlock,
-    RetrievalEventRecord,
-    RetrievalFilters,
-    SearchCandidate,
-    SourceKind,
-    utcnow,
+from .object_store import (
+    FilesystemObjectStore,
+    MemoryObjectStore,
+    ObjectStore,
 )
-from .object_store import FilesystemObjectStore, MemoryObjectStore, ObjectReference, ObjectStore
 
 
 def _uuid(prefix: str) -> str:
@@ -343,9 +348,7 @@ class MemoryKnowledgeStore:
             return False
         if filters.namespace_ids and source.namespace_id not in filters.namespace_ids:
             return False
-        if filters.environments and source.environment not in filters.environments:
-            return False
-        return True
+        return not (filters.environments and source.environment not in filters.environments)
 
     def list_sources(self, filters: RetrievalFilters, *, include_retired: bool = False) -> list[dict[str, Any]]:
         rows = []
@@ -471,7 +474,7 @@ class PostgresKnowledgeStore:
         self._migration_package = migration_package
 
     @classmethod
-    def from_dsn(cls, dsn: str, *, migration_package: str = "opennicf.knowledge.migrations") -> "PostgresKnowledgeStore":
+    def from_dsn(cls, dsn: str, *, migration_package: str = "opennicf.knowledge.migrations") -> PostgresKnowledgeStore:
         def factory():
             try:
                 import psycopg
@@ -485,7 +488,11 @@ class PostgresKnowledgeStore:
         return self._connection_factory()
 
     def migrate(self) -> list[int]:
-        from .migration_utils import iter_migration_files, migration_checksum, migration_version
+        from .migration_utils import (
+            iter_migration_files,
+            migration_checksum,
+            migration_version,
+        )
 
         applied: list[int] = []
         with self._connect() as conn:
@@ -549,7 +556,7 @@ class PostgresKnowledgeStore:
             conn.commit()
 
     def next_version_number(self, source_id: str, content_hash: str) -> int:
-        with self._connect() as conn:
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT version_number FROM knowledge_source_versions WHERE source_id = %s AND content_hash = %s",
@@ -567,10 +574,9 @@ class PostgresKnowledgeStore:
     def search_candidates(self, filters: RetrievalFilters) -> list[SearchCandidate]:
         filters = filters.normalized()
         sql, params = _build_search_sql(filters)
-        with self._connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql, params)
-                rows = cur.fetchall()
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(sql, params)
+            rows = cur.fetchall()
         candidates: list[SearchCandidate] = []
         for row in rows:
             row = tuple(value.decode("utf-8") if isinstance(value, bytes) else value for value in row)
@@ -934,7 +940,7 @@ class PostgresKnowledgeStore:
             params.append(list(filters.environments))
         if not include_retired:
             clauses.append("COALESCE(metadata->>'status', 'active') <> 'retired'")
-        with self._connect() as conn:
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
             with conn.cursor() as cur:
                 cur.execute(f"SELECT source_id, source_uri, source_kind, channel, namespace_id, domain_id, system_id, component_id, environment, evidence_type, acl_scope, content_hash, updated_at, metadata FROM knowledge_sources WHERE {' AND '.join(clauses)} ORDER BY source_id", tuple(params))
                 rows = cur.fetchall()
@@ -945,7 +951,7 @@ class PostgresKnowledgeStore:
         rows = self.list_sources(replace(filters, source_ids=(source_id,)), include_retired=True)
         if not rows:
             raise KeyError(f"source is unavailable: {source_id}")
-        with self._connect() as conn:
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*), COUNT(DISTINCT c.chunk_id), COALESCE(array_agg(DISTINCT e.embedding_space_id) FILTER (WHERE e.embedding_space_id IS NOT NULL), ARRAY[]::text[]) FROM knowledge_source_versions v LEFT JOIN knowledge_chunks c ON c.source_version_id = v.source_version_id LEFT JOIN knowledge_embeddings e ON e.chunk_id = c.chunk_id WHERE v.source_id = %s", (source_id,))
                 versions, chunks, spaces = cur.fetchone()
@@ -956,7 +962,7 @@ class PostgresKnowledgeStore:
         rows = self.list_sources(replace(filters, source_ids=(source_id,)), include_retired=True)
         if not rows:
             raise KeyError(f"source is unavailable: {source_id}")
-        with self._connect() as conn:
+        with self._connect() as conn:  # noqa: SIM117 - cursor scope is intentionally explicit
             with conn.cursor() as cur:
                 version_clause = "AND v.source_version_id = %s" if source_version_id else ""
                 params: tuple[Any, ...] = (source_id, source_version_id) if source_version_id else (source_id,)
@@ -1001,7 +1007,7 @@ class KnowledgePlatform:
         self.retriever = HybridRetriever(store, self.embeddings)
 
     @classmethod
-    def in_memory(cls, *, root: str | None = None) -> "KnowledgePlatform":
+    def in_memory(cls, *, root: str | None = None) -> KnowledgePlatform:
         object_store = FilesystemObjectStore(root) if root else MemoryObjectStore()
         return cls(MemoryKnowledgeStore(), object_store)
 
@@ -1013,7 +1019,7 @@ class KnowledgePlatform:
         object_store_root: str,
         embeddings: LocalFirstEmbeddingService | None = None,
         migration_package: str = "opennicf.knowledge.migrations",
-    ) -> "KnowledgePlatform":
+    ) -> KnowledgePlatform:
         """Build the production platform from injected runtime configuration."""
         return cls(
             PostgresKnowledgeStore.from_dsn(dsn, migration_package=migration_package),
@@ -1028,7 +1034,7 @@ class KnowledgePlatform:
         dsn_var: str = "OPENNICF_POSTGRES_DSN",
         object_store_var: str = "OPENNICF_OBJECT_STORE_ROOT",
         embeddings: LocalFirstEmbeddingService | None = None,
-    ) -> "KnowledgePlatform":
+    ) -> KnowledgePlatform:
         """Build from protected environment variables without logging their values."""
         dsn = os.environ.get(dsn_var)
         object_store_root = os.environ.get(object_store_var)
@@ -1040,12 +1046,12 @@ class KnowledgePlatform:
 
     @staticmethod
     def _source_version_id(source_id: str, content_hash: str) -> str:
-        digest = sha256(f"source-version:{source_id}:{content_hash}".encode("utf-8")).hexdigest()
+        digest = sha256(f"source-version:{source_id}:{content_hash}".encode()).hexdigest()
         return f"srcver_{digest}"
 
     @staticmethod
     def _artifact_hash(content_hash: str, parser_version: str) -> str:
-        return sha256(f"{content_hash}:{parser_version}".encode("utf-8")).hexdigest()
+        return sha256(f"{content_hash}:{parser_version}".encode()).hexdigest()
 
     def ingest(
         self,
@@ -1146,7 +1152,7 @@ class KnowledgePlatform:
         if hasattr(self.store, "next_version_number"):
             version_number = int(self.store.next_version_number(source_id, content_hash))
         elif hasattr(self.store, "source_versions"):
-            version_number = len([version for version in getattr(self.store, "source_versions").values() if version.source_id == source_id]) + 1
+            version_number = len([version for version in self.store.source_versions.values() if version.source_id == source_id]) + 1
         version = KnowledgeSourceVersion(
             source_version_id=self._source_version_id(source_id, content_hash),
             source_id=source_id,
@@ -1199,9 +1205,9 @@ class KnowledgePlatform:
         chunks: list[ChunkRecord] = []
         embeddings: list[EmbeddingRecord] = []
         for ordinal, block in enumerate(sanitized_blocks):
-            chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode("utf-8")).hexdigest()
+            chunk_digest = sha256(f"chunk:{version.source_version_id}:{ordinal}".encode()).hexdigest()
             chunk_id = f"chunk_{chunk_digest}"
-            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block.text}".encode("utf-8")).hexdigest()
+            chunk_hash = sha256(f"{version.source_version_id}:{ordinal}:{block.text}".encode()).hexdigest()
             if block.locator:
                 locator = sanitize_text(block.locator, redacted_values)
             elif explicit_locator:

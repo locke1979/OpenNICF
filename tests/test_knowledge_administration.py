@@ -7,7 +7,6 @@ from opennicf.knowledge import (
     MemoryKnowledgeStore,
     MemoryObjectStore,
     RetrievalFilters,
-    RetirementPolicy,
 )
 
 
@@ -47,7 +46,7 @@ def test_retirement_policy_rejects_legal_hold_without_mutation():
 
 
 def test_failed_ingestion_retry_is_audited_and_embedding_status_is_explicit():
-    platform, store, service = _platform()
+    _, store, service = _platform()
     queue = IngestionQueue()
     job = IngestionJob("job-1", "source-1", "manual://one", "manual", "text/plain", "hash", b"one")
     queue.enqueue(job)

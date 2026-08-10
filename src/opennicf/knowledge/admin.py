@@ -7,17 +7,18 @@ never deletes immutable source artifacts as part of retirement.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Callable, Iterable, Mapping, Sequence
 import uuid
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Any
 
 from .embeddings import EmbeddingMigration, LocalFirstEmbeddingService
 from .models import ParsedBlock, RetrievalFilters
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(frozen=True)
@@ -88,7 +89,7 @@ class KnowledgeAdministration:
         operation = self._start("retire", actor, source_id, {"reason": reason})
         try:
             self.store.retire_source(source_id, reason=reason, actor=actor, preserve_provenance=policy.preserve_provenance)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - persist operation failure state
             return self._finish(operation, "failed", {"error": str(exc)})
         return self._finish(operation, "complete", {"reason": reason})
 
@@ -98,7 +99,7 @@ class KnowledgeAdministration:
             retried = bool(queue.retry_dead_letter(job_id))
             if not retried:
                 raise KeyError(f"dead-letter job not found: {job_id}")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - persist operation failure state
             return self._finish(operation, "failed", {"error": str(exc)})
         return self._finish(operation, "queued", {"job_id": job_id})
 
@@ -115,7 +116,7 @@ class KnowledgeAdministration:
             content = self.object_store.get_bytes(version["object_key"])
             blocks = tuple(parser(content, version["source_uri"]))
             ingest(source_id=source_id, source_uri=version["source_uri"], content=content, blocks=blocks, parser_version=parser_version)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - persist operation failure state
             return self._finish(operation, "failed", {"error": str(exc)})
         return self._finish(operation, "complete", {"blocks": len(blocks), "source_version_id": version["source_version_id"]})
 
@@ -127,7 +128,7 @@ class KnowledgeAdministration:
         operation = self._start("reembed", actor, target, {"privacy_policy": privacy_policy, "count": len(chunks)})
         try:
             state = migration.run(chunks, self.store.save_embedding, privacy_policy=privacy_policy)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - persist operation failure state
             return self._finish(operation, "failed", {"error": str(exc), "embedding_space_id": target})
         return self._finish(operation, state.get("status", "paused"), {"embedding_space_id": target, **state})
 
@@ -150,6 +151,6 @@ class KnowledgeAdministration:
         operation = self._start(name, actor, target_id, {})
         try:
             result = callback(target_id)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - persist operation failure state
             return self._finish(operation, "failed", {"error": str(exc)})
         return self._finish(operation, "complete", {"result": result} if isinstance(result, Mapping) else {})

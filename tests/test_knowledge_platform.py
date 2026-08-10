@@ -14,8 +14,11 @@ from opennicf.knowledge import (
     PostgresKnowledgeStore,
     RetrievalFilters,
 )
-from opennicf.knowledge.migrations import iter_migration_files, migration_checksum, migration_version
-
+from opennicf.knowledge.migrations import (
+    iter_migration_files,
+    migration_checksum,
+    migration_version,
+)
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "knowledge"
 
@@ -87,7 +90,7 @@ def test_memory_platform_import_versioning_acl_and_provenance_roundtrip(tmp_path
     assert changed.version.version_number == 2
     assert len(platform.store.source_versions) == 2
 
-    public = platform.ingest(
+    platform.ingest(
         source_id="log-1",
         source_uri="tests/fixtures/knowledge/logs.txt",
         content=_load("logs.txt"),
