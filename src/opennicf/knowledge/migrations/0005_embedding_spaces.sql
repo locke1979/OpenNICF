@@ -18,9 +18,17 @@ ALTER TABLE knowledge_embeddings
 CREATE UNIQUE INDEX IF NOT EXISTS knowledge_embeddings_chunk_space_uidx
     ON knowledge_embeddings (chunk_id, embedding_space_id);
 
-CREATE INDEX IF NOT EXISTS knowledge_embeddings_space_hnsw_idx
-    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops, embedding_space_id)
-    WHERE normalized = TRUE;
+-- ANN graphs are isolated per semantic space; new spaces receive their own
+-- partial index during registration/migration.
+CREATE INDEX IF NOT EXISTS knowledge_embeddings_qwen3_768_hnsw_idx
+    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops)
+    WHERE normalized = TRUE AND embedding_space_id = 'Qwen/Qwen3-Embedding-0.6B:768:v1';
+CREATE INDEX IF NOT EXISTS knowledge_embeddings_gemini_001_768_hnsw_idx
+    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops)
+    WHERE normalized = TRUE AND embedding_space_id = 'gemini-embedding-001:768:v1';
+CREATE INDEX IF NOT EXISTS knowledge_embeddings_gemini_2_768_hnsw_idx
+    ON knowledge_embeddings USING hnsw (vector vector_cosine_ops)
+    WHERE normalized = TRUE AND embedding_space_id = 'gemini-embedding-2:768:v1';
 
 CREATE TABLE IF NOT EXISTS knowledge_embedding_spaces (
     embedding_space_id TEXT PRIMARY KEY,

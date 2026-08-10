@@ -241,6 +241,13 @@ class MemoryKnowledgeStore:
             self._store_chunk(chunk, embedding)
         return bundle
 
+    def save_embedding(self, embedding: EmbeddingRecord) -> None:
+        """Add or replace one vector without creating a new logical chunk."""
+        if embedding.chunk_id not in self.chunks:
+            raise KeyError(f"unknown chunk: {embedding.chunk_id}")
+        space_id = embedding.embedding_space_id or f"{embedding.model}:{embedding.dimensions}:v1"
+        self.embeddings[(embedding.chunk_id, space_id)] = embedding
+
     def next_version_number(self, source_id: str, content_hash: str) -> int:
         if (source_id, content_hash) in self._latest_version_by_source_hash:
             version_id = self._latest_version_by_source_hash[(source_id, content_hash)]
@@ -446,6 +453,12 @@ class PostgresKnowledgeStore:
                     _upsert_embedding(cur, embedding)
             conn.commit()
         return bundle
+
+    def save_embedding(self, embedding: EmbeddingRecord) -> None:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                _upsert_embedding(cur, embedding)
+            conn.commit()
 
     def next_version_number(self, source_id: str, content_hash: str) -> int:
         with self._connect() as conn:
