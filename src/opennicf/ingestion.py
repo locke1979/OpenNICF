@@ -53,6 +53,15 @@ TEXT_SUFFIXES = {
 }
 
 
+class ArtifactValidationError(ValueError):
+    """A terminal, artifact-scoped validation failure.
+
+    Watchers may quarantine this class safely.  Other exceptions are allowed
+    to escape discovery so programming and infrastructure failures are not
+    silently converted into bad-input records.
+    """
+
+
 LIFECYCLE_STATES = (
     "received",
     "validated",
@@ -233,8 +242,29 @@ class IngestionQueue:
             self._event(job.job_id, "retry", {"attempt": job.attempts + 1})
         else:
             self.jobs[job.job_id] = replace(job, state="quarantined")
-            self._event(job.job_id, "quarantined")
+            self._event(job.job_id, "quarantined", {"reason": reason[:240], "retryable": False})
         self._persist()
+
+    def quarantine(self, job: IngestionJob, reason: str) -> IngestionJob:
+        """Terminally quarantine an already-landed, not-yet-claimed job.
+
+        This is used by discovery-time validation, before the normal worker
+        can claim a job.  It preserves the normal failed/quarantined lifecycle
+        and is idempotent for an already observed content-addressed job.
+        """
+        current = self.jobs.get(job.job_id)
+        if current is not None and current.state == "quarantined":
+            return current
+        matching = next((item for item in self.pending if item.job_id == job.job_id), None)
+        if matching is None:
+            return current or job
+        self.pending = [item for item in self.pending if item.job_id != job.job_id]
+        claimed = replace(matching, state="running", attempts=matching.attempts + 1)
+        self.in_progress[job.job_id] = claimed
+        self.jobs[job.job_id] = claimed
+        self._persist()
+        self.fail(claimed, reason, retryable=False)
+        return self.jobs[job.job_id]
 
     def retry_dead_letter(self, job_id: str) -> bool:
         for index, entry in enumerate(list(self.dead_letters)):
@@ -1086,6 +1116,63 @@ class IngestionService:
         job = self._enqueue(job)
         return [job]
 
+    def quarantine_file(
+        self,
+        path: str | Path,
+        *,
+        channel: str,
+        reason: str,
+        failure_classification: str,
+        source_id: str | None = None,
+        source_uri: str | None = None,
+        domain: str = "general",
+        system: str = "unknown",
+        domain_id: str | None = None,
+        system_id: str | None = None,
+        component_id: str | None = None,
+        evidence_type: str | None = None,
+        environment: str = "unknown",
+        acl_scope: str = "internal",
+        metadata: dict[str, Any] | None = None,
+        local_only: bool = False,
+    ) -> IngestionJob:
+        """Land and durably quarantine a discovery-time invalid artifact."""
+        file_path = Path(path)
+        raw_bytes = file_path.read_bytes()
+        self._validate_payload_size(raw_bytes, label="evidence file")
+        if len(raw_bytes) > self.limits.max_single_file_bytes:
+            raise ValueError("evidence file exceeds size limit")
+        source_uri = source_uri or str(file_path)
+        source_id = source_id or _stable_source_id(channel, source_uri)
+        source_type, source_kind = _classify_suffix(file_path)
+        job = self._build_job(
+            source_id=source_id,
+            source_uri=source_uri,
+            channel=channel,
+            mime_type=_canonical_mime(file_path, None),
+            raw_bytes=raw_bytes,
+            source_kind=source_kind,
+            source_type=source_type or "archive",
+            domain=domain,
+            system=system,
+            domain_id=domain_id,
+            system_id=system_id,
+            component_id=component_id,
+            evidence_type=evidence_type,
+            environment=environment,
+            acl_scope=acl_scope,
+            parser_hint=source_type,
+            local_only=local_only,
+            metadata={
+                "failure_stage": "archive_validation",
+                "failure_classification": failure_classification,
+                "failure_reason": reason[:240],
+                **dict(metadata or {}),
+            },
+        )
+        job = self._enqueue(job)
+        return self.queue.quarantine(job, reason)
+
     def _submit_conversation_message(
         self,
         *,
@@ -1391,20 +1478,37 @@ class IngestionService:
 
     def _expand_archive(self, path: Path, raw_bytes: bytes) -> list[tuple[PurePosixPath, bytes]]:
         suffix = _archive_suffix(path)
-        if suffix == ".zip":
-            members = _archive_members_from_zip(raw_bytes)
-        elif suffix in {".tar", ".tgz", ".tar.gz"}:
-            members = _archive_members_from_tar(raw_bytes)
-        elif suffix == ".7z":
-            members = _archive_members_from_7z(raw_bytes)
-        else:
-            raise ValueError(f"unsupported archive type: {path.name}")
-        if len(members) > self.limits.max_archive_entries:
-            raise ValueError("archive entry limit exceeded")
-        total = sum(len(content) for _, content in members)
-        if total > self.limits.max_archive_expansion_bytes:
-            raise ValueError("archive expansion limit exceeded")
-        return members
+        try:
+            if suffix == ".zip":
+                members = _archive_members_from_zip(raw_bytes)
+            elif suffix in {".tar", ".tgz", ".tar.gz"}:
+                members = _archive_members_from_tar(raw_bytes)
+            elif suffix == ".7z":
+                members = _archive_members_from_7z(raw_bytes)
+            else:
+                raise ValueError(f"unsupported archive type: {path.name}")
+            if len(members) > self.limits.max_archive_entries:
+                raise ValueError("archive entry limit exceeded")
+            total = sum(len(content) for _, content in members)
+            if total > self.limits.max_archive_expansion_bytes:
+                raise ValueError("archive expansion limit exceeded")
+            return members
+        except ArtifactValidationError:
+            raise
+        except ValueError as exc:
+            # Preserve a bounded classification useful to callers/tests, but
+            # never copy an archive-controlled member name into operational
+            # state or logs.
+            detail = str(exc)
+            if detail.startswith("unsafe archive member path"):
+                detail = "unsafe archive member path"
+            elif "limit exceeded" in detail:
+                detail = "archive limit exceeded"
+            else:
+                detail = "archive structure is invalid"
+            raise ArtifactValidationError(f"archive validation failed: {detail}") from exc
+        except (zipfile.BadZipFile, tarfile.TarError, EOFError, OSError) as exc:
+            raise ArtifactValidationError("archive validation failed: archive structure is invalid") from exc
 
     def process_next(self) -> IngestionOutcome | None:
         job = self.queue.claim()
@@ -1522,7 +1626,19 @@ class DirectoryWatcher:
             key = str(path)
             if self._observed.get(key) == marker:
                 continue
-            jobs.extend(self.service.submit_file(path, channel=self.channel, metadata={"watcher": "directory", **self.submit_options.get("metadata", {})}, **{k: v for k, v in self.submit_options.items() if k != "metadata"}))
+            try:
+                jobs.extend(self.service.submit_file(path, channel=self.channel, metadata={"watcher": "directory", **self.submit_options.get("metadata", {})}, **{k: v for k, v in self.submit_options.items() if k != "metadata"}))
+            except ArtifactValidationError as exc:
+                jobs.append(
+                    self.service.quarantine_file(
+                        path,
+                        channel=self.channel,
+                        reason=str(exc),
+                        failure_classification="malformed_archive",
+                        metadata={"watcher": "directory", **self.submit_options.get("metadata", {})},
+                        **{k: v for k, v in self.submit_options.items() if k != "metadata"},
+                    )
+                )
             self._observed[key] = marker
         return jobs
 

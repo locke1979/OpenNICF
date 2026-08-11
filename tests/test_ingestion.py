@@ -250,3 +250,59 @@ def test_failed_jobs_are_retryable_then_quarantined_and_status_is_bounded():
     status = service.status(limit=0)
     assert len(status["jobs"]) <= 1
     assert status["states"]["quarantined"] == 1
+
+
+def test_directory_watcher_quarantines_malformed_zip_and_processes_next_file(tmp_path):
+    landing = tmp_path / "landing"
+    watched = tmp_path / "watched"
+    watched.mkdir()
+    malformed = watched / "bad.zip"
+    malformed.write_bytes(b"not a zip archive")
+    valid = watched / "after.txt"
+
+    platform = KnowledgePlatform.in_memory()
+    service = IngestionService(platform, landing_root=landing)
+    watcher = DirectoryWatcher(
+        service,
+        watched,
+        domain="finance",
+        system="ledger",
+        acl_scope="restricted",
+    )
+
+    first_scan = watcher.scan()
+    assert len(first_scan) == 1
+    bad_job = first_scan[0]
+    assert service.queue.jobs[bad_job.job_id].state == "quarantined"
+    assert service.queue.lifecycle[bad_job.job_id][-1].state == "quarantined"
+    assert service.queue.lifecycle[bad_job.job_id][-1].details["retryable"] is False
+    assert service.queue.jobs[bad_job.job_id].metadata["failure_classification"] == "malformed_archive"
+    assert service.queue.jobs[bad_job.job_id].metadata["failure_stage"] == "archive_validation"
+    assert service.queue.status()["dead_letters"] == 1
+
+    valid.write_text("valid evidence after malformed archive", encoding="utf-8")
+    second_scan = watcher.scan()
+    assert len(second_scan) == 1
+    assert service.run() and service.queue.jobs[second_scan[0].job_id].state == "indexed"
+    assert any("valid evidence after malformed archive" in chunk.text for chunk in platform.store.chunks.values())
+
+    # The unchanged malformed artifact is observed once and cannot create a
+    # second durable job or retry cycle on later scans.
+    assert watcher.scan() == []
+    assert len(service.queue.dead_letters) == 1
+
+
+def test_directory_watcher_does_not_hide_unexpected_programming_errors(tmp_path, monkeypatch):
+    watched = tmp_path / "watched"
+    watched.mkdir()
+    path = watched / "evidence.txt"
+    path.write_text("evidence", encoding="utf-8")
+    service = IngestionService(KnowledgePlatform.in_memory())
+    watcher = DirectoryWatcher(service, watched)
+
+    def explode(*_args, **_kwargs):
+        raise RuntimeError("unexpected programming failure")
+
+    monkeypatch.setattr(service, "submit_file", explode)
+    with pytest.raises(RuntimeError, match="unexpected programming failure"):
+        watcher.scan()
