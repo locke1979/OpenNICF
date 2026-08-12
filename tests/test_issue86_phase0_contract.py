@@ -1,6 +1,7 @@
 """Model-free safety tests for the issue #86 Phase 0 contract."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -23,7 +24,11 @@ from opennicf.evaluation import (
     RerankCandidate,
     RerankQuery,
     RerankLimits,
+    RerankedCandidate,
+    RerankerInfo,
+    build_result_manifest,
     select_context,
+    validate_result_manifest,
 )
 
 ROOT = Path(__file__).parents[1]
@@ -56,7 +61,11 @@ def _representation(**overrides):
         "render_version": "1",
     }
     values.update(overrides)
-    rep_id = stable_representation_id(**values)
+    identity = {key: values[key] for key in (
+        "source_version_id", "representation_type", "locator", "parent_chunk_id",
+        "rendition_hash", "render_name", "render_version",
+    )}
+    rep_id = stable_representation_id(**identity)
     return RepresentationRecord(
         representation_id=rep_id,
         source_id="src-1",
@@ -70,6 +79,10 @@ def _representation(**overrides):
         rendition_hash=values["rendition_hash"],
         render_name=values["render_name"],
         render_version=values["render_version"],
+        lifecycle_status=values.get("lifecycle_status", "ready"),
+        acl_scope=values.get("acl_scope", ""),
+        domain_id=values.get("domain_id", ""),
+        system_id=values.get("system_id", ""),
     )
 
 
@@ -97,6 +110,23 @@ def test_unchanged_rendition_write_is_idempotent_and_embedding_spaces_cannot_com
     right = EmbeddingVariant(record.representation_id, "VL_QWEN3_2B_W4_768_V1", "vl", "r1", "W4", 2048, 2, True, (1.0, 0.0))
     with pytest.raises(ValueError, match="space"):
         compare_embeddings(left, right)
+
+
+def test_store_eligibility_joins_lifecycle_embedding_space_and_policy():
+    store = InMemoryRepresentationStore()
+    ready = _representation(acl_scope="team-a", domain_id="legal", system_id="case")
+    pending = _representation(locator="page:2", lifecycle_status="pending", acl_scope="team-a", domain_id="legal", system_id="case")
+    denied = _representation(locator="page:3", acl_scope="team-b", domain_id="legal", system_id="case")
+    for record in (ready, pending, denied):
+        store.put_representation(record)
+        store.put_embedding(EmbeddingVariant(record.representation_id, "space-a", "fake", "r1", "none", 1, 1, True, (1.0,)))
+    eligible = store.eligible_representations(
+        "space-a",
+        acl_scopes=frozenset({"team-a"}),
+        domain_ids=frozenset({"legal"}),
+        system_ids=frozenset({"case"}),
+    )
+    assert eligible == (ready,)
 
 
 def test_rrf_is_deterministic_and_uses_rank_not_raw_scores():
@@ -206,15 +236,20 @@ def _candidate(candidate_id, *, representation_type="text", source_id="src", loc
 
 
 def test_evaluation_coordinator_filters_before_fusion_and_records_candidate_recall():
-    candidates = [_candidate("allowed", acl="allow"), _candidate("secret", acl="secret")]
+    candidates = [
+        _candidate("allowed", acl="allow"),
+        _candidate("secret", acl="secret"),
+        replace(_candidate("pending", acl="allow"), lifecycle_status="pending"),
+    ]
     result = EvaluationCoordinator(k_rrf=1).run(
         RerankQuery("query", "q-1"),
-        {"dense": ["secret", "allowed"], "lexical": ["allowed"]},
+        {"dense": ["secret", "pending", "allowed"], "lexical": ["allowed"]},
         candidates,
         filters=EvaluationFilters(acl_scopes=frozenset({"allow"})),
         relevant_candidate_ids=["allowed"],
     )
     assert tuple(item.candidate_id for item in result.fused_candidates) == ("allowed",)
+    assert {item.candidate_id for item in result.filtered_candidates} == {"allowed"}
     assert result.candidate_recall == 1.0
     assert result.phase_order.index("filter") < result.phase_order.index("rrf")
     assert result.phase_order.index("candidate_recall") < result.phase_order.index("rerank")
@@ -237,8 +272,6 @@ def test_reranker_failure_policies_are_explicit_and_never_look_successful():
 
 
 def test_skip_unsupported_candidate_records_it_without_silent_loss():
-    from opennicf.evaluation import RerankerInfo
-
     candidates = [_candidate("text"), _candidate("image", representation_type="page_image", locator="page:2")]
     reranker = FakeReranker(
         info=RerankerInfo(id="text-only", capabilities=frozenset({"text"}), failure_policy="SKIP_UNSUPPORTED_CANDIDATE"),
@@ -248,6 +281,25 @@ def test_skip_unsupported_candidate_records_it_without_silent_loss():
     assert result.rerank is not None
     assert result.rerank.skipped_candidate_ids == ("image",)
     assert {item.candidate_id for item in result.reranked_candidates} == {"text", "image"}
+
+
+def test_malformed_reranker_output_preserves_provenance_and_obeys_failure_policy():
+    class ProvenanceChangingReranker(FakeReranker):
+        def score(self, query, candidates, *, limits):
+            result = super().score(query, candidates, limits=limits)
+            changed = replace(result.reranked[0].candidate, artifact_hash="f" * 64)
+            return replace(result, reranked=(replace(result.reranked[0], candidate=changed),))
+
+    candidate = _candidate("safe", text="sanitized evidence")
+    reranker = ProvenanceChangingReranker(
+        info=RerankerInfo(id="malformed", failure_policy="FALLBACK_TO_FUSED_ORDER")
+    )
+    result = EvaluationCoordinator().run("query", {"dense": ["safe"]}, [candidate], reranker=reranker)
+    assert result.rerank is not None
+    assert result.rerank.failure_classification == "malformed_output"
+    assert result.rerank.reranker_applied is False
+    assert result.rerank.fallback_invoked is True
+    assert result.reranked_candidates[0].candidate == candidate
 
 
 def test_context_selection_deduplicates_late_and_enforces_source_page_limits():
@@ -264,3 +316,56 @@ def test_context_selection_deduplicates_late_and_enforces_source_page_limits():
     )
     assert [item.candidate_id for item in result.selected] == ["first", "second"]
     assert any(item.reason == "duplicate_representation" for item in result.suppressed)
+
+
+@pytest.mark.parametrize(
+    ("limits", "candidates", "reason"),
+    [
+        (ContextLimits(max_candidates=1), [_candidate("one"), _candidate("two", source_id="other")], "candidate_limit"),
+        (ContextLimits(max_tokens=1), [_candidate("tokens", text="two tokens")], "token_limit"),
+        (
+            ContextLimits(max_images=1),
+            [
+                _candidate("image-a", representation_type="page_image", source_id="a", locator="page:1"),
+                _candidate("image-b", representation_type="page_image", source_id="b", locator="page:2"),
+            ],
+            "image_limit",
+        ),
+        (
+            ContextLimits(max_pixels=10),
+            [replace(_candidate("pixels", representation_type="page_image"), pixel_width=4, pixel_height=4)],
+            "pixel_limit",
+        ),
+    ],
+)
+def test_context_selection_records_every_global_budget(limits, candidates, reason):
+    ranked = [RerankedCandidate(candidate, 1.0, rank) for rank, candidate in enumerate(candidates, 1)]
+    result = select_context(ranked, limits=limits)
+    assert reason in {item.reason for item in result.suppressed}
+
+
+def test_result_manifest_is_machine_generated_deterministic_and_sanitized():
+    candidate = replace(
+        _candidate("safe", text="RAW DISTINCTIVE QUERY SECRET"),
+        metadata={"password": "must-not-leak", "private_note": "must-not-leak"},
+        domain_id="evaluation",
+        system_id="synthetic",
+    )
+    result = EvaluationCoordinator().run(
+        RerankQuery("RAW QUERY MUST NOT LEAK", "query-synthetic-001"),
+        {"dense": ["safe"]},
+        [candidate],
+        relevant_candidate_ids=["safe"],
+    )
+    generated = build_result_manifest(
+        result,
+        experiment_manifest_digest="e" * 64,
+        arm_id="T0",
+        run_id="synthetic-run-001",
+    )
+    validate_result_manifest(generated)
+    expected = json.loads((DOCS / "issue88-result-manifest.example.json").read_text())
+    assert generated == expected
+    raw = json.dumps(generated, sort_keys=True)
+    for forbidden in ("RAW QUERY", "DISTINCTIVE", "must-not-leak", "password", "metadata", "acl_scope"):
+        assert forbidden not in raw

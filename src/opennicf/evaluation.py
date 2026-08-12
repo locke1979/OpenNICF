@@ -7,6 +7,7 @@ No method here downloads, invokes, or persists a model artifact.
 """
 from __future__ import annotations
 
+import json
 import re
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -28,6 +29,12 @@ _TOKEN_RE = re.compile(r"[\w./:-]+", re.UNICODE)
 _PAGE_RE = re.compile(r"(?:^|[:/#=_ -])page[:/#=_ -]?([0-9]+)(?:$|[:/#=_ -])", re.IGNORECASE)
 FAILURE_POLICIES = {"FAIL_QUERY", "FALLBACK_TO_FUSED_ORDER", "SKIP_UNSUPPORTED_CANDIDATE"}
 MODALITIES = {"text", "page_image", "region_image", "mixed"}
+_HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
+_UNSAFE_RESULT_RE = re.compile(
+    r"(?:api[_-]?key|password|secret|authorization)\s*[:=]|"
+    r"(?:/var/lib/opennicf|/etc/opennicf|production[_-]?data|private[_-]?evidence|raw[_-]?evidence)",
+    re.IGNORECASE,
+)
 
 
 def _token_count(text: str) -> int:
@@ -83,6 +90,7 @@ class RerankCandidate:
     component_id: str = "unknown-component"
     environment: str = ""
     evidence_type: str = ""
+    lifecycle_status: str = "ready"
     pixel_width: int | None = None
     pixel_height: int | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -92,6 +100,8 @@ class RerankCandidate:
             raise ValueError("candidate and representation IDs are required")
         if self.representation_type not in MODALITIES:
             raise ValueError(f"unsupported representation_type: {self.representation_type}")
+        if self.lifecycle_status not in {"pending", "ready", "failed", "quarantined", "retired"}:
+            raise ValueError(f"unsupported lifecycle_status: {self.lifecycle_status}")
         if self.representation_type != "text" and (
             self.pixel_width is not None and self.pixel_width <= 0
             or self.pixel_height is not None and self.pixel_height <= 0
@@ -278,7 +288,8 @@ class EvaluationFilters:
 
     def allows(self, candidate: RerankCandidate) -> bool:
         return (
-            (not self.acl_scopes or candidate.acl_scope in self.acl_scopes)
+            candidate.lifecycle_status == "ready"
+            and (not self.acl_scopes or candidate.acl_scope in self.acl_scopes)
             and (not self.domain_ids or candidate.domain_id in self.domain_ids)
             and (not self.system_ids or candidate.system_id in self.system_ids)
         )
@@ -386,6 +397,116 @@ class EvaluationResult:
     reranked_candidates: tuple[RerankedCandidate, ...]
     context: ContextSelectionResult
     phase_order: tuple[str, ...]
+
+
+def _candidate_provenance(candidate: RerankCandidate) -> dict[str, Any]:
+    """Return the immutable, non-content fields allowed in a result manifest."""
+    return {
+        "candidate_id": candidate.candidate_id,
+        "representation_id": candidate.representation_id,
+        "representation_type": candidate.representation_type,
+        "source_id": candidate.source_id,
+        "source_version_id": candidate.source_version_id,
+        "artifact_hash": candidate.artifact_hash,
+        "locator": candidate.locator,
+        "chunk_id": candidate.chunk_id,
+        "parent_chunk_id": candidate.parent_chunk_id,
+        "domain_id": candidate.domain_id,
+        "system_id": candidate.system_id,
+        "component_id": candidate.component_id,
+        "environment": candidate.environment,
+        "evidence_type": candidate.evidence_type,
+    }
+
+
+def build_result_manifest(
+    result: EvaluationResult,
+    *,
+    experiment_manifest_digest: str,
+    arm_id: str,
+    run_id: str,
+) -> dict[str, Any]:
+    """Serialize an evaluation result without query text, evidence text, ACLs, or metadata."""
+    rerank = result.rerank
+    payload: dict[str, Any] = {
+        "result_manifest_version": 1,
+        "production": False,
+        "production_route_changed": False,
+        "experiment_manifest_digest": experiment_manifest_digest,
+        "arm_id": arm_id,
+        "run_id": run_id,
+        "query_id": result.query.query_id,
+        "phase_order": list(result.phase_order),
+        "lane_orders": {name: list(ids) for name, ids in sorted(result.lane_orders.items())},
+        "candidate_recall": result.candidate_recall,
+        "relevant_candidate_count": result.relevant_candidate_count,
+        "relevant_candidates_found": result.relevant_candidates_found,
+        "fused_candidates": [_candidate_provenance(item) for item in result.fused_candidates],
+        "reranked_candidates": [
+            {**_candidate_provenance(item.candidate), "score": item.score, "original_rank": item.original_rank}
+            for item in result.reranked_candidates
+        ],
+        "context": {
+            "selected_ids": [item.candidate_id for item in result.context.selected],
+            "suppressions": [
+                {"candidate_id": item.candidate.candidate_id, "reason": item.reason}
+                for item in result.context.suppressed
+            ],
+            "token_count": result.context.token_count,
+            "image_count": result.context.image_count,
+            "pixel_count": result.context.pixel_count,
+        },
+        "rerank": None if rerank is None else {
+            "requested_reranker": rerank.requested_reranker,
+            "actual_reranker": rerank.actual_reranker,
+            "elapsed_ms": rerank.elapsed_ms,
+            "eligible_count": rerank.eligible_count,
+            "scored_count": rerank.scored_count,
+            "skipped_count": rerank.skipped_count,
+            "failure_classification": rerank.failure_classification,
+            "reranker_applied": rerank.reranker_applied,
+            "fallback_invoked": rerank.fallback_invoked,
+            "skipped_candidate_ids": list(rerank.skipped_candidate_ids),
+        },
+    }
+    validate_result_manifest(payload)
+    return payload
+
+
+def validate_result_manifest(manifest: Mapping[str, Any]) -> None:
+    """Fail closed if a generated result contract is incomplete or unsafe."""
+    errors: list[str] = []
+    if manifest.get("result_manifest_version") != 1:
+        errors.append("unsupported result manifest version")
+    if manifest.get("production") is not False or manifest.get("production_route_changed") is not False:
+        errors.append("result manifest must remain evaluation-only")
+    if not _HEX64_RE.fullmatch(str(manifest.get("experiment_manifest_digest", ""))):
+        errors.append("experiment manifest digest must be SHA-256")
+    if not manifest.get("arm_id") or not manifest.get("run_id") or not manifest.get("query_id"):
+        errors.append("arm, run, and query IDs are required")
+    expected_order = list(EvaluationCoordinator.PHASE_ORDER)
+    if manifest.get("phase_order") != expected_order:
+        errors.append("result phase order is invalid")
+    raw = json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    if _UNSAFE_RESULT_RE.search(raw):
+        errors.append("unsafe result content is forbidden")
+    forbidden_keys = {"text", "metadata", "acl_scope", "error"}
+    def walk(value: Any) -> None:
+        if isinstance(value, Mapping):
+            if forbidden_keys.intersection(value):
+                errors.append("raw content, metadata, ACLs, and errors are forbidden")
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value:
+                walk(child)
+    walk(manifest)
+    for section in ("fused_candidates", "reranked_candidates"):
+        for candidate in manifest.get(section, []):
+            if not _HEX64_RE.fullmatch(str(candidate.get("artifact_hash", ""))):
+                errors.append(f"{section} artifact hash must be SHA-256")
+    if errors:
+        raise ValueError("; ".join(dict.fromkeys(errors)))
 
 
 CandidateSource: TypeAlias = Mapping[str, RerankCandidate] | Sequence[RerankCandidate]
@@ -584,8 +705,10 @@ __all__ = [
     "SuppressedCandidate",
     "UnsupportedModalityError",
     "compare_embeddings",
+    "build_result_manifest",
     "rrf_rank",
     "select_context",
     "stable_representation_id",
     "validate_manifest",
+    "validate_result_manifest",
 ]

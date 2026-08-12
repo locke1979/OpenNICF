@@ -166,12 +166,22 @@ class InMemoryRepresentationStore:
             records = (record for record in records if record.lifecycle_status == lifecycle_status)
         return tuple(sorted(records, key=lambda record: record.representation_id))
 
-    def eligible_representations(self, embedding_space_id: str) -> tuple[RepresentationRecord, ...]:
-        """Return ready renditions with an embedding in one explicit space."""
+    def eligible_representations(
+        self,
+        embedding_space_id: str,
+        *,
+        acl_scopes: frozenset[str] = frozenset(),
+        domain_ids: frozenset[str] = frozenset(),
+        system_ids: frozenset[str] = frozenset(),
+    ) -> tuple[RepresentationRecord, ...]:
+        """Return ready, embedded renditions authorized by explicit policy filters."""
         return tuple(
             record
             for record in self.list_representations(lifecycle_status="ready")
             if (record.representation_id, embedding_space_id) in self.embeddings
+            and (not acl_scopes or record.acl_scope in acl_scopes)
+            and (not domain_ids or record.domain_id in domain_ids)
+            and (not system_ids or record.system_id in system_ids)
         )
 
 
