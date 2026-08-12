@@ -1,6 +1,6 @@
 # Issue #86 Phase 0 — architecture delta
 
-Status: `ARCHITECTURE_EVALUATION = NOT_STARTED`
+Status: `ARCHITECTURE_EVALUATION = PHASE_0_CONTRACT_CORRECTED`
 
 This document is an evaluation design. It does not change the active model,
 embedding space, production index, service configuration, FastClaw, or QwenAgent
@@ -47,7 +47,8 @@ artifact
   -> existing parser / bounded renderer
        -> text blocks -> stable text chunks -> TEXT_4B_Q4_768
        -> page/region/mixed renditions -> VL_2B_W4_768
-  -> representation registry (independent identity per rendition and space)
+  -> representation registry (one identity per canonical rendition)
+  -> independent embedding variants keyed by (representation_id, embedding_space_id)
 
 query
   -> ACL/domain/system filters
@@ -70,9 +71,14 @@ behavior. No evaluation result can write to the active ANN/index path.
 
 ## Required design decisions
 
-1. `embedding_space_id` is the compatibility boundary. Proposed defaults are
-   `TEXT_4B_Q4_768` and `VL_2B_W4_768`; they are never mixed in one vector
-   comparison or persisted under one representation identity.
+1. `representation_id` identifies a canonical derived rendition independently
+   of model, quantization, runtime, or semantic space. Its canonical tuple is
+   `source_version_id`, representation type, stable page/region locator,
+   optional parent chunk, rendition hash, render name, and render version.
+   `embedding_space_id` is the compatibility boundary for attached embedding
+   variants. Proposed examples are `TEXT_QWEN3_4B_Q4_K_M_768_V1`,
+   `VL_QWEN3_2B_BF16_768_V1`, `VL_QWEN3_2B_W4_768_V1`, and
+   `VL_QWEN3_2B_W8_768_V1`; they are never mixed in one vector comparison.
 2. RRF is the initial fusion method. Lexical, text dense, VL dense, and
    reranker scores are not numerically comparable without a separately
    validated calibration study.
@@ -89,6 +95,39 @@ behavior. No evaluation result can write to the active ANN/index path.
    retryable or quarantined with a classified reason.
 8. Ingested visual/text content remains untrusted evidence and cannot alter
    workflow, tools, ACLs, limits, or model routing.
+
+## Verified runtime/tool sequence
+
+The current path is:
+
+```text
+DomainTools.search_* / search_domain_evidence
+  -> _filters() and domain/ACL enforcement
+  -> KnowledgePlatform.search / exact / symbol / log route
+  -> HybridRetriever.search or bounded domain-specific candidate ranking
+  -> DomainTools._package_hits()
+  -> DomainAgent.permitted_qwen_tools() / OpenNICFTools.as_qwen_tools()
+  -> QwenAgentRuntime.run()
+  -> OpenNICFChatModel.chat()
+  -> ModelGateway request to the generator
+```
+
+`DomainTools._package_hits()` groups results by source version and emits
+provenance-bearing evidence references, including source/version, locator,
+excerpt hash, embedding space, ACL/domain/system metadata, and bounded size
+estimates. `OpenNICFTools.search_evidence()` is a legacy reduced adapter and
+does not expose the complete package; issue #86 must use the domain package or
+an evaluation adapter that preserves the full fields.
+
+`knowledge/benchmark.py:compact_hits()` currently performs four-chunk/256-token
+deduplication for the benchmark path. The inspected production tool path does
+not prove that this compactor is invoked before QwenAgent context assembly, and
+the generator adapter accepts the tool result returned by QwenAgent. Therefore
+the safest Phase 1 insertion point is an evaluation-only context selector
+between post-rerank result ordering and `_package_hits()`, with an explicit
+result phase and budgets. It must be tested without changing the production
+tool response or default route. Text truncation, image count, and pixel limits
+must be recorded rather than inferred from the model gateway.
 
 ## Exact proposed code changes (later phases; not implemented in Phase 0)
 

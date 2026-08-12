@@ -42,8 +42,29 @@
 
 ```text
 PRODUCTION = UNCHANGED
-ARCHITECTURE_EVALUATION = PHASE_0_DESIGN_READY_FOR_REVIEW
+ARCHITECTURE_EVALUATION = PHASE_0_CONTRACT_CORRECTED
 RECOMMENDATION = NEEDS_EVIDENCE
 MODEL_DOWNLOADS = 0
 DEPLOYMENTS = 0
 ```
+
+## Execution gates
+
+### Gate A — text reranker foundation
+
+Ready after this correction for model-free work only: provider-neutral
+reranker interfaces, deterministic RRF, in-memory representations,
+machine-validatable manifests, timeout/failure/fallback tests, and post-rerank
+context-selection tests. No text quality claims are permitted.
+
+### Gate B — text quality execution
+
+Blocked until #85 supplies at least 150 accepted human-reviewed queries, hard
+negative labels, corpus/label digests, complete 715-chunk Qwen 4B vectors, and
+the decision-grade paired baseline.
+
+### Gate C — multimodal execution
+
+Blocked until exact official VL-2B BF16/FP16 and W4 artifacts/revisions,
+multimodal reranker identity, runtime and license records, sanitized corpus,
+human review contract, and approved pixel/resolution/batch limits exist.

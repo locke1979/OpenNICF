@@ -30,19 +30,13 @@ source_version_id: existing immutable version identity
 artifact_hash: existing immutable artifact hash
 parent_chunk_id: nullable existing text chunk identity
 page_locator: nullable stable page/region locator
-object_key: rendition object-store key
+object_key: nullable for text backed directly by an existing chunk; required for new renditions
 mime_type: rendition MIME type
 pixel_width: nullable bounded integer
 pixel_height: nullable bounded integer
 render_name: renderer/parser name
 render_version: renderer/parser revision
 rendition_hash: SHA-256 of canonical rendition bytes/manifest
-embedding_space_id: explicit independent semantic space
-model: model identity
-model_revision: model revision or commit
-quantization: none | bf16 | fp16 | w4 | w8 | q4_k_m | other
-dimensions: positive integer
-normalized: boolean
 lifecycle_status: pending | ready | failed | quarantined | retired
 failure_classification: nullable bounded enum
 acl_scope: inherited immutable ACL
@@ -54,10 +48,17 @@ evidence_type: inherited evidence class
 metadata: sanitized bounded JSON metadata
 ```
 
-`representation_id` is stable over a canonical tuple of source version,
-parent locator, representation type, rendition hash, and embedding space. A
-changed renderer revision or bytes creates a new representation/rendition
-identity; reprocessing unchanged bytes is an idempotent no-op.
+Embedding model, quantization, dimensions, normalization, and
+`embedding_space_id` belong to the separate embedding-variant record, not to
+the rendition identity.
+
+`representation_id` is stable over the canonical tuple
+`source_version_id`, `representation_type`, stable locator, optional
+`parent_chunk_id`, `rendition_hash`, `render_name`, and `render_version`.
+`embedding_space_id` is deliberately excluded. A changed renderer revision or
+rendition bytes creates a new representation identity; reprocessing an
+unchanged rendition is an idempotent no-op. BF16/W4/W8 and future revisions
+attach to the same representation through separate embedding rows.
 
 ## Proposed database shape (evaluation design only)
 
@@ -72,7 +73,7 @@ knowledge_representations (
   parent_chunk_id TEXT REFERENCES knowledge_chunks(chunk_id),
   representation_type TEXT NOT NULL,
   page_locator TEXT,
-  object_key TEXT NOT NULL,
+  object_key TEXT,
   mime_type TEXT NOT NULL,
   pixel_width INTEGER,
   pixel_height INTEGER,
@@ -88,7 +89,12 @@ knowledge_representations (
   environment TEXT NOT NULL,
   evidence_type TEXT NOT NULL,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-  UNIQUE(source_version_id, representation_type, page_locator, rendition_hash)
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  first_attempt_at TIMESTAMPTZ,
+  last_attempt_at TIMESTAMPTZ,
+  last_error_at TIMESTAMPTZ,
+  last_error TEXT,
+  UNIQUE(source_version_id, representation_type, page_locator, parent_chunk_id, rendition_hash, render_name, render_version)
 )
 
 knowledge_representation_embeddings (
@@ -105,6 +111,31 @@ knowledge_representation_embeddings (
   PRIMARY KEY(representation_id, embedding_space_id)
 )
 ```
+
+### Integrity rules
+
+- `component_id` follows the current OpenNICF contract: it is required as a
+  non-null normalized identifier; use `unknown-component` when no finer value
+  is available, rather than using SQL `NULL`.
+- `object_key` is nullable only for a text representation that is exactly
+  backed by an existing immutable `knowledge_chunks` row. Image, region, and
+  mixed renditions must have an object-store key. The repository method must
+  enforce this by representation type.
+- A representation write validates that source, source version, and artifact
+  refer to the same existing chain. Durable SQL should use composite foreign
+  keys (or a validated repository transaction) so an artifact cannot be
+  attached to another source version.
+- `parent_chunk_id`, when present, must belong to the same `source_version_id`.
+  The isolated implementation rejects mismatches before insertion.
+- Only `ready` representations with a compatible embedding variant are
+  eligible for retrieval. `pending`, `failed`, `quarantined`, and `retired`
+  rows remain auditable but are excluded by the candidate query.
+- Page/region locators are stable canonical strings. Uniqueness includes
+  source version, representation type, parent chunk, locator, rendition hash,
+  and renderer identity so separate regions/pages cannot collide.
+- Retirement is a lifecycle update that preserves the immutable original and
+  all provenance. It does not cascade-delete source, artifact, chunk, or
+  embedding history.
 
 Dimension-specific ANN materialization must be created only after a target
 space is validated. Legacy vectors and active production indexes are not
