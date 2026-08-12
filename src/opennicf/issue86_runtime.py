@@ -135,6 +135,38 @@ def require_model_on_cuda(model: Any) -> None:
     require_cuda_tensors(parameters, role="model parameter")
 
 
+QUANTIZATION_EVIDENCE_FIELDS = (
+    "weight_bits",
+    "weight_quantization_method",
+    "weight_quantization_scheme",
+    "group_size",
+    "compute_dtype",
+    "runtime",
+    "runtime_revision",
+    "cuda_required",
+    "cpu_offload_allowed",
+    "verified_cuda_residency",
+)
+
+
+def require_quantization_evidence(record: dict[str, Any]) -> None:
+    """Fail closed when an executed model lacks precision/residency evidence."""
+    if record.get("status") != "EXECUTED_CUDA":
+        return
+    missing = [field for field in QUANTIZATION_EVIDENCE_FIELDS if field not in record]
+    if missing:
+        raise ValueError(f"executed arm lacks quantization evidence: {', '.join(missing)}")
+    if record["cuda_required"] is not True or record["cpu_offload_allowed"] is not False:
+        raise ValueError("executed arm violates the CUDA-only/no-offload contract")
+    if record["verified_cuda_residency"] is not True:
+        raise ValueError("executed arm lacks verified CUDA residency")
+    bits = record["weight_bits"]
+    if not isinstance(bits, (int, list)) or isinstance(bits, bool):
+        raise ValueError("weight_bits must describe executable weight metadata")
+    if record["weight_quantization_method"] == "none" and bits not in (16, 32):
+        raise ValueError("unquantized weights cannot be relabelled as low-bit")
+
+
 def preflight(artifact_root: str | Path) -> RuntimePreflight:
     packages: dict[str, str | None] = {}
     for name in ("torch", "transformers", "safetensors", "huggingface-hub", "tokenizers", "numpy", "psutil"):

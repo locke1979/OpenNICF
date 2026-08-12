@@ -11,6 +11,7 @@ from opennicf.issue86_runtime import (
     require_cuda,
     require_cuda_tensors,
     require_model_on_cuda,
+    require_quantization_evidence,
 )
 
 
@@ -98,3 +99,35 @@ def test_model_inputs_and_outputs_must_be_verifiably_cuda_resident():
         require_model_on_cuda(cpu_model)
     with pytest.raises(CudaRequiredError, match="no output device"):
         require_cuda_tensors({"scores": [1.0]}, role="output")
+
+
+def test_executed_quantization_evidence_fails_closed():
+    with pytest.raises(ValueError, match="lacks quantization evidence"):
+        require_quantization_evidence({"status": "EXECUTED_CUDA"})
+    record = {
+        "status": "EXECUTED_CUDA", "weight_bits": 16,
+        "weight_quantization_method": "none", "weight_quantization_scheme": "FP16",
+        "group_size": None, "compute_dtype": "float16", "runtime": "PyTorch CUDA",
+        "runtime_revision": "pinned", "cuda_required": True,
+        "cpu_offload_allowed": False, "verified_cuda_residency": True,
+    }
+    require_quantization_evidence(record)
+    with pytest.raises(ValueError, match="low-bit"):
+        require_quantization_evidence({**record, "weight_bits": 4})
+
+
+def test_quantization_audit_preserves_reference_precision_and_spaces():
+    import json
+    audit = json.loads((Path(__file__).parents[1] / "docs/issue86-quantization-audit-2026-08-12.json").read_text())
+    assert audit["quantization_audit"] == "FAIL"
+    assert audit["all_models_4bit"] is False
+    assert audit["executed_fp16_arms"] == ["T00", "T04"]
+    assert audit["executed_4bit_arms"] == ["T01", "T05"]
+    executed = [model for model in audit["models"] if model["status"] == "EXECUTED_CUDA"]
+    assert all(model["verified_cuda_residency"] is False for model in executed)
+    for model in executed:
+        with pytest.raises(ValueError, match="verified CUDA residency"):
+            require_quantization_evidence(model)
+    q4 = next(model for model in executed if model["weight_quantization_scheme"].startswith("Q4_K_M"))
+    assert q4["tensor_type_inventory"] == {"Q4_K": 216, "Q6_K": 37, "F32": 145}
+    assert audit["separate_4bit_variants"]["Q00"]["embedding_space_id"] != "TEXT_QWEN3_06B_768_AUTO_V1"
