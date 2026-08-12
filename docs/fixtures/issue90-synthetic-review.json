@@ -1,0 +1,3200 @@
+{
+  "queries": [
+    {
+      "category": "page_image",
+      "domain": "domain-0",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-f0c4788565f7bfe173baa7b8"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-5120aa2c4a204eb7041a47df"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-000",
+      "relevant_representation_ids": [
+        "rep-5120aa2c4a204eb7041a47df"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 000.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-2",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-77dde301306e568312331af4"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-eb0cace17bd8762f7a9a1136"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-001",
+      "relevant_representation_ids": [
+        "rep-eb0cace17bd8762f7a9a1136"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 002.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-4",
+      "hard_negative_category": "same_diagram_labels_wrong_flow",
+      "hard_negative_ids": [
+        "rep-c3158b62f94936947e7c1a8d"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-c6f0e8a3c5774736d4863a1f"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-002",
+      "relevant_representation_ids": [
+        "rep-c6f0e8a3c5774736d4863a1f"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 004.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-1",
+      "hard_negative_category": "same_table_wrong_operation",
+      "hard_negative_ids": [
+        "rep-aa84041a162a5f726f93f69c"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-c2cc887d8d85247e9e21418a"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-003",
+      "relevant_representation_ids": [
+        "rep-c2cc887d8d85247e9e21418a"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 006.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-3",
+      "hard_negative_category": "current_obsolete",
+      "hard_negative_ids": [
+        "rep-197caada3a72845d44438e00"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-f6d7089088c721fc6764a74a"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-004",
+      "relevant_representation_ids": [
+        "rep-f6d7089088c721fc6764a74a"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 008.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-0",
+      "hard_negative_category": "production_non_production",
+      "hard_negative_ids": [
+        "rep-71054b35c32828a27bca4a68"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-154f66780f2a5fd1f346afd5"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-005",
+      "relevant_representation_ids": [
+        "rep-154f66780f2a5fd1f346afd5"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 010.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-2",
+      "hard_negative_category": "same_error_wrong_service",
+      "hard_negative_ids": [
+        "rep-e24651c365be6502a612cde6"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-1c709119d239832ec9d4e949"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-006",
+      "relevant_representation_ids": [
+        "rep-1c709119d239832ec9d4e949"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 012.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-4",
+      "hard_negative_category": "visually_similar_wrong_evidence",
+      "hard_negative_ids": [
+        "rep-9878d4fc7a86171b09c434aa"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-d7bf3789bda6ab0b8b6981e2"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-007",
+      "relevant_representation_ids": [
+        "rep-d7bf3789bda6ab0b8b6981e2"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 014.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-1",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-f13c26f6e4859d62c6f02306"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-af4b4e5e0f4641c284baf151"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-008",
+      "relevant_representation_ids": [
+        "rep-af4b4e5e0f4641c284baf151"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 016.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-3",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-6a4e59ffaeda008747c08840"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-1c921342fd788a5fe955a10c"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-009",
+      "relevant_representation_ids": [
+        "rep-1c921342fd788a5fe955a10c"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 018.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-0",
+      "hard_negative_category": "same_diagram_labels_wrong_flow",
+      "hard_negative_ids": [
+        "rep-925f980608ea697b7d95c650"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-e216b2b12816570ce81fa42b"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-010",
+      "relevant_representation_ids": [
+        "rep-e216b2b12816570ce81fa42b"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 020.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-2",
+      "hard_negative_category": "same_table_wrong_operation",
+      "hard_negative_ids": [
+        "rep-3d16c4a9683811c46f1d1455"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-0f5acd50262236ba84aebd8a"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-011",
+      "relevant_representation_ids": [
+        "rep-0f5acd50262236ba84aebd8a"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 022.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-4",
+      "hard_negative_category": "current_obsolete",
+      "hard_negative_ids": [
+        "rep-5ce7309c859221f1eeed6a93"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-541ad5b583cdf2f6090f79a6"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-012",
+      "relevant_representation_ids": [
+        "rep-541ad5b583cdf2f6090f79a6"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 024.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-1",
+      "hard_negative_category": "production_non_production",
+      "hard_negative_ids": [
+        "rep-5309bb8959841dc869efc1f5"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-94c5c0f2aabbfdee95e07230"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-013",
+      "relevant_representation_ids": [
+        "rep-94c5c0f2aabbfdee95e07230"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 026.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-3",
+      "hard_negative_category": "same_error_wrong_service",
+      "hard_negative_ids": [
+        "rep-d822be9b8fc018134de46f58"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-b9bcbaccfd1690a6cc76af0f"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-014",
+      "relevant_representation_ids": [
+        "rep-b9bcbaccfd1690a6cc76af0f"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 028.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-0",
+      "hard_negative_category": "visually_similar_wrong_evidence",
+      "hard_negative_ids": [
+        "rep-5ba3bfaa40078469f3f36c79"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-5c4b664bd597754367adb7ae"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-015",
+      "relevant_representation_ids": [
+        "rep-5c4b664bd597754367adb7ae"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 030.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-2",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-233b5dbebee4d9a636a3d04a"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-d65bfd4457a0d18509d55a7f"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-016",
+      "relevant_representation_ids": [
+        "rep-d65bfd4457a0d18509d55a7f"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 032.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-4",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-49bf303f27c7d3c1ea17dc41"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-925be42502f86682a9f608b4"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-017",
+      "relevant_representation_ids": [
+        "rep-925be42502f86682a9f608b4"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 034.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-1",
+      "hard_negative_category": "same_diagram_labels_wrong_flow",
+      "hard_negative_ids": [
+        "rep-c59f49582b184f408fe58e75"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-587c428be5ca30344b06e972"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-018",
+      "relevant_representation_ids": [
+        "rep-587c428be5ca30344b06e972"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 036.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-3",
+      "hard_negative_category": "same_table_wrong_operation",
+      "hard_negative_ids": [
+        "rep-97eb1984a796c848ff430462"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-8997192d982112f968994191"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-019",
+      "relevant_representation_ids": [
+        "rep-8997192d982112f968994191"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 038.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-0",
+      "hard_negative_category": "current_obsolete",
+      "hard_negative_ids": [
+        "rep-9a64f492f95150630fab92cf"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-67d02fa482ff05c6251dbbf0"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-020",
+      "relevant_representation_ids": [
+        "rep-67d02fa482ff05c6251dbbf0"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 040.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-2",
+      "hard_negative_category": "production_non_production",
+      "hard_negative_ids": [
+        "rep-03897ee72bdf061fc65f6879"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-ec17a34cb55a860ec1ff6a9c"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-021",
+      "relevant_representation_ids": [
+        "rep-ec17a34cb55a860ec1ff6a9c"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 042.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-4",
+      "hard_negative_category": "same_error_wrong_service",
+      "hard_negative_ids": [
+        "rep-806ac3a984d5b102f5ecf1f9"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-5929f9a4317e33334045608c"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-022",
+      "relevant_representation_ids": [
+        "rep-5929f9a4317e33334045608c"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 044.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-1",
+      "hard_negative_category": "visually_similar_wrong_evidence",
+      "hard_negative_ids": [
+        "rep-e8bf4ddba1ba3f2c6c03f806"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-e495a2bf1fcbf249b1c722df"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-023",
+      "relevant_representation_ids": [
+        "rep-e495a2bf1fcbf249b1c722df"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 046.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-3",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-6388dcf566e398d1dd27314d"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-406d738fac5c2058b67d4026"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-024",
+      "relevant_representation_ids": [
+        "rep-406d738fac5c2058b67d4026"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 048.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-0",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-ee7cf8a13d391d1319dd953c"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-ff66226e6c521b5db6080c07"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-025",
+      "relevant_representation_ids": [
+        "rep-ff66226e6c521b5db6080c07"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 050.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-2",
+      "hard_negative_category": "same_diagram_labels_wrong_flow",
+      "hard_negative_ids": [
+        "rep-ab23bf22b1cbd70734703d7e"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-0ca0f91d372a4d10544a60bc"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-026",
+      "relevant_representation_ids": [
+        "rep-0ca0f91d372a4d10544a60bc"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 052.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-4",
+      "hard_negative_category": "same_table_wrong_operation",
+      "hard_negative_ids": [
+        "rep-97513e07755b9bddb50f6f50"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-84f702a1d68d24659e2265fe"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-027",
+      "relevant_representation_ids": [
+        "rep-84f702a1d68d24659e2265fe"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 054.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-1",
+      "hard_negative_category": "current_obsolete",
+      "hard_negative_ids": [
+        "rep-55b4d2ef21ff70295f609724"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-51064b0fb356bbc2a47af3f2"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-028",
+      "relevant_representation_ids": [
+        "rep-51064b0fb356bbc2a47af3f2"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 056.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-3",
+      "hard_negative_category": "production_non_production",
+      "hard_negative_ids": [
+        "rep-b1971524c121dbba602ab957"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-5d3e595f6dc605b785b4dc95"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-029",
+      "relevant_representation_ids": [
+        "rep-5d3e595f6dc605b785b4dc95"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 058.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-0",
+      "hard_negative_category": "same_error_wrong_service",
+      "hard_negative_ids": [
+        "rep-0df1ab7a2e07cc5a96bdcf2e"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-f0636ca6d132d9206d64995c"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-030",
+      "relevant_representation_ids": [
+        "rep-f0636ca6d132d9206d64995c"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 060.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-2",
+      "hard_negative_category": "visually_similar_wrong_evidence",
+      "hard_negative_ids": [
+        "rep-b0e93e5c948e370ce172b193"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-ba1222ae4e49681d32763314"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-031",
+      "relevant_representation_ids": [
+        "rep-ba1222ae4e49681d32763314"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 062.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-4",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-1114f7d8e5fcd5a0ca954e7a"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-114f4c7f17efb9a353327a7f"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-032",
+      "relevant_representation_ids": [
+        "rep-114f4c7f17efb9a353327a7f"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 064.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-1",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-0591ea5020752520854d0df5"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-0c4cd9125f2b5d7ef5a52e83"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-033",
+      "relevant_representation_ids": [
+        "rep-0c4cd9125f2b5d7ef5a52e83"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 066.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-3",
+      "hard_negative_category": "same_diagram_labels_wrong_flow",
+      "hard_negative_ids": [
+        "rep-9e17753f0cacb47d7206ad0f"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-200f7317abc44d23a4f0d6b4"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-034",
+      "relevant_representation_ids": [
+        "rep-200f7317abc44d23a4f0d6b4"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 068.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-0",
+      "hard_negative_category": "same_table_wrong_operation",
+      "hard_negative_ids": [
+        "rep-82304f07b95bd1314adf75b6"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-b18c4b71431d9676ea6c652c"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-035",
+      "relevant_representation_ids": [
+        "rep-b18c4b71431d9676ea6c652c"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 070.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-2",
+      "hard_negative_category": "current_obsolete",
+      "hard_negative_ids": [
+        "rep-46c0af91169959a9c15df05c"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-24bc2bca6bde5c45504b6a97"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-036",
+      "relevant_representation_ids": [
+        "rep-24bc2bca6bde5c45504b6a97"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 072.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-4",
+      "hard_negative_category": "production_non_production",
+      "hard_negative_ids": [
+        "rep-1ca11616ead66b4fabe2daed"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-773eaa6609024a6559c14920"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-037",
+      "relevant_representation_ids": [
+        "rep-773eaa6609024a6559c14920"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 074.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-1",
+      "hard_negative_category": "same_error_wrong_service",
+      "hard_negative_ids": [
+        "rep-fb5a6d21725543f0218ce43e"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-1317e8a874c45634a0e24a5e"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-038",
+      "relevant_representation_ids": [
+        "rep-1317e8a874c45634a0e24a5e"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 076.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-3",
+      "hard_negative_category": "visually_similar_wrong_evidence",
+      "hard_negative_ids": [
+        "rep-4388fb42198b6a5a586b5d52"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-f7cb989cb7443121a5b7b869"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-039",
+      "relevant_representation_ids": [
+        "rep-f7cb989cb7443121a5b7b869"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 078.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-0",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-a8853d2a4b04796f2946082c"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-d5417eb4cc14fe5e29abd5bb"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-040",
+      "relevant_representation_ids": [
+        "rep-d5417eb4cc14fe5e29abd5bb"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 080.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-2",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-28ccb2c301bc09331a777c27"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-bee569eb815fac5e606c87d8"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-041",
+      "relevant_representation_ids": [
+        "rep-bee569eb815fac5e606c87d8"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 082.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-4",
+      "hard_negative_category": "same_diagram_labels_wrong_flow",
+      "hard_negative_ids": [
+        "rep-35a28af8b5d673a37cd699c5"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-93afcae8b9582e0cdfd50e09"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-042",
+      "relevant_representation_ids": [
+        "rep-93afcae8b9582e0cdfd50e09"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 084.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-1",
+      "hard_negative_category": "same_table_wrong_operation",
+      "hard_negative_ids": [
+        "rep-72af848d64fede94a7805da8"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-745ee955792d9f8b5c9b630a"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-043",
+      "relevant_representation_ids": [
+        "rep-745ee955792d9f8b5c9b630a"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 086.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-3",
+      "hard_negative_category": "current_obsolete",
+      "hard_negative_ids": [
+        "rep-6b24d2f3b7be33f1ae307fe8"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-8e33662824659d2b01786e42"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-044",
+      "relevant_representation_ids": [
+        "rep-8e33662824659d2b01786e42"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 088.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-0",
+      "hard_negative_category": "production_non_production",
+      "hard_negative_ids": [
+        "rep-7990f921f8d37131a2a05260"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-65b694dab9cad64ba3d7f424"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-045",
+      "relevant_representation_ids": [
+        "rep-65b694dab9cad64ba3d7f424"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 090.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-2",
+      "hard_negative_category": "same_error_wrong_service",
+      "hard_negative_ids": [
+        "rep-d523659ff31f017f86820681"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-ecf0770447794b7782f4327c"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-046",
+      "relevant_representation_ids": [
+        "rep-ecf0770447794b7782f4327c"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 092.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "ocr_poor",
+      "domain": "domain-4",
+      "hard_negative_category": "visually_similar_wrong_evidence",
+      "hard_negative_ids": [
+        "rep-eb46af1ef083f5594f2d303a"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-234505c928baca4524a0c7df"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-047",
+      "relevant_representation_ids": [
+        "rep-234505c928baca4524a0c7df"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 094.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "page_image",
+      "domain": "domain-1",
+      "hard_negative_category": "same_application_wrong_screen",
+      "hard_negative_ids": [
+        "rep-b6b592f1a1babb59b4ac44ca"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-a9d3a4a5de6a60d7a31e1ecd"
+      ],
+      "language": "en",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-048",
+      "relevant_representation_ids": [
+        "rep-a9d3a4a5de6a60d7a31e1ecd"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 096.",
+      "text_only_evidence_sufficient": false
+    },
+    {
+      "category": "diagram",
+      "domain": "domain-3",
+      "hard_negative_category": "same_document_wrong_page",
+      "hard_negative_ids": [
+        "rep-4406d687f760e6ad1b9b7515"
+      ],
+      "highly_relevant_representation_ids": [
+        "rep-37bb9d142ded00377c6048a1"
+      ],
+      "language": "pt",
+      "leakage_indicators": [
+        "synthetic_numeric_identifier"
+      ],
+      "modality": "mixed",
+      "query_id": "mmq-049",
+      "relevant_representation_ids": [
+        "rep-37bb9d142ded00377c6048a1"
+      ],
+      "review_notes": "",
+      "review_status": "PENDING_REVIEW",
+      "text": "Find the sanitized synthetic evidence number 098.",
+      "text_only_evidence_sufficient": false
+    }
+  ],
+  "representations": [
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "10e9c980e243251dbdaea1ba3a884bd45750a3ba600a9ff36aa3299f6a009904",
+      "representation_id": "rep-03897ee72bdf061fc65f6879",
+      "retryable": false,
+      "source_id": "synthetic-source-043",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "59e7ec9b395d97a3dfe0914ceaa692b0337e5247065f1aa0547510f894e8c648",
+      "representation_id": "rep-0591ea5020752520854d0df5",
+      "retryable": false,
+      "source_id": "synthetic-source-067",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a3a902868d2489095918436412d419f5f065cb3823d86e6d6c37b415b1507ed2",
+      "representation_id": "rep-0c4cd9125f2b5d7ef5a52e83",
+      "retryable": false,
+      "source_id": "synthetic-source-066",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "cc39d66e4e796be5a4210a5e7be76fce20920300b6e6e00ef805dc14bf735f0e",
+      "representation_id": "rep-0ca0f91d372a4d10544a60bc",
+      "retryable": false,
+      "source_id": "synthetic-source-052",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "bbb46e6e4f1d424c06da91318321e53167bf08edca3bc08110a62054faebe34b",
+      "representation_id": "rep-0df1ab7a2e07cc5a96bdcf2e",
+      "retryable": false,
+      "source_id": "synthetic-source-061",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a8d82d5877099673b677815706ad1abe8d157b813b2301060b6908f1a0423bd5",
+      "representation_id": "rep-0f5acd50262236ba84aebd8a",
+      "retryable": false,
+      "source_id": "synthetic-source-022",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "d6ac399601e3dd09b2b0370aaacfb4b5d6935e359abd67ae0b45136a0690f6c1",
+      "representation_id": "rep-1114f7d8e5fcd5a0ca954e7a",
+      "retryable": false,
+      "source_id": "synthetic-source-065",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "b923535916e0dd6047bcae8744a218bce09a4a81ec365948676d4df7f351009b",
+      "representation_id": "rep-114f4c7f17efb9a353327a7f",
+      "retryable": false,
+      "source_id": "synthetic-source-064",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "3abaac81e3abf6694f9a484b9b0eafef56059162c11320919c1385be817a544d",
+      "representation_id": "rep-1317e8a874c45634a0e24a5e",
+      "retryable": false,
+      "source_id": "synthetic-source-076",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "1ac1405c31953ff57cc615a8f4f5fbe8c3e0323b22adeb95238f005f0c4e7d47",
+      "representation_id": "rep-154f66780f2a5fd1f346afd5",
+      "retryable": false,
+      "source_id": "synthetic-source-010",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "bf36fc52a36d017f2c0fb01f8844d6cd3aaa79eb14bc08771f74c727b64d3421",
+      "representation_id": "rep-197caada3a72845d44438e00",
+      "retryable": false,
+      "source_id": "synthetic-source-009",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "cd5502c8a9ce52e181cb9ce1f10f78ea2af85a7d7e4de20fc7f758898701d26d",
+      "representation_id": "rep-1c709119d239832ec9d4e949",
+      "retryable": false,
+      "source_id": "synthetic-source-012",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "4eb2b8f5b18848866cdf9524a5b02b5cb3a7d3591806451366a7199713a54646",
+      "representation_id": "rep-1c921342fd788a5fe955a10c",
+      "retryable": false,
+      "source_id": "synthetic-source-018",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "72cf3c9a39b58465d22b4ddb887b481fd825f5c07f0fbab42c69171b2e1d18b8",
+      "representation_id": "rep-1ca11616ead66b4fabe2daed",
+      "retryable": false,
+      "source_id": "synthetic-source-075",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "e8e6a85a1e082cd2925b4b22874abf2481030fc9af8bffe025bd7e90b75dcffe",
+      "representation_id": "rep-200f7317abc44d23a4f0d6b4",
+      "retryable": false,
+      "source_id": "synthetic-source-068",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "78cb5e3f1e8a457d0ab89ad0c54cadc10e3b1a47d626d26508690930966b28aa",
+      "representation_id": "rep-233b5dbebee4d9a636a3d04a",
+      "retryable": false,
+      "source_id": "synthetic-source-033",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "566bd38dfe13fdab3ce95e37a9cfa62315c0f26058535d78493c325c4f56dd52",
+      "representation_id": "rep-234505c928baca4524a0c7df",
+      "retryable": false,
+      "source_id": "synthetic-source-094",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "2228085933b0a0bdc70e24f2da7617d86aa35b2d74d6dc375a8165b0cd03d1be",
+      "representation_id": "rep-24bc2bca6bde5c45504b6a97",
+      "retryable": false,
+      "source_id": "synthetic-source-072",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "8519c04004129e108070a4b2e8dbe91f819921f9871628e659625dac03c76f44",
+      "representation_id": "rep-28ccb2c301bc09331a777c27",
+      "retryable": false,
+      "source_id": "synthetic-source-083",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "652274b40fc96de981f44f554faa9c6fdb129423e70266a36bf131390eaec6ff",
+      "representation_id": "rep-35a28af8b5d673a37cd699c5",
+      "retryable": false,
+      "source_id": "synthetic-source-085",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "11897b7d7d908f44db491279055de8b859cd4b8aa2d8867d87e89e34c7bca3bd",
+      "representation_id": "rep-37bb9d142ded00377c6048a1",
+      "retryable": false,
+      "source_id": "synthetic-source-098",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "3e2d5af22430d8c0d24095f755958995e0a1bd0157cb1db05c2ead3e7e554b20",
+      "representation_id": "rep-3d16c4a9683811c46f1d1455",
+      "retryable": false,
+      "source_id": "synthetic-source-023",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "aa999682147c3e423a8010b1a6d5d95d24823e59bf72d887404dc7fe5463913b",
+      "representation_id": "rep-406d738fac5c2058b67d4026",
+      "retryable": false,
+      "source_id": "synthetic-source-048",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "6c6e6b4fc2297f34ae154e60930058eb30fef721a79d9cf02c31f29a7fd87785",
+      "representation_id": "rep-4388fb42198b6a5a586b5d52",
+      "retryable": false,
+      "source_id": "synthetic-source-079",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "5d6f7c8f0dffcf7a3ceb68d3fa63788d67baa2d5c35da6c2dc49e7f047fbb772",
+      "representation_id": "rep-4406d687f760e6ad1b9b7515",
+      "retryable": false,
+      "source_id": "synthetic-source-099",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "4eae03cd45b3559745c142067c378e4946e47e50fa75eec8f76100a05a81d9aa",
+      "representation_id": "rep-46c0af91169959a9c15df05c",
+      "retryable": false,
+      "source_id": "synthetic-source-073",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "3749662a70a2576db6ddb138ec6aeaaf1ed808f573467b700e7173ec9556825a",
+      "representation_id": "rep-49bf303f27c7d3c1ea17dc41",
+      "retryable": false,
+      "source_id": "synthetic-source-035",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a22546199f074dfb8daecbfa75a0853c68f468ed741ad0f8023aba54e26db2e7",
+      "representation_id": "rep-51064b0fb356bbc2a47af3f2",
+      "retryable": false,
+      "source_id": "synthetic-source-056",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "2030aa1d10c488c9453fabffbfc1ae11cd9191fdc8d7e18f29e1060b36a5139c",
+      "representation_id": "rep-5120aa2c4a204eb7041a47df",
+      "retryable": false,
+      "source_id": "synthetic-source-000",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "e156891263cbf40a1280ee01f67b949eebaa6d7ec12e3cc675a29fba0ffafb76",
+      "representation_id": "rep-5309bb8959841dc869efc1f5",
+      "retryable": false,
+      "source_id": "synthetic-source-027",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "bc93d5e4b0c0dbc69c5f62a6c5a71f6c27fe6a19256ba28a91b8fe5644f2fd30",
+      "representation_id": "rep-541ad5b583cdf2f6090f79a6",
+      "retryable": false,
+      "source_id": "synthetic-source-024",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "e417c22d9753f9f0774de4895dd480d2ede39ae639f2652eb8b6252c227c23d1",
+      "representation_id": "rep-55b4d2ef21ff70295f609724",
+      "retryable": false,
+      "source_id": "synthetic-source-057",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "de38ad8ab492fd738194fb2b6773d8b85072cf139940e4901ea35bb757a1272a",
+      "representation_id": "rep-587c428be5ca30344b06e972",
+      "retryable": false,
+      "source_id": "synthetic-source-036",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "29d4522b8cfbdd7fa267e6990841163cfdd0cb0677b9449125ae774fb57f05e2",
+      "representation_id": "rep-5929f9a4317e33334045608c",
+      "retryable": false,
+      "source_id": "synthetic-source-044",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "f2d17c20d93eb012f5a4193e5fc895547d99b553ab6711a3f9b9f09846ee5148",
+      "representation_id": "rep-5ba3bfaa40078469f3f36c79",
+      "retryable": false,
+      "source_id": "synthetic-source-031",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "35369c9fd1e910a6d232866e46f9f112fb4ea1656ded9ee33559fc6656d79e33",
+      "representation_id": "rep-5c4b664bd597754367adb7ae",
+      "retryable": false,
+      "source_id": "synthetic-source-030",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "eda9eb10aa3cf2ef46a127db7bfa7174554199e4a1488d4a4fee9302881fd892",
+      "representation_id": "rep-5ce7309c859221f1eeed6a93",
+      "retryable": false,
+      "source_id": "synthetic-source-025",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "96dd248a9b28c4e4dd24788c5a01cea0d7bd415330f1d49d642be5bdcb4074db",
+      "representation_id": "rep-5d3e595f6dc605b785b4dc95",
+      "retryable": false,
+      "source_id": "synthetic-source-058",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "5b47c7f797db229439459e597d04fb2b4a96e456bf0a4ec5410b1d33d67fb52d",
+      "representation_id": "rep-6388dcf566e398d1dd27314d",
+      "retryable": false,
+      "source_id": "synthetic-source-049",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a52bd179ca360afe0b5dc5f321e63641f2b100a665ec96aefa9bc0f49a1e554a",
+      "representation_id": "rep-65b694dab9cad64ba3d7f424",
+      "retryable": false,
+      "source_id": "synthetic-source-090",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "5a98f1ebd378ed0e6578d176f3925a9be2c4700a977e6c50016e931c652b4410",
+      "representation_id": "rep-67d02fa482ff05c6251dbbf0",
+      "retryable": false,
+      "source_id": "synthetic-source-040",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "848fb54d8f8b1b43846d5633b15f4dcfa29a7f092591fa70fc953f0803c13cbe",
+      "representation_id": "rep-6a4e59ffaeda008747c08840",
+      "retryable": false,
+      "source_id": "synthetic-source-019",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a922ae2ea304c84459774d6b08cf928ecb1613177f94ac0298b8abdf55722c9d",
+      "representation_id": "rep-6b24d2f3b7be33f1ae307fe8",
+      "retryable": false,
+      "source_id": "synthetic-source-089",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "df58a69c174b69dcf99daed7024db499549b1c4a09bece730cd55914e91cada7",
+      "representation_id": "rep-71054b35c32828a27bca4a68",
+      "retryable": false,
+      "source_id": "synthetic-source-011",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a05a7df61b6a022c177baabdf193b2b31a9b1163dac7af8b83658bbc055f77d4",
+      "representation_id": "rep-72af848d64fede94a7805da8",
+      "retryable": false,
+      "source_id": "synthetic-source-087",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "af56ae8371ba134eee7894ffa19d1e0621902b65cfbb92544ab56cb558dcf6e7",
+      "representation_id": "rep-745ee955792d9f8b5c9b630a",
+      "retryable": false,
+      "source_id": "synthetic-source-086",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "03f375cc93b5721f0d7493f12aa71cf7accb37508ce5d43cdab5487ba2251c33",
+      "representation_id": "rep-773eaa6609024a6559c14920",
+      "retryable": false,
+      "source_id": "synthetic-source-074",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "80966c002fe8340d376ef0e8cea002524dad22dc5d5b2d116341735e1a798547",
+      "representation_id": "rep-77dde301306e568312331af4",
+      "retryable": false,
+      "source_id": "synthetic-source-003",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "4ac4ef4372d4d3a1f6f8a8c289805146eea8741c01674daf5ededc71675c6fd0",
+      "representation_id": "rep-7990f921f8d37131a2a05260",
+      "retryable": false,
+      "source_id": "synthetic-source-091",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "928eaf1de8608c0a6f9a0b14a8224194866936ea535bd15682af67647ab91440",
+      "representation_id": "rep-806ac3a984d5b102f5ecf1f9",
+      "retryable": false,
+      "source_id": "synthetic-source-045",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "829ef3dce4ee3c04d25efafab8a247421156167e39d0b81d6cae027ee3187355",
+      "representation_id": "rep-82304f07b95bd1314adf75b6",
+      "retryable": false,
+      "source_id": "synthetic-source-071",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "ea81d433a203d4e0fb41c834bb9682f84fc9cb2686213a795b549dff3fc81df2",
+      "representation_id": "rep-84f702a1d68d24659e2265fe",
+      "retryable": false,
+      "source_id": "synthetic-source-054",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "e0313b7ccf2e607a79da96537935db8b07489b72375dcb45c6025025f6290391",
+      "representation_id": "rep-8997192d982112f968994191",
+      "retryable": false,
+      "source_id": "synthetic-source-038",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "37b3c52c818d324bed43cddc82a1bbd49a2242b196cd13e8d9209f34fdaacfef",
+      "representation_id": "rep-8e33662824659d2b01786e42",
+      "retryable": false,
+      "source_id": "synthetic-source-088",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "bbb9a46965695f01b369a7b5d60df301554b1ef32017137200d7e810fce378dc",
+      "representation_id": "rep-925be42502f86682a9f608b4",
+      "retryable": false,
+      "source_id": "synthetic-source-034",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a995b2e5299b3e0c7ce7dc2198fa76f45667b7e844d0ac0abe7a14762826399d",
+      "representation_id": "rep-925f980608ea697b7d95c650",
+      "retryable": false,
+      "source_id": "synthetic-source-021",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "4e4e45ffe5852c6af761c5b612cba493c921edd846dec8f86d51c74c290c0c15",
+      "representation_id": "rep-93afcae8b9582e0cdfd50e09",
+      "retryable": false,
+      "source_id": "synthetic-source-084",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "41e48b6bfdc00f0516ff74899c02aa7abf4b8a20c9b103155a3980926ec51246",
+      "representation_id": "rep-94c5c0f2aabbfdee95e07230",
+      "retryable": false,
+      "source_id": "synthetic-source-026",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "3b8174d35ca3f6d51992f3458f203c3a941cb54a64c07fd2c79c17322eb6bb01",
+      "representation_id": "rep-97513e07755b9bddb50f6f50",
+      "retryable": false,
+      "source_id": "synthetic-source-055",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "63d557141b73829d3862a790d98b9b39c6fd07bd87ba5d3c89a2bd9f27e3bf08",
+      "representation_id": "rep-97eb1984a796c848ff430462",
+      "retryable": false,
+      "source_id": "synthetic-source-039",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "6be4d2020fccce69f883aabb9ef49a2a9b752f49ef10b9bd75fc752e547b5880",
+      "representation_id": "rep-9878d4fc7a86171b09c434aa",
+      "retryable": false,
+      "source_id": "synthetic-source-015",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "a26520e7b8be682eac8386d8fc653972879adc19175a040a429521d65de02235",
+      "representation_id": "rep-9a64f492f95150630fab92cf",
+      "retryable": false,
+      "source_id": "synthetic-source-041",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "adedcbc65a53819e7393e17b395ebdc7a0d110baeabd1673b11c99eeea8c9f45",
+      "representation_id": "rep-9e17753f0cacb47d7206ad0f",
+      "retryable": false,
+      "source_id": "synthetic-source-069",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "b403b94a4cf9bcb634236fa0fd71ca6b6e8a8f9be657d9ceb729a14fc7d03200",
+      "representation_id": "rep-a8853d2a4b04796f2946082c",
+      "retryable": false,
+      "source_id": "synthetic-source-081",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "509b708ed04e0df238a6fea463bcc468173648fb9ce68cb2954531a5d27d6c72",
+      "representation_id": "rep-a9d3a4a5de6a60d7a31e1ecd",
+      "retryable": false,
+      "source_id": "synthetic-source-096",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "fe96e765e80858424394949dcee79e1bedb027652f8a9a8a616239dc0d6b6254",
+      "representation_id": "rep-aa84041a162a5f726f93f69c",
+      "retryable": false,
+      "source_id": "synthetic-source-007",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "dd16bbab95f70265028b02925d2db887875b568c791397fe0b817f66b0d03d2b",
+      "representation_id": "rep-ab23bf22b1cbd70734703d7e",
+      "retryable": false,
+      "source_id": "synthetic-source-053",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "3c3754de314a7a720775d65c55b968451057741ce3abe0648b968fb9c54ea3f7",
+      "representation_id": "rep-af4b4e5e0f4641c284baf151",
+      "retryable": false,
+      "source_id": "synthetic-source-016",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "b532503ab47b89f46dbf8709e7db6c1d962e3a8180e1d07970f86eb14a58a1b3",
+      "representation_id": "rep-b0e93e5c948e370ce172b193",
+      "retryable": false,
+      "source_id": "synthetic-source-063",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "5b70f473b55e7dddaba56aea933a7ac1e122c69bf0c61da77a896dc934a34396",
+      "representation_id": "rep-b18c4b71431d9676ea6c652c",
+      "retryable": false,
+      "source_id": "synthetic-source-070",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "1f3625689f0cadafad8db3389c459eaa9e041447a73a6a13fac471d5e53b465d",
+      "representation_id": "rep-b1971524c121dbba602ab957",
+      "retryable": false,
+      "source_id": "synthetic-source-059",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "359451e995c910d79bd8f862a42f331d2e0bc3f9ebfcdb0604bb2276b453f4cc",
+      "representation_id": "rep-b6b592f1a1babb59b4ac44ca",
+      "retryable": false,
+      "source_id": "synthetic-source-097",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "feb6f7c90e1526c90fb315807d6eb27f94a3b67b9e12b22d5cb133a12ddffd55",
+      "representation_id": "rep-b9bcbaccfd1690a6cc76af0f",
+      "retryable": false,
+      "source_id": "synthetic-source-028",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "b20bd2796ea4d676b3b54a380707ffab1b98e17c8c2cf30ea7d7f6fb762a64cf",
+      "representation_id": "rep-ba1222ae4e49681d32763314",
+      "retryable": false,
+      "source_id": "synthetic-source-062",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "6c2becf1ab43fa5b1b514fe09c471e6cf918a9b069483531866aff38e598e274",
+      "representation_id": "rep-bee569eb815fac5e606c87d8",
+      "retryable": false,
+      "source_id": "synthetic-source-082",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "748a1fc54d6133385d9b446ef026ecee6713fabae04d3c646cbdc88e938da287",
+      "representation_id": "rep-c2cc887d8d85247e9e21418a",
+      "retryable": false,
+      "source_id": "synthetic-source-006",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "914e6baf892e3673d097d4f7d48d211ab85db06ddad99aa13517c7e5f2d9b074",
+      "representation_id": "rep-c3158b62f94936947e7c1a8d",
+      "retryable": false,
+      "source_id": "synthetic-source-005",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "f4321fa30f603ea5ce006cd1216d2861af115d204afd50b2482a148b23bcf16a",
+      "representation_id": "rep-c59f49582b184f408fe58e75",
+      "retryable": false,
+      "source_id": "synthetic-source-037",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "4f33c2474834318fc275d760ffd83086b986e101450850d7c358adc557b80c7e",
+      "representation_id": "rep-c6f0e8a3c5774736d4863a1f",
+      "retryable": false,
+      "source_id": "synthetic-source-004",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "b7918941c55fca6abfe1fab87bc464b6f95c14d420cff2ea785aaf472a781875",
+      "representation_id": "rep-d523659ff31f017f86820681",
+      "retryable": false,
+      "source_id": "synthetic-source-093",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "958faf04ee6ec3a3826d59365bfadf7939ee78ee342bfff6c8e438488a398536",
+      "representation_id": "rep-d5417eb4cc14fe5e29abd5bb",
+      "retryable": false,
+      "source_id": "synthetic-source-080",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "1f324daab9b885c894d1a194501266a2ba07aa5f127ea0f37bb4ad695930fa4a",
+      "representation_id": "rep-d65bfd4457a0d18509d55a7f",
+      "retryable": false,
+      "source_id": "synthetic-source-032",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "4ffdb323515efcf8128d3a149c70f64bcad33347cc40167c92063c4d0f3e34f9",
+      "representation_id": "rep-d7bf3789bda6ab0b8b6981e2",
+      "retryable": false,
+      "source_id": "synthetic-source-014",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-4",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "d4ea4098690c27437647f66509e39a64b7a874c5db0989ac69d9fb21bb023eef",
+      "representation_id": "rep-d822be9b8fc018134de46f58",
+      "retryable": false,
+      "source_id": "synthetic-source-029",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "f39a0f5abd5b53e559e78311123806d7369b42675cdb0355a3fd9808adebe421",
+      "representation_id": "rep-e216b2b12816570ce81fa42b",
+      "retryable": false,
+      "source_id": "synthetic-source-020",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "7b13c4ef09946fd5d78e61ad7edf747752e2f84a96aa4b9373e243f50ca3a2ea",
+      "representation_id": "rep-e24651c365be6502a612cde6",
+      "retryable": false,
+      "source_id": "synthetic-source-013",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "ocr_poor",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "bb4451acc1ac3f2eedf7afcd4332cd1362b756c8f66aacbe42a3941803b9ab33",
+      "representation_id": "rep-e495a2bf1fcbf249b1c722df",
+      "retryable": false,
+      "source_id": "synthetic-source-046",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "2742d880d9687d33f87609b722290d656b3e4248f803b08304ef5e4977c9b520",
+      "representation_id": "rep-e8bf4ddba1ba3f2c6c03f806",
+      "retryable": false,
+      "source_id": "synthetic-source-047",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "49801cb00fef01f0e47af7c02d30c020bcbd961728c5efc2a95e6d05ff7c03b7",
+      "representation_id": "rep-eb0cace17bd8762f7a9a1136",
+      "retryable": false,
+      "source_id": "synthetic-source-002",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "08fdd290424c5130dc73f6b29f1c4fdc5a43a38679137b2b94500e096fe175c7",
+      "representation_id": "rep-eb46af1ef083f5594f2d303a",
+      "retryable": false,
+      "source_id": "synthetic-source-095",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "67ee7c9fe03c3ee4efa6c89c205fc0099a64c353e5b124db8203305a7cf53ff2",
+      "representation_id": "rep-ec17a34cb55a860ec1ff6a9c",
+      "retryable": false,
+      "source_id": "synthetic-source-042",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "8edaa66e70569bb1b5ef115500f2ed6145d9d87579d1404ef6583c6ad7350004",
+      "representation_id": "rep-ecf0770447794b7782f4327c",
+      "retryable": false,
+      "source_id": "synthetic-source-092",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "table_form",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "80e040df57f774ae2878d4cea611cd905335cd816ac5084b0b868c97f3853dbc",
+      "representation_id": "rep-ee7cf8a13d391d1319dd953c",
+      "retryable": false,
+      "source_id": "synthetic-source-051",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "752677aeb0b2fe962dd81fa00c3fff3c0ad36e326aaf2c77c7358910ccfecb68",
+      "representation_id": "rep-f0636ca6d132d9206d64995c",
+      "retryable": false,
+      "source_id": "synthetic-source-060",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-1",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "screenshot",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "30180b643db62f19fda43b9569a1b1ac50841ffa0381a8410806abb229628808",
+      "representation_id": "rep-f0c4788565f7bfe173baa7b8",
+      "retryable": false,
+      "source_id": "synthetic-source-001",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "371900c567a36e1f28ac1bf8569cc10c8d1ff1973045aa75e299f1508c65ff82",
+      "representation_id": "rep-f13c26f6e4859d62c6f02306",
+      "retryable": false,
+      "source_id": "synthetic-source-017",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "79881d182524f7241b08114009cb7cc6e9620c016f061c46600d716beb8bf2f7",
+      "representation_id": "rep-f6d7089088c721fc6764a74a",
+      "retryable": false,
+      "source_id": "synthetic-source-008",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-3",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "page_image",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "7c00f8488666d51cb20dc262053b7ac355b8a4fed9eb54630c347d60cae69307",
+      "representation_id": "rep-f7cb989cb7443121a5b7b869",
+      "retryable": false,
+      "source_id": "synthetic-source-078",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-2",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "mixed",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "9f06d2f5f98c90f6ce20ca90fe314ba5f47c951c85c44d91ff8c58320e6151e2",
+      "representation_id": "rep-fb5a6d21725543f0218ce43e",
+      "retryable": false,
+      "source_id": "synthetic-source-077",
+      "system": "synthetic",
+      "width": 640
+    },
+    {
+      "acl": [
+        "evaluation"
+      ],
+      "domain": "domain-0",
+      "embedded_content_is_untrusted": true,
+      "failure_code": null,
+      "height": 480,
+      "lifecycle": "READY",
+      "modality": "diagram",
+      "page": 1,
+      "renderer_version": "opennicf-synthetic-svg@1",
+      "rendition_sha256": "7caf1042aceb644621759b27bc36c3f4c9f9b902aee94c06a369c98096c30ec9",
+      "representation_id": "rep-ff66226e6c521b5db6080c07",
+      "retryable": false,
+      "source_id": "synthetic-source-050",
+      "system": "synthetic",
+      "width": 640
+    }
+  ],
+  "review_instructions": {
+    "allowed_decisions": [
+      "ACCEPT",
+      "REWRITE",
+      "REJECT"
+    ],
+    "batches": [
+      {
+        "batch_id": "issue90-1",
+        "query_ids": [
+          "mmq-000",
+          "mmq-001",
+          "mmq-002",
+          "mmq-003",
+          "mmq-004",
+          "mmq-005",
+          "mmq-006",
+          "mmq-007",
+          "mmq-008",
+          "mmq-009"
+        ]
+      },
+      {
+        "batch_id": "issue90-2",
+        "query_ids": [
+          "mmq-010",
+          "mmq-011",
+          "mmq-012",
+          "mmq-013",
+          "mmq-014",
+          "mmq-015",
+          "mmq-016",
+          "mmq-017",
+          "mmq-018",
+          "mmq-019"
+        ]
+      },
+      {
+        "batch_id": "issue90-3",
+        "query_ids": [
+          "mmq-020",
+          "mmq-021",
+          "mmq-022",
+          "mmq-023",
+          "mmq-024",
+          "mmq-025",
+          "mmq-026",
+          "mmq-027",
+          "mmq-028",
+          "mmq-029"
+        ]
+      },
+      {
+        "batch_id": "issue90-4",
+        "query_ids": [
+          "mmq-030",
+          "mmq-031",
+          "mmq-032",
+          "mmq-033",
+          "mmq-034",
+          "mmq-035",
+          "mmq-036",
+          "mmq-037",
+          "mmq-038",
+          "mmq-039"
+        ]
+      },
+      {
+        "batch_id": "issue90-5",
+        "query_ids": [
+          "mmq-040",
+          "mmq-041",
+          "mmq-042",
+          "mmq-043",
+          "mmq-044",
+          "mmq-045",
+          "mmq-046",
+          "mmq-047",
+          "mmq-048",
+          "mmq-049"
+        ]
+      }
+    ],
+    "generated_labels_are_authoritative": false,
+    "required_for_decision": [
+      "review_status",
+      "review_notes"
+    ]
+  },
+  "safety": {
+    "production_routes_changed": false,
+    "synthetic_only": true
+  },
+  "schema_version": 1
+}
