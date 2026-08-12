@@ -95,4 +95,3 @@ def preflight(artifact_root: str | Path) -> RuntimePreflight:
         "CUDA_OPERATIONAL_ARMS": "EXECUTABLE" if cuda else "INVALID_FOR_HARDWARE",
     }
     return RuntimePreflight(platform.python_version(), packages, cuda, free, statuses)
-
