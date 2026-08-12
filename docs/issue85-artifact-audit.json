@@ -1,0 +1,75 @@
+{
+  "valid": false,
+  "errors": [
+    "gold-set corpus digest does not match the corpus"
+  ],
+  "inventory": {
+    "corpus_manifest_matches": true,
+    "gold_embedded_corpus_digest_matches": false,
+    "four_b_artifact": {
+      "path": "artifacts/Qwen3-Embedding-4B-Q4_K_M.gguf",
+      "size_bytes": 2496703776,
+      "expected_sha256": "2b0cf8f17b4c723c27303015383c27ec4bf2d8314bb677d05e920dd70bb0f16b",
+      "actual_sha256": "6fc91b94aa945a268991a1a94d77129d674a12cbe20c94575889d73071f30990",
+      "matches": false
+    }
+  },
+  "corpus": {
+    "chunks": 715,
+    "unique_chunk_ids": 715,
+    "sha256": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1"
+  },
+  "gold": {
+    "queries": 190,
+    "sha256": "4867311d9b92177e5d894c61819cd34c9586f0334984fd30c3af4d5b44287bde",
+    "review_status_counts": {
+      "ACCEPT_LEGACY": 10,
+      "NEEDS_HUMAN_REVIEW": 180
+    },
+    "normalized_decision_counts": {
+      "ACCEPT": 10,
+      "REWRITE": 0,
+      "REJECT": 0,
+      "PENDING_REVIEW": 180
+    }
+  },
+  "references": {
+    "unresolved_query_count": 0,
+    "unresolved": {}
+  },
+  "hard_negative_query_count": 16,
+  "hard_negative_typed_query_count": 16,
+  "hard_negative_labelled_query_count": 0,
+  "human_accepted_query_count": 10,
+  "vectors": {
+    "vectors-06b": {
+      "space_id": "EVAL_QWEN_06B_768",
+      "model": "Qwen/Qwen3-Embedding-0.6B",
+      "dimension": 768,
+      "normalized": true,
+      "document_vector_count": 10,
+      "query_vector_count": 190,
+      "complete_for_corpus": false,
+      "complete_for_queries": true,
+      "dimensions_valid": true
+    },
+    "vectors-4b": {
+      "space_id": "EVAL_QWEN_4B_Q4_768",
+      "model": "Qwen/Qwen3-Embedding-4B",
+      "dimension": 768,
+      "normalized": true,
+      "document_vector_count": 10,
+      "query_vector_count": 190,
+      "complete_for_corpus": false,
+      "complete_for_queries": true,
+      "dimensions_valid": true
+    }
+  },
+  "decision_grade_paired_metrics_executable": false,
+  "objective_repair": {
+    "path": "docs/issue85-gold-set-objective-repair.json",
+    "sha256": "829c2f505a8090a1ae73954b312d3933fecddc96064a5dda5c6edb766da44815",
+    "human_labels_changed": false,
+    "repaired_embedded_corpus_digest_matches": true
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "PREPARATION",
+  "parent_issues": [85, 86, 89],
+  "safety": {"evaluation_only": true, "production_untouched": true, "deployment": false, "merge": false},
+  "inputs": {
+    "corpus_path": null,
+    "corpus_sha256": null,
+    "labels_path": null,
+    "labels_sha256": null,
+    "human_accepted_queries": 0,
+    "reviewed_hard_negative_queries": 0,
+    "unresolved_references": 0
+  },
+  "embedding_spaces": [
+    {"space_id": "EVAL_QWEN_06B_768", "model": "Qwen/Qwen3-Embedding-0.6B", "dimension": 768, "document_vector_count": 0, "artifact_sha256": null},
+    {"space_id": "EVAL_QWEN_4B_Q4_768", "model": "Qwen/Qwen3-Embedding-4B", "dimension": 768, "document_vector_count": 0, "artifact_sha256": null}
+  ],
+  "reranker": {
+    "model": "Qwen/Qwen3-Reranker-0.6B",
+    "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+    "license": "apache-2.0",
+    "artifact": "model.safetensors",
+    "artifact_size_bytes": 1191588280,
+    "artifact_sha256": "27cd75a405b9c1b46b59abfd88aaa209e6fed2a1972cde9b70e7659537c5e65b",
+    "runtime": "transformers",
+    "runtime_version": ">=4.51.0",
+    "execution_device": "isolated CPU pending bounded qualification",
+    "preprocessing_contract": "official Qwen prefix/suffix, yes/no token log-softmax; max_length fixed by executable run"
+  },
+  "metrics": ["Recall@1", "Recall@3", "Recall@5", "Recall@10", "Recall@20", "MRR@10", "nDCG@5", "nDCG@10", "zero-hit rate", "paired bootstrap CI", "disagreement analysis"],
+  "outputs": {"sanitized_result_manifest": null}
+}
