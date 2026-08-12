@@ -1,0 +1,4105 @@
+{
+  "gold_set_version": 1,
+  "corpus_manifest": "tests/fixtures/retrieval_benchmark/v1/manifest.json",
+  "corpus_manifest_sha256": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1",
+  "label_status": "10_existing_plus_curated_source_derived_pending_human_review",
+  "chunking_contract": {
+    "chunk_id_format": "source_id:ordinal",
+    "chunk_size": "runtime_default",
+    "overlap": "runtime_default"
+  },
+  "queries": [
+    {
+      "query_id": "pt-reindex",
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "reindexação incremental documentos portugueses",
+      "language": "PT",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "en-compaction",
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "context compaction provenance evidence",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "java-total",
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_symbols": [
+        "calculateTotal"
+      ],
+      "query_text": "calculateTotal",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "sql-refresh",
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_symbols": [
+        "refresh_order_totals"
+      ],
+      "query_text": "refresh order totals procedure",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "powershell-rollback",
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_symbols": [
+        "Invoke-Rollback"
+      ],
+      "query_text": "Invoke-Rollback",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "log-timeout",
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "gateway timeout request trace",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "splunk-denial",
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "ACL denied export",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "schema-artifact",
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "artifact hash source version",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "integration-correlation",
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "correlation id retry endpoint",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "query-acl",
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "modes": [
+        "lexical",
+        "vector",
+        "hybrid"
+      ],
+      "query_text": "acl scope chunk ordinal",
+      "language": "EN",
+      "query_type": "legacy_smoke",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "domain": "retrieval_benchmark",
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "versioned_existing_manifest"
+    },
+    {
+      "query_id": "curated-001",
+      "query_text": "Which evidence describes context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-002",
+      "query_text": "What is the documented handling of context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-003",
+      "query_text": "Find the Portuguese evidence for context compaction provenance ACL locator.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-004",
+      "query_text": "Which evidence describes context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-005",
+      "query_text": "What is the documented handling of context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-006",
+      "query_text": "Encontre a evidência técnica em inglês sobre context compaction provenance ACL locator.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-007",
+      "query_text": "Which evidence describes context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-008",
+      "query_text": "What is the documented handling of context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-009",
+      "query_text": "Find the Portuguese evidence for context compaction provenance ACL locator.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-010",
+      "query_text": "Which evidence describes context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-011",
+      "query_text": "What is the documented handling of context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-012",
+      "query_text": "Encontre a evidência técnica em inglês sobre context compaction provenance ACL locator.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-013",
+      "query_text": "Which evidence describes context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-014",
+      "query_text": "What is the documented handling of context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-015",
+      "query_text": "Find the Portuguese evidence for context compaction provenance ACL locator.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-016",
+      "query_text": "Which evidence describes context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-017",
+      "query_text": "What is the documented handling of context compaction provenance ACL locator?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-018",
+      "query_text": "Onde está a evidência sobre reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-019",
+      "query_text": "Qual é o procedimento para reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-020",
+      "query_text": "Como funciona reindexação incremental hash artefato ACL na documentação?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-021",
+      "query_text": "Onde está a evidência sobre reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-022",
+      "query_text": "Qual é o procedimento para reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-023",
+      "query_text": "Como funciona reindexação incremental hash artefato ACL na documentação?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-024",
+      "query_text": "Onde está a evidência sobre reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-025",
+      "query_text": "Qual é o procedimento para reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-026",
+      "query_text": "Como funciona reindexação incremental hash artefato ACL na documentação?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-027",
+      "query_text": "Onde está a evidência sobre reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-028",
+      "query_text": "Qual é o procedimento para reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-029",
+      "query_text": "Como funciona reindexação incremental hash artefato ACL na documentação?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-030",
+      "query_text": "Onde está a evidência sobre reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-031",
+      "query_text": "Qual é o procedimento para reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-032",
+      "query_text": "Como funciona reindexação incremental hash artefato ACL na documentação?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-033",
+      "query_text": "Onde está a evidência sobre reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-034",
+      "query_text": "Qual é o procedimento para reindexação incremental hash artefato ACL?",
+      "language": "PT",
+      "query_type": "portuguese",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-035",
+      "query_text": "Where is calculateTotal persistTotal repository save implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-036",
+      "query_text": "Which method handles calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-037",
+      "query_text": "Which source code component performs calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-038",
+      "query_text": "Where is the deployment operation calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-039",
+      "query_text": "Where is calculateTotal persistTotal repository save implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-040",
+      "query_text": "Which method handles calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-041",
+      "query_text": "Which source code component performs calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-042",
+      "query_text": "Where is the deployment operation calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-043",
+      "query_text": "Where is calculateTotal persistTotal repository save implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-044",
+      "query_text": "Which method handles calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-045",
+      "query_text": "Which source code component performs calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-046",
+      "query_text": "Where is the deployment operation calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-047",
+      "query_text": "Where is calculateTotal persistTotal repository save implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-048",
+      "query_text": "Which method handles calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-049",
+      "query_text": "Which source code component performs calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-050",
+      "query_text": "Where is the deployment operation calculateTotal persistTotal repository save?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-051",
+      "query_text": "Where is calculateTotal persistTotal repository save implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-java-service"
+      ],
+      "relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-java-service:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-052",
+      "query_text": "Which SQL routine handles refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-053",
+      "query_text": "Which database field or table describes refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-054",
+      "query_text": "Where is the order total operation defined?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-055",
+      "query_text": "Which SQL routine handles refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-056",
+      "query_text": "Which database field or table describes refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-057",
+      "query_text": "Where is the order total operation defined?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-058",
+      "query_text": "Which SQL routine handles refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-059",
+      "query_text": "Which database field or table describes refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-060",
+      "query_text": "Where is the order total operation defined?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-061",
+      "query_text": "Which SQL routine handles refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-062",
+      "query_text": "Which database field or table describes refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-063",
+      "query_text": "Where is the order total operation defined?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-064",
+      "query_text": "Which SQL routine handles refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-065",
+      "query_text": "Which database field or table describes refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-066",
+      "query_text": "Where is the order total operation defined?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-067",
+      "query_text": "Which SQL routine handles refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-068",
+      "query_text": "Which database field or table describes refresh_order_totals order_total UPDATE orders?",
+      "language": "EN",
+      "query_type": "database_sql",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-sql-routine"
+      ],
+      "relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-sql-routine:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-069",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE",
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-070",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE",
+        "EXACT_IDENTIFIER"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-071",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE",
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-072",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE",
+        "EXACT_IDENTIFIER"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-073",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE",
+        "DATABASE_SQL"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-074",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-075",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-076",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-077",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-078",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-079",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-080",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-081",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-082",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-083",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-084",
+      "query_text": "Find the correct source for knowledge_chunks artifact_hash source_version_id, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-085",
+      "query_text": "Where is the identifier knowledge_chunks artifact_hash source_version_id used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-database-schema"
+      ],
+      "relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-database-schema:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-086",
+      "query_text": "Where is Invoke-Rollback Invoke-Deploy Restore-Release implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-087",
+      "query_text": "Which method handles Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-088",
+      "query_text": "Which source code component performs Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-089",
+      "query_text": "Where is the deployment operation Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-090",
+      "query_text": "Where is Invoke-Rollback Invoke-Deploy Restore-Release implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-091",
+      "query_text": "Which method handles Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-092",
+      "query_text": "Which source code component performs Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-093",
+      "query_text": "Where is the deployment operation Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-094",
+      "query_text": "Where is Invoke-Rollback Invoke-Deploy Restore-Release implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-095",
+      "query_text": "Which method handles Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-096",
+      "query_text": "Which source code component performs Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-097",
+      "query_text": "Where is the deployment operation Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-098",
+      "query_text": "Where is Invoke-Rollback Invoke-Deploy Restore-Release implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-099",
+      "query_text": "Which method handles Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-100",
+      "query_text": "Which source code component performs Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-101",
+      "query_text": "Where is the deployment operation Invoke-Rollback Invoke-Deploy Restore-Release?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-102",
+      "query_text": "Where is Invoke-Rollback Invoke-Deploy Restore-Release implemented?",
+      "language": "EN",
+      "query_type": "code_retrieval",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CODE_RETRIEVAL"
+      ],
+      "relevant_source_ids": [
+        "bench-powershell-deploy"
+      ],
+      "relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-powershell-deploy:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-103",
+      "query_text": "What happened during gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-104",
+      "query_text": "Which trace shows gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-105",
+      "query_text": "Find the incident evidence for gateway timeout retry succeeded request_id trace_id.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-106",
+      "query_text": "What happened during gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-107",
+      "query_text": "Which trace shows gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-108",
+      "query_text": "Find the incident evidence for gateway timeout retry succeeded request_id trace_id.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-109",
+      "query_text": "What happened during gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-110",
+      "query_text": "Which trace shows gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-111",
+      "query_text": "Find the incident evidence for gateway timeout retry succeeded request_id trace_id.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-112",
+      "query_text": "What happened during gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-113",
+      "query_text": "Which trace shows gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-114",
+      "query_text": "Find the incident evidence for gateway timeout retry succeeded request_id trace_id.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-115",
+      "query_text": "What happened during gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-116",
+      "query_text": "Which trace shows gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-117",
+      "query_text": "Find the incident evidence for gateway timeout retry succeeded request_id trace_id.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-118",
+      "query_text": "What happened during gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-119",
+      "query_text": "Which trace shows gateway timeout retry succeeded request_id trace_id?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-application-log"
+      ],
+      "relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-application-log:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-120",
+      "query_text": "What happened during ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-121",
+      "query_text": "Which trace shows ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-122",
+      "query_text": "Find the incident evidence for ACL denied ACL allowed export req-23.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-123",
+      "query_text": "What happened during ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-124",
+      "query_text": "Which trace shows ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-125",
+      "query_text": "Find the incident evidence for ACL denied ACL allowed export req-23.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-126",
+      "query_text": "What happened during ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-127",
+      "query_text": "Which trace shows ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-128",
+      "query_text": "Find the incident evidence for ACL denied ACL allowed export req-23.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-129",
+      "query_text": "What happened during ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-130",
+      "query_text": "Which trace shows ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-131",
+      "query_text": "Find the incident evidence for ACL denied ACL allowed export req-23.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-132",
+      "query_text": "What happened during ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-133",
+      "query_text": "Which trace shows ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-134",
+      "query_text": "Find the incident evidence for ACL denied ACL allowed export req-23.",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-135",
+      "query_text": "What happened during ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-136",
+      "query_text": "Which trace shows ACL denied ACL allowed export req-23?",
+      "language": "EN",
+      "query_type": "log_incident",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "LOG_INCIDENT"
+      ],
+      "relevant_source_ids": [
+        "bench-splunk-events"
+      ],
+      "relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-splunk-events:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-137",
+      "query_text": "Which evidence describes correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-138",
+      "query_text": "What is the documented handling of correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-139",
+      "query_text": "Find the Portuguese evidence for correlation ID transient endpoint retry source version.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-140",
+      "query_text": "Which evidence describes correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-141",
+      "query_text": "What is the documented handling of correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-142",
+      "query_text": "Encontre a evidência técnica em inglês sobre correlation ID transient endpoint retry source version.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-143",
+      "query_text": "Which evidence describes correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-144",
+      "query_text": "What is the documented handling of correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-145",
+      "query_text": "Find the Portuguese evidence for correlation ID transient endpoint retry source version.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-146",
+      "query_text": "Which evidence describes correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-147",
+      "query_text": "What is the documented handling of correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-148",
+      "query_text": "Encontre a evidência técnica em inglês sobre correlation ID transient endpoint retry source version.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-149",
+      "query_text": "Which evidence describes correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-150",
+      "query_text": "What is the documented handling of correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-151",
+      "query_text": "Find the Portuguese evidence for correlation ID transient endpoint retry source version.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-152",
+      "query_text": "Which evidence describes correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-153",
+      "query_text": "What is the documented handling of correlation ID transient endpoint retry source version?",
+      "language": "EN",
+      "query_type": "general_technical",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "GENERAL_TECHNICAL"
+      ],
+      "relevant_source_ids": [
+        "bench-integration-doc"
+      ],
+      "relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-integration-doc:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-154",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-155",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-156",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-157",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-158",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-159",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-160",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-161",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-162",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-163",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-164",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-165",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-166",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-167",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-168",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-169",
+      "query_text": "Find the correct source for srcver-orders-v1 srcver-schema-v1 chunk_ordinal, not the similarly named one.",
+      "language": "EN",
+      "query_type": "hard_negative",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "curated-170",
+      "query_text": "Where is the identifier srcver-orders-v1 srcver-schema-v1 chunk_ordinal used?",
+      "language": "EN",
+      "query_type": "exact_identifier",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "EXACT_IDENTIFIER",
+        "HARD_NEGATIVE"
+      ],
+      "relevant_source_ids": [
+        "bench-query-output"
+      ],
+      "relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-query-output:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-01",
+      "query_text": "Find the Portuguese evidence for reindexação incremental and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-02",
+      "query_text": "Encontre a evidência em inglês sobre immutable document versions and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-03",
+      "query_text": "Find the Portuguese evidence for reindexação incremental and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-04",
+      "query_text": "Encontre a evidência em inglês sobre immutable document versions and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-05",
+      "query_text": "Find the Portuguese evidence for reindexação incremental and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-06",
+      "query_text": "Encontre a evidência em inglês sobre immutable document versions and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-07",
+      "query_text": "Find the Portuguese evidence for reindexação incremental and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-08",
+      "query_text": "Encontre a evidência em inglês sobre immutable document versions and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-09",
+      "query_text": "Find the Portuguese evidence for reindexação incremental and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-pt"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-pt:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    },
+    {
+      "query_id": "cross-10",
+      "query_text": "Encontre a evidência em inglês sobre immutable document versions and ACL.",
+      "language": "MIXED",
+      "query_type": "cross_language",
+      "domain": "retrieval_benchmark",
+      "categories": [
+        "CROSS_LANGUAGE",
+        "PORTUGUESE"
+      ],
+      "relevant_source_ids": [
+        "bench-technical-en"
+      ],
+      "relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "highly_relevant_chunk_ids": [
+        "bench-technical-en:0"
+      ],
+      "hard_negative_chunk_ids": [],
+      "label_provenance": "curated_source_derived_pending_human_review"
+    }
+  ],
+  "category_counts": {
+    "GENERAL_TECHNICAL": 34,
+    "CODE_RETRIEVAL": 34,
+    "DATABASE_SQL": 20,
+    "LOG_INCIDENT": 34,
+    "PORTUGUESE": 37,
+    "CROSS_LANGUAGE": 20,
+    "EXACT_IDENTIFIER": 20,
+    "HARD_NEGATIVE": 34
+  },
+  "objective_repair": {
+    "kind": "corpus_digest_reconciliation",
+    "source_gold_sha256": "4867311d9b92177e5d894c61819cd34c9586f0334984fd30c3af4d5b44287bde",
+    "human_labels_changed": false
+  }
+}
