@@ -15,6 +15,16 @@ from opennicf.evaluation_contract import (
     stable_representation_id,
     validate_manifest,
 )
+from opennicf.evaluation import (
+    ContextLimits,
+    EvaluationCoordinator,
+    EvaluationFilters,
+    FakeReranker,
+    RerankCandidate,
+    RerankQuery,
+    RerankLimits,
+    select_context,
+)
 
 ROOT = Path(__file__).parents[1]
 DOCS = ROOT / "docs"
@@ -179,3 +189,78 @@ def test_phase0_artifacts_do_not_contain_credentials_or_production_paths():
         assert "OPENAI_API_KEY" not in text
         assert "Authorization: Bearer" not in text
         assert "/var/lib/opennicf" not in text
+
+
+def _candidate(candidate_id, *, representation_type="text", source_id="src", locator="chunk:1", acl="allow", text=None):
+    return RerankCandidate(
+        candidate_id=candidate_id,
+        representation_id=f"rep-{candidate_id}",
+        text=text or candidate_id,
+        representation_type=representation_type,
+        source_id=source_id,
+        source_version_id="sv-1",
+        artifact_hash="a" * 64,
+        locator=locator,
+        acl_scope=acl,
+    )
+
+
+def test_evaluation_coordinator_filters_before_fusion_and_records_candidate_recall():
+    candidates = [_candidate("allowed", acl="allow"), _candidate("secret", acl="secret")]
+    result = EvaluationCoordinator(k_rrf=1).run(
+        RerankQuery("query", "q-1"),
+        {"dense": ["secret", "allowed"], "lexical": ["allowed"]},
+        candidates,
+        filters=EvaluationFilters(acl_scopes=frozenset({"allow"})),
+        relevant_candidate_ids=["allowed"],
+    )
+    assert tuple(item.candidate_id for item in result.fused_candidates) == ("allowed",)
+    assert result.candidate_recall == 1.0
+    assert result.phase_order.index("filter") < result.phase_order.index("rrf")
+    assert result.phase_order.index("candidate_recall") < result.phase_order.index("rerank")
+
+
+def test_reranker_failure_policies_are_explicit_and_never_look_successful():
+    candidates = [_candidate("a", text="alpha"), _candidate("b", text="beta")]
+    for policy, fallback, expected_count in (("FAIL_QUERY", False, 0), ("FALLBACK_TO_FUSED_ORDER", True, 2)):
+        reranker = FakeReranker(
+            info=__import__("opennicf.evaluation", fromlist=["RerankerInfo"]).RerankerInfo(
+                id=f"fake-{policy}", failure_policy=policy
+            ),
+            failure="timeout",
+        )
+        result = EvaluationCoordinator().run("q", {"dense": ["a", "b"]}, candidates, reranker=reranker)
+        assert len(result.reranked_candidates) == expected_count
+        assert result.rerank is not None
+        assert result.rerank.reranker_applied is False
+        assert result.rerank.fallback_invoked is fallback
+
+
+def test_skip_unsupported_candidate_records_it_without_silent_loss():
+    from opennicf.evaluation import RerankerInfo
+
+    candidates = [_candidate("text"), _candidate("image", representation_type="page_image", locator="page:2")]
+    reranker = FakeReranker(
+        info=RerankerInfo(id="text-only", capabilities=frozenset({"text"}), failure_policy="SKIP_UNSUPPORTED_CANDIDATE"),
+        scores={"text": 1.0},
+    )
+    result = EvaluationCoordinator().run("q", {"dense": ["text", "image"]}, candidates, reranker=reranker)
+    assert result.rerank is not None
+    assert result.rerank.skipped_candidate_ids == ("image",)
+    assert {item.candidate_id for item in result.reranked_candidates} == {"text", "image"}
+
+
+def test_context_selection_deduplicates_late_and_enforces_source_page_limits():
+    first = _candidate("first", source_id="src", locator="page:1")
+    duplicate = RerankCandidate(**{**first.__dict__, "candidate_id": "duplicate", "representation_id": first.representation_id})
+    second_page = _candidate("second", source_id="src", locator="page:2")
+    result = select_context(
+        [
+            __import__("opennicf.evaluation", fromlist=["RerankedCandidate"]).RerankedCandidate(first, 1.0, 1),
+            __import__("opennicf.evaluation", fromlist=["RerankedCandidate"]).RerankedCandidate(duplicate, .9, 2),
+            __import__("opennicf.evaluation", fromlist=["RerankedCandidate"]).RerankedCandidate(second_page, .8, 3),
+        ],
+        limits=ContextLimits(max_candidates=3, max_per_source=2, max_per_page=1),
+    )
+    assert [item.candidate_id for item in result.selected] == ["first", "second"]
+    assert any(item.reason == "duplicate_representation" for item in result.suppressed)

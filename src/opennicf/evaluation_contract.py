@@ -14,6 +14,7 @@ from typing import Any
 
 
 REPRESENTATION_TYPES = {"text", "page_image", "region_image", "mixed"}
+REPRESENTATION_LIFECYCLE = {"pending", "ready", "failed", "quarantined", "retired"}
 MANIFEST_STATES = {"DRAFT", "EXECUTABLE"}
 FAILURE_POLICIES = {"FAIL_QUERY", "FALLBACK_TO_FUSED_ORDER", "SKIP_UNSUPPORTED_CANDIDATE"}
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -71,6 +72,14 @@ class RepresentationRecord:
     failure_classification: str | None = None
     attempt_count: int = 0
     metadata: dict[str, Any] = field(default_factory=dict)
+    pixel_width: int | None = None
+    pixel_height: int | None = None
+    acl_scope: str = ""
+    domain_id: str = ""
+    system_id: str = ""
+    component_id: str = "unknown-component"
+    environment: str = ""
+    evidence_type: str = ""
 
 
 @dataclass(frozen=True)
@@ -103,6 +112,17 @@ class InMemoryRepresentationStore:
         self.embeddings: dict[tuple[str, str], EmbeddingVariant] = {}
 
     def put_representation(self, record: RepresentationRecord) -> RepresentationRecord:
+        if record.representation_type not in REPRESENTATION_TYPES:
+            raise ValueError(f"unsupported representation_type: {record.representation_type}")
+        if record.lifecycle_status not in REPRESENTATION_LIFECYCLE:
+            raise ValueError(f"unsupported lifecycle_status: {record.lifecycle_status}")
+        if record.attempt_count < 0:
+            raise ValueError("attempt_count must be non-negative")
+        if record.representation_type != "text" and not record.object_key:
+            raise ValueError("non-text representations require an object_key")
+        for name, value in (("pixel_width", record.pixel_width), ("pixel_height", record.pixel_height)):
+            if value is not None and value <= 0:
+                raise ValueError(f"{name} must be positive when provided")
         expected = stable_representation_id(
             source_version_id=record.source_version_id,
             representation_type=record.representation_type,
@@ -132,6 +152,28 @@ class InMemoryRepresentationStore:
         self.embeddings[key] = variant
         return variant
 
+    def get_representation(self, representation_id: str) -> RepresentationRecord | None:
+        return self.representations.get(representation_id)
+
+    def get_embedding(self, representation_id: str, embedding_space_id: str) -> EmbeddingVariant | None:
+        return self.embeddings.get((representation_id, embedding_space_id))
+
+    def list_representations(self, *, lifecycle_status: str | None = None) -> tuple[RepresentationRecord, ...]:
+        records = self.representations.values()
+        if lifecycle_status is not None:
+            if lifecycle_status not in REPRESENTATION_LIFECYCLE:
+                raise ValueError(f"unsupported lifecycle_status: {lifecycle_status}")
+            records = (record for record in records if record.lifecycle_status == lifecycle_status)
+        return tuple(sorted(records, key=lambda record: record.representation_id))
+
+    def eligible_representations(self, embedding_space_id: str) -> tuple[RepresentationRecord, ...]:
+        """Return ready renditions with an embedding in one explicit space."""
+        return tuple(
+            record
+            for record in self.list_representations(lifecycle_status="ready")
+            if (record.representation_id, embedding_space_id) in self.embeddings
+        )
+
 
 def rrf_rank(
     ranked_lanes: list[list[str]],
@@ -144,7 +186,14 @@ def rrf_rank(
     scores: dict[str, float] = {}
     first_rank: dict[str, int] = {}
     for lane in ranked_lanes:
+        seen_in_lane: set[str] = set()
         for rank, candidate_id in enumerate(lane, 1):
+            # A repeated representation is one candidate in a lane.  Keep its
+            # first (best) rank and do not let a later occurrence contribute a
+            # second reciprocal-rank term.
+            if candidate_id in seen_in_lane:
+                continue
+            seen_in_lane.add(candidate_id)
             scores[candidate_id] = scores.get(candidate_id, 0.0) + 1.0 / (k_rrf + rank)
             first_rank[candidate_id] = min(first_rank.get(candidate_id, rank), rank)
     return sorted(scores, key=lambda candidate_id: (-scores[candidate_id], first_rank[candidate_id], candidate_id))
