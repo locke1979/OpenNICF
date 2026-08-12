@@ -1,0 +1,10 @@
+# Issue #86 evaluation runtime. Install only in a repository-local virtualenv.
+# The PyTorch wheel must come from https://download.pytorch.org/whl/cpu.
+torch==2.8.0
+transformers==4.57.1
+huggingface-hub==0.36.0
+safetensors==0.6.2
+tokenizers==0.22.1
+numpy==2.3.4
+psutil==7.1.3
+
