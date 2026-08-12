@@ -149,61 +149,63 @@ def validate_review_contract(queries: Iterable[MultimodalQuery], representations
             raise ValueError("human decisions require review notes")
 
 
-def apply_multimodal_reviews(
-    manifest: Mapping[str, Any],
-    decisions: Iterable[Mapping[str, Any]],
-    *,
-    reviewer: str,
-    reviewed_at: str,
-) -> dict[str, Any]:
-    """Apply genuine review decisions while preserving query and evidence identity."""
-    if not reviewer.strip() or not reviewed_at.strip():
-        raise ValueError("reviewer and reviewed_at are required")
-    known = {item["representation_id"] for item in manifest.get("representations", [])}
-    originals = {item["query_id"]: item for item in manifest.get("queries", [])}
-    supplied: dict[str, Mapping[str, Any]] = {}
-    for item in decisions:
-        query_id = str(item.get("query_id"))
-        if query_id in supplied or query_id not in originals:
-            raise ValueError(f"duplicate or unknown query ID: {query_id}")
-        supplied[query_id] = item
-    output = []
-    for query_id in sorted(originals):
-        original = dict(originals[query_id])
-        review = supplied.get(query_id)
-        if review is None:
-            output.append(original)
-            continue
-        decision = str(review.get("reviewer_decision"))
-        if decision not in {"ACCEPT", "REWRITE", "REJECT"}:
-            raise ValueError(f"invalid reviewer decision for {query_id}")
-        notes = str(review.get("reviewer_notes") or "").strip()
-        if not notes:
-            raise ValueError(f"reviewer notes are required for {query_id}")
-        for field in ("relevant_representation_ids", "highly_relevant_representation_ids"):
-            if field in review and tuple(review[field]) != tuple(original.get(field, ())):
-                raise ValueError(f"{field} changed for {query_id}")
-        negatives = tuple(review.get("hard_negative_ids", original.get("hard_negative_ids", ())))
+def build_multimodal_review_artifact(queries: Iterable[MultimodalQuery],
+                                     representations: Iterable[Representation]) -> dict[str, object]:
+    """Create safe deterministic preview references; never inline source bytes."""
+    reps = {item.representation_id: item for item in representations}
+    items = []
+    for query in sorted(queries, key=lambda item: item.query_id):
+        refs = (*query.relevant_representation_ids, *query.hard_negative_ids)
+        previews = [{"representation_id": rid, "rendition_sha256": reps[rid].rendition_sha256,
+                     "bounded_preview_ref": f"fixture://rendition/{reps[rid].rendition_sha256[:16]}",
+                     "width": reps[rid].width, "height": reps[rid].height} for rid in refs]
+        payload = {"query_id": query.query_id, "text": query.text,
+                   "relevant_representation_ids": list(query.relevant_representation_ids),
+                   "hard_negative_ids": list(query.hard_negative_ids)}
+        items.append({**payload, "language": query.language, "category": query.category,
+                      "leakage_indicators": list(query.leakage_indicators), "previews": previews,
+                      "machine_recommendation": None, "suggested_rewrite": None,
+                      "reviewer_decision": None, "reviewer_identity": None, "review_timestamp": None,
+                      "reviewer_notes": None, "reviewed_query_text": None,
+                      "item_digest": _digest(__import__("json").dumps(payload, sort_keys=True))})
+    return {"schema_version": 1, "decision_grade": False,
+            "label": "NON_DECISION_GRADE_REVIEW_ASSISTANCE", "items": items}
+
+
+def apply_multimodal_review(artifact: Mapping[str, Any], decisions: Mapping[str, Mapping[str, Any]],
+                            representation_ids: Iterable[str]) -> dict[str, Any]:
+    known = set(representation_ids)
+    sources = {item["query_id"]: item for item in artifact.get("items", [])}
+    if set(decisions) - set(sources):
+        raise ValueError("decision contains an unknown query ID")
+    rows = []
+    for qid in sorted(decisions):
+        source, decision = sources[qid], decisions[qid]
+        status = decision.get("reviewer_decision")
+        if status not in {"ACCEPT", "REWRITE", "REJECT"}:
+            raise ValueError("invalid reviewer decision")
+        if not decision.get("reviewer_identity") or not decision.get("review_timestamp"):
+            raise ValueError("reviewer identity and timestamp are required")
+        relevant = list(source["relevant_representation_ids"])
+        if decision.get("relevant_representation_ids", relevant) != relevant:
+            raise ValueError("review application cannot silently change relevant IDs")
+        negatives = list(decision.get("hard_negative_ids", source["hard_negative_ids"]))
         if any(item not in known for item in negatives):
-            raise ValueError(f"invalid hard-negative ID for {query_id}")
-        rewritten = review.get("rewritten_query_text")
-        if decision == "REWRITE" and not str(rewritten or "").strip():
-            raise ValueError(f"rewritten query text is required for {query_id}")
-        original.update({
-            "original_text": original.get("text"),
-            "text": str(rewritten).strip() if decision == "REWRITE" else original.get("text"),
-            "hard_negative_ids": list(negatives),
-            "review_status": decision,
-            "review_notes": notes,
-            "reviewer": reviewer,
-            "reviewed_at": reviewed_at,
-        })
-        output.append(original)
-    payload = {**manifest, "queries": output, "review_source": reviewer, "reviewed_at": reviewed_at}
-    import json
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    payload["reviewed_label_digest"] = sha256(canonical).hexdigest()
-    return payload
+            raise ValueError("invalid hard-negative representation ID")
+        reviewed = decision.get("reviewed_query_text")
+        if status == "REWRITE" and (not reviewed or reviewed == source["text"]):
+            raise ValueError("REWRITE requires a distinct reviewed query")
+        rows.append({"query_id": qid, "review_status": status,
+                     "reviewer_identity": decision["reviewer_identity"],
+                     "review_timestamp": decision["review_timestamp"],
+                     "reviewer_notes": decision.get("reviewer_notes", ""),
+                     "original_query_text": source["text"],
+                     "reviewed_query_text": reviewed if status == "REWRITE" else source["text"],
+                     "relevant_representation_ids": relevant, "hard_negative_ids": negatives,
+                     "source_item_digest": source["item_digest"]})
+    digest = _digest(__import__("json").dumps(rows, sort_keys=True, separators=(",", ":")))
+    return {"schema_version": 1, "review_source": "DECLARED_HUMAN_REVIEW", "labels_sha256": digest,
+            "decisions": rows}
 
 
 @dataclass(frozen=True)
