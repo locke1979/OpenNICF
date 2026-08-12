@@ -1,0 +1,50 @@
+{
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "model_execution_device": "CUDA_REQUIRED",
+  "cpu_model_execution": "NOT_AUTHORIZED",
+  "cuda_preflight": "PASS",
+  "cuda_host": {
+    "isolation": "Proxmox LXC 308 opennicf-embedding-eval; no production traffic; onboot=0",
+    "gpu": "NVIDIA GeForce GTX 1060 3GB",
+    "uuid": "GPU-cf150279-b259-0608-019f-8f51e0664ff4",
+    "vram_mib": 3072,
+    "driver": "535.261.03",
+    "driver_cuda_compatibility": "12.2",
+    "pytorch_cuda_runtime": "12.1",
+    "compute_capability": "6.1",
+    "container_gpu_visibility": true,
+    "minimal_tensor_operation": "PASS",
+    "disk_before_bytes": 1825361100,
+    "disk_after_expansion_bytes": 27917287424,
+    "disk_after_staging_and_execution_bytes": 20641349632
+  },
+  "artifacts": {
+    "qwen3_embedding_06b": {"status": "VERIFIED", "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3", "weight_sha256": "0437e45c94563b09e13cb7a64478fc406947a93cb34a7e05870fc8dcd48e23fd"},
+    "qwen3_embedding_4b_q4": {"status": "VERIFIED", "revision": "f4602530db1d980e16da9d7d3a70294cf5c190be", "weight_sha256": "2b0cf8f17b4c723c27303015383c27ec4bf2d8314bb677d05e920dd70bb0f16b"},
+    "qwen3_reranker_06b": {"status": "BLOCKED_BANDWIDTH", "remaining_bytes": 1207488344, "observed_bytes_per_second": 53600},
+    "qwen3_vl_embedding_2b": {"status": "BLOCKED_CUDA_VRAM", "weight_bytes": 4255140312, "available_vram_bytes": 3228565504},
+    "qwen3_vl_reranker_2b": {"status": "BLOCKED_CUDA_VRAM", "weight_bytes": 4255140312, "available_vram_bytes": 3228565504},
+    "quarantined_4b": {"status": "QUARANTINED", "sha256": "6fc91b94aa945a268991a1a94d77129d674a12cbe20c94575889d73071f30990", "executed": false}
+  },
+  "vector_spaces": {
+    "TEXT_QWEN3_06B_768_AUTO_V1": {"status": "EXECUTED_CUDA", "documents": 715, "queries": 190, "sha256": "c868233e07768e0ccc3027109dc4f1f1df06466aa109b5c35383279c6b4372fe", "elapsed_seconds": 225.362687545, "peak_vram_bytes": 1274816512},
+    "TEXT_QWEN3_4B_Q4_768_AUTO_V1": {"status": "EXECUTED_CUDA", "documents": 715, "queries": 190, "sha256": "be55b267406f2633d5fdff76925f1aa4f9191faf76a6661bbd1c7bfcbbf08d8d", "document_elapsed_ms": 456371, "query_elapsed_ms": 53492, "gpu_layers": "37/37"}
+  },
+  "arms": {
+    "T00": "EXECUTED_CUDA", "T01": "EXECUTED_CUDA", "T02": "BLOCKED_BANDWIDTH", "T03": "BLOCKED_BANDWIDTH",
+    "T04": "EXECUTED_CUDA", "T05": "EXECUTED_CUDA", "T06": "BLOCKED_BANDWIDTH", "T07": "BLOCKED_BANDWIDTH",
+    "M00": "BLOCKED_CUDA_VRAM", "M01": "BLOCKED_CUDA_VRAM", "M02": "BLOCKED_CUDA_VRAM", "M03": "BLOCKED_CUDA_VRAM",
+    "M04": "BLOCKED_CUDA_VRAM", "M05": "BLOCKED_CUDA_VRAM"
+  },
+  "executed_cuda_count": 4,
+  "blocked_bandwidth_count": 4,
+  "blocked_cuda_vram_count": 6,
+  "rag": "BLOCKED_INCOMPLETE_COMPARISON_SET_AND_GENERATOR_BINDING",
+  "winner_selection": "BLOCKED",
+  "decision_grade_production_validation": false,
+  "production_decision": "NOT_AUTHORIZED",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0,
+  "warnings": ["AUTOMATED LABELS MAY CONTAIN SOURCE-DERIVED LEAKAGE", "QUALITY RESULTS ARE COMPARATIVE EXPERIMENTAL EVIDENCE", "PRODUCTION REMAINS UNCHANGED"]
+}

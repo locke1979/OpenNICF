@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 import platform
 import shutil
-from typing import Iterable, Sequence
+from typing import Any, Sequence
 
 
 QWEN_06B_REPOSITORY = "Qwen/Qwen3-Embedding-0.6B"
@@ -72,6 +72,69 @@ class RuntimePreflight:
     statuses: dict[str, str]
 
 
+class CudaRequiredError(RuntimeError):
+    """Issue #86 must never turn a missing/misplaced CUDA path into CPU work."""
+
+
+def require_cuda(torch_module: Any | None = None) -> dict[str, Any]:
+    """Prove CUDA visibility and execute a synchronized CUDA tensor operation.
+
+    Import injection is intentional: preflight behavior can be tested on CPU-only
+    CI without pretending that CI has a CUDA device.
+    """
+    if torch_module is None:
+        try:
+            import torch as torch_module
+        except ImportError as exc:
+            raise CudaRequiredError("BLOCKED_CUDA: PyTorch is not installed") from exc
+    cuda = getattr(torch_module, "cuda", None)
+    if cuda is None or not cuda.is_available() or cuda.device_count() < 1:
+        raise CudaRequiredError("BLOCKED_CUDA: no CUDA device is visible")
+    try:
+        probe = torch_module.tensor([1.0], device="cuda")
+        result = probe + probe
+        cuda.synchronize()
+    except Exception as exc:
+        raise CudaRequiredError("BLOCKED_CUDA: CUDA tensor probe failed") from exc
+    device = str(getattr(result, "device", ""))
+    if not device.startswith("cuda"):
+        raise CudaRequiredError("CUDA_REQUIRED_CPU_FALLBACK_DETECTED: probe output is not on CUDA")
+    properties = cuda.get_device_properties(0)
+    return {
+        "device_count": cuda.device_count(),
+        "device_name": cuda.get_device_name(0),
+        "device": device,
+        "cuda_runtime": getattr(getattr(torch_module, "version", None), "cuda", None),
+        "vram_total_bytes": int(properties.total_memory),
+    }
+
+
+def require_cuda_tensors(*values: Any, role: str = "tensor") -> None:
+    """Reject CPU model parameters, inputs, or outputs before evidence is kept."""
+    seen = False
+    stack = list(values)
+    while stack:
+        value = stack.pop()
+        if isinstance(value, dict):
+            stack.extend(value.values())
+        elif isinstance(value, (list, tuple)):
+            stack.extend(value)
+        elif hasattr(value, "device"):
+            seen = True
+            if not str(value.device).startswith("cuda"):
+                raise CudaRequiredError(f"CUDA_REQUIRED_CPU_FALLBACK_DETECTED: {role} is on {value.device}")
+    if not seen:
+        raise CudaRequiredError(f"CUDA_REQUIRED_CPU_FALLBACK_DETECTED: no {role} device was verifiable")
+
+
+def require_model_on_cuda(model: Any) -> None:
+    """Verify every materialized parameter is resident on CUDA."""
+    parameters = list(model.parameters())
+    if not parameters:
+        raise CudaRequiredError("CUDA_REQUIRED_CPU_FALLBACK_DETECTED: model has no verifiable parameters")
+    require_cuda_tensors(parameters, role="model parameter")
+
+
 def preflight(artifact_root: str | Path) -> RuntimePreflight:
     packages: dict[str, str | None] = {}
     for name in ("torch", "transformers", "safetensors", "huggingface-hub", "tokenizers", "numpy", "psutil"):
@@ -80,18 +143,18 @@ def preflight(artifact_root: str | Path) -> RuntimePreflight:
         except importlib.metadata.PackageNotFoundError:
             packages[name] = None
     try:
-        import torch
-        cuda = bool(torch.cuda.is_available())
-    except ImportError:
+        require_cuda()
+        cuda = True
+    except CudaRequiredError:
         cuda = False
     root = Path(artifact_root)
     free = shutil.disk_usage(root if root.exists() else root.parent).free
     text_runtime = packages["torch"] is not None and packages["transformers"] is not None
     statuses = {
-        "T00_T04": "EXECUTABLE" if text_runtime else "BLOCKED_RUNTIME",
-        "T02_T06": "EXECUTABLE" if text_runtime else "BLOCKED_RUNTIME",
+        "T00_T04": "EXECUTABLE" if text_runtime and cuda else ("BLOCKED_RUNTIME" if not text_runtime else "BLOCKED_CUDA"),
+        "T02_T06": "EXECUTABLE" if text_runtime and cuda else ("BLOCKED_RUNTIME" if not text_runtime else "BLOCKED_CUDA"),
         "T01_T03_T05_T07": "BLOCKED_ARTIFACT",
-        "M00_M05": "BLOCKED_ARTIFACT" if text_runtime else "BLOCKED_RUNTIME",
-        "CUDA_OPERATIONAL_ARMS": "EXECUTABLE" if cuda else "INVALID_FOR_HARDWARE",
+        "M00_M05": "BLOCKED_ARTIFACT" if text_runtime and cuda else ("BLOCKED_RUNTIME" if not text_runtime else "BLOCKED_CUDA"),
+        "CUDA_OPERATIONAL_ARMS": "EXECUTABLE" if cuda else "BLOCKED_CUDA",
     }
     return RuntimePreflight(platform.python_version(), packages, cuda, free, statuses)
