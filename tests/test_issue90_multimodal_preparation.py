@@ -5,7 +5,7 @@ import pytest
 from opennicf.multimodal_evaluation import (
     HARD_NEGATIVE_CATEGORIES, Lifecycle, MultimodalQuery, RenderLimits,
     ReviewStatus, SanitizedCorpusBuilder, SourceRecord, TelemetrySample,
-    validate_review_contract,
+    apply_multimodal_reviews, validate_review_contract,
 )
 
 
@@ -73,3 +73,21 @@ def test_telemetry_contract_and_no_claims():
     with pytest.raises(ValueError):
         TelemetrySample("embed", 1, 1, 1, 1, 1, 1, 1, concurrency=3)
     assert len(HARD_NEGATIVE_CATEGORIES) == 8
+
+
+def test_multimodal_review_ingestion_is_attributed_and_fail_closed():
+    rep = SanitizedCorpusBuilder(renderer_version="r1").render(source(), modality="table", page=1, width=10, height=10, renderer=lambda: b"x")
+    manifest = {"representations": [{"representation_id": rep.representation_id}], "queries": [{
+        "query_id": "q1", "text": "original", "relevant_representation_ids": [rep.representation_id],
+        "highly_relevant_representation_ids": [rep.representation_id], "hard_negative_ids": [rep.representation_id],
+        "review_status": "PENDING_REVIEW",
+    }]}
+    reviewed = apply_multimodal_reviews(manifest, [{"query_id": "q1", "reviewer_decision": "REWRITE",
+        "reviewer_notes": "Reviewed synthetic evidence.", "rewritten_query_text": "rewritten"}],
+        reviewer="declared-human", reviewed_at="2026-08-12T19:00:00Z")
+    assert reviewed["queries"][0]["original_text"] == "original"
+    assert reviewed["queries"][0]["text"] == "rewritten"
+    assert len(reviewed["reviewed_label_digest"]) == 64
+    with pytest.raises(ValueError, match="hard-negative"):
+        apply_multimodal_reviews(manifest, [{"query_id": "q1", "reviewer_decision": "ACCEPT",
+            "reviewer_notes": "Reviewed.", "hard_negative_ids": ["unknown"]}], reviewer="human", reviewed_at="now")

@@ -1,6 +1,7 @@
 import pytest
 
 from opennicf.text_evaluation import (
+    apply_human_review_batches,
     audit_inputs,
     build_review_artifact,
     disagreement_analysis,
@@ -83,3 +84,31 @@ def test_executable_manifest_requires_human_labels_vectors_digests_and_reranker(
 def test_metrics_reject_unpaired_inputs():
     with pytest.raises(ValueError):
         retrieval_metrics({"q": []}, {})
+
+
+def test_completed_review_ingestion_preserves_ids_and_recalculates_digest():
+    corpus, gold, review, _ = fixtures()
+    artifact = build_review_artifact(corpus, gold, review, batch_size=1)
+    item = artifact["batches"][0]["items"][0]
+    item.update({"reviewer_decision": "REWRITE", "reviewer_notes": "Distinct wording reviewed.",
+                 "rewritten_query_text": "How often does the alpha service rotate signing keys?",
+                 "selected_hard_negative_ids": ["c2"]})
+    applied = apply_human_review_batches(gold, artifact, reviewer="declared-human", reviewed_at="2026-08-12T19:00:00Z")
+    assert applied["queries"][0]["query_id"] == "q1"
+    assert applied["queries"][0]["original_query_text"] == gold["queries"][0]["query_text"]
+    assert applied["queries"][0]["hard_negative_chunk_ids"] == ["c2"]
+    assert len(applied["reviewed_label_digest"]) == 64
+
+
+def test_review_ingestion_rejects_silent_relevance_or_negative_changes():
+    corpus, gold, review, _ = fixtures()
+    artifact = build_review_artifact(corpus, gold, review, batch_size=1)
+    item = artifact["batches"][0]["items"][0]
+    item.update({"reviewer_decision": "ACCEPT", "reviewer_notes": "Reviewed.",
+                 "selected_hard_negative_ids": ["not-a-candidate"]})
+    with pytest.raises(ValueError, match="hard-negative"):
+        apply_human_review_batches(gold, artifact, reviewer="human", reviewed_at="now")
+    item["selected_hard_negative_ids"] = ["c2"]
+    item["intended_relevant"] = [{"chunk_id": "c2"}]
+    with pytest.raises(ValueError, match="relevant IDs"):
+        apply_human_review_batches(gold, artifact, reviewer="human", reviewed_at="now")

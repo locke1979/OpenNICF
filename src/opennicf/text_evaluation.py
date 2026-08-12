@@ -20,6 +20,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 FINAL_REVIEW_STATUSES = {"ACCEPT", "ACCEPT_LEGACY", "REWRITE", "REJECT"}
 HUMAN_ACCEPT_STATUSES = {"ACCEPT", "ACCEPT_LEGACY"}
+REVIEW_DECISIONS = {"ACCEPT", "REWRITE", "REJECT"}
 REQUIRED_METRICS = (
     "recall_at_1", "recall_at_3", "recall_at_5", "recall_at_10",
     "recall_at_20", "mrr_at_10", "ndcg_at_5", "ndcg_at_10", "zero_hit_rate",
@@ -271,6 +272,72 @@ def build_review_artifact(
             for offset in range(0, len(items), batch_size)
         ],
     }
+
+
+def apply_human_review_batches(
+    gold: Mapping[str, Any],
+    artifact: Mapping[str, Any],
+    *,
+    reviewer: str,
+    reviewed_at: str,
+) -> dict[str, Any]:
+    """Validate and apply completed text review batches without changing IDs silently."""
+    if not reviewer.strip() or not reviewed_at.strip():
+        raise ValueError("reviewer and reviewed_at are required")
+    source = {item["query_id"]: item for item in gold.get("queries", [])}
+    if len(source) != len(gold.get("queries", [])):
+        raise ValueError("gold query IDs must be unique")
+    completed: dict[str, Mapping[str, Any]] = {}
+    for batch in artifact.get("batches", []):
+        for item in batch.get("items", []):
+            query_id = item.get("query_id")
+            if query_id in completed:
+                raise ValueError(f"duplicate reviewed query ID: {query_id}")
+            if query_id not in source:
+                raise ValueError(f"unknown reviewed query ID: {query_id}")
+            completed[str(query_id)] = item
+
+    output: list[dict[str, Any]] = []
+    for query_id in sorted(source):
+        original = dict(source[query_id])
+        review = completed.get(query_id)
+        if review is None or review.get("reviewer_decision") is None:
+            output.append(original)
+            continue
+        decision = str(review["reviewer_decision"])
+        if decision not in REVIEW_DECISIONS:
+            raise ValueError(f"invalid reviewer decision for {query_id}")
+        notes = str(review.get("reviewer_notes") or "").strip()
+        if not notes:
+            raise ValueError(f"reviewer notes are required for {query_id}")
+        expected_relevant = tuple(original.get("relevant_chunk_ids", ()))
+        submitted_relevant = tuple(item.get("chunk_id") for item in review.get("intended_relevant", ()))
+        if submitted_relevant != expected_relevant:
+            raise ValueError(f"relevant IDs changed for {query_id}")
+        allowed_negatives = {
+            item.get("chunk_id") for key in ("hard_negatives", "hard_negative_candidates")
+            for item in review.get(key, ())
+        }
+        selected_negatives = tuple(review.get("selected_hard_negative_ids", original.get("hard_negative_chunk_ids", ())))
+        if any(item not in allowed_negatives for item in selected_negatives):
+            raise ValueError(f"invalid hard-negative ID for {query_id}")
+        rewritten = review.get("rewritten_query_text")
+        if decision == "REWRITE" and not str(rewritten or "").strip():
+            raise ValueError(f"rewritten query text is required for {query_id}")
+        original.update({
+            "original_query_text": original.get("query_text"),
+            "query_text": str(rewritten).strip() if decision == "REWRITE" else original.get("query_text"),
+            "hard_negative_chunk_ids": list(selected_negatives),
+            "review_status": decision,
+            "reviewer": reviewer,
+            "reviewed_at": reviewed_at,
+            "review_notes": notes,
+        })
+        output.append(original)
+    payload = {**gold, "queries": output, "review_source": reviewer, "reviewed_at": reviewed_at}
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    payload["reviewed_label_digest"] = sha256(canonical).hexdigest()
+    return payload
 
 
 def retrieval_metrics(rankings: Mapping[str, Sequence[str]], labels: Mapping[str, Mapping[str, Sequence[str]]]) -> dict[str, float]:

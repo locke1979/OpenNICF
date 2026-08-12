@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from hashlib import sha256
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable, Mapping
 
 
 def _digest(*parts: str | bytes) -> str:
@@ -147,6 +147,63 @@ def validate_review_contract(queries: Iterable[MultimodalQuery], representations
             raise ValueError(f"unresolved representation reference in {query.query_id}")
         if query.review_status != ReviewStatus.PENDING_REVIEW and not query.review_notes.strip():
             raise ValueError("human decisions require review notes")
+
+
+def apply_multimodal_reviews(
+    manifest: Mapping[str, Any],
+    decisions: Iterable[Mapping[str, Any]],
+    *,
+    reviewer: str,
+    reviewed_at: str,
+) -> dict[str, Any]:
+    """Apply genuine review decisions while preserving query and evidence identity."""
+    if not reviewer.strip() or not reviewed_at.strip():
+        raise ValueError("reviewer and reviewed_at are required")
+    known = {item["representation_id"] for item in manifest.get("representations", [])}
+    originals = {item["query_id"]: item for item in manifest.get("queries", [])}
+    supplied: dict[str, Mapping[str, Any]] = {}
+    for item in decisions:
+        query_id = str(item.get("query_id"))
+        if query_id in supplied or query_id not in originals:
+            raise ValueError(f"duplicate or unknown query ID: {query_id}")
+        supplied[query_id] = item
+    output = []
+    for query_id in sorted(originals):
+        original = dict(originals[query_id])
+        review = supplied.get(query_id)
+        if review is None:
+            output.append(original)
+            continue
+        decision = str(review.get("reviewer_decision"))
+        if decision not in {"ACCEPT", "REWRITE", "REJECT"}:
+            raise ValueError(f"invalid reviewer decision for {query_id}")
+        notes = str(review.get("reviewer_notes") or "").strip()
+        if not notes:
+            raise ValueError(f"reviewer notes are required for {query_id}")
+        for field in ("relevant_representation_ids", "highly_relevant_representation_ids"):
+            if field in review and tuple(review[field]) != tuple(original.get(field, ())):
+                raise ValueError(f"{field} changed for {query_id}")
+        negatives = tuple(review.get("hard_negative_ids", original.get("hard_negative_ids", ())))
+        if any(item not in known for item in negatives):
+            raise ValueError(f"invalid hard-negative ID for {query_id}")
+        rewritten = review.get("rewritten_query_text")
+        if decision == "REWRITE" and not str(rewritten or "").strip():
+            raise ValueError(f"rewritten query text is required for {query_id}")
+        original.update({
+            "original_text": original.get("text"),
+            "text": str(rewritten).strip() if decision == "REWRITE" else original.get("text"),
+            "hard_negative_ids": list(negatives),
+            "review_status": decision,
+            "review_notes": notes,
+            "reviewer": reviewer,
+            "reviewed_at": reviewed_at,
+        })
+        output.append(original)
+    payload = {**manifest, "queries": output, "review_source": reviewer, "reviewed_at": reviewed_at}
+    import json
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    payload["reviewed_label_digest"] = sha256(canonical).hexdigest()
+    return payload
 
 
 @dataclass(frozen=True)
