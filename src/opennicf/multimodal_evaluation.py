@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from hashlib import sha256
-from typing import Any, Callable, Iterable, Mapping
+from typing import Callable, Iterable, Mapping
 
 
 def _digest(*parts: str | bytes) -> str:
@@ -149,65 +149,6 @@ def validate_review_contract(queries: Iterable[MultimodalQuery], representations
             raise ValueError("human decisions require review notes")
 
 
-def build_multimodal_review_artifact(queries: Iterable[MultimodalQuery],
-                                     representations: Iterable[Representation]) -> dict[str, object]:
-    """Create safe deterministic preview references; never inline source bytes."""
-    reps = {item.representation_id: item for item in representations}
-    items = []
-    for query in sorted(queries, key=lambda item: item.query_id):
-        refs = (*query.relevant_representation_ids, *query.hard_negative_ids)
-        previews = [{"representation_id": rid, "rendition_sha256": reps[rid].rendition_sha256,
-                     "bounded_preview_ref": f"fixture://rendition/{reps[rid].rendition_sha256[:16]}",
-                     "width": reps[rid].width, "height": reps[rid].height} for rid in refs]
-        payload = {"query_id": query.query_id, "text": query.text,
-                   "relevant_representation_ids": list(query.relevant_representation_ids),
-                   "hard_negative_ids": list(query.hard_negative_ids)}
-        items.append({**payload, "language": query.language, "category": query.category,
-                      "leakage_indicators": list(query.leakage_indicators), "previews": previews,
-                      "machine_recommendation": None, "suggested_rewrite": None,
-                      "reviewer_decision": None, "reviewer_identity": None, "review_timestamp": None,
-                      "reviewer_notes": None, "reviewed_query_text": None,
-                      "item_digest": _digest(__import__("json").dumps(payload, sort_keys=True))})
-    return {"schema_version": 1, "decision_grade": False,
-            "label": "NON_DECISION_GRADE_REVIEW_ASSISTANCE", "items": items}
-
-
-def apply_multimodal_review(artifact: Mapping[str, Any], decisions: Mapping[str, Mapping[str, Any]],
-                            representation_ids: Iterable[str]) -> dict[str, Any]:
-    known = set(representation_ids)
-    sources = {item["query_id"]: item for item in artifact.get("items", [])}
-    if set(decisions) - set(sources):
-        raise ValueError("decision contains an unknown query ID")
-    rows = []
-    for qid in sorted(decisions):
-        source, decision = sources[qid], decisions[qid]
-        status = decision.get("reviewer_decision")
-        if status not in {"ACCEPT", "REWRITE", "REJECT"}:
-            raise ValueError("invalid reviewer decision")
-        if not decision.get("reviewer_identity") or not decision.get("review_timestamp"):
-            raise ValueError("reviewer identity and timestamp are required")
-        relevant = list(source["relevant_representation_ids"])
-        if decision.get("relevant_representation_ids", relevant) != relevant:
-            raise ValueError("review application cannot silently change relevant IDs")
-        negatives = list(decision.get("hard_negative_ids", source["hard_negative_ids"]))
-        if any(item not in known for item in negatives):
-            raise ValueError("invalid hard-negative representation ID")
-        reviewed = decision.get("reviewed_query_text")
-        if status == "REWRITE" and (not reviewed or reviewed == source["text"]):
-            raise ValueError("REWRITE requires a distinct reviewed query")
-        rows.append({"query_id": qid, "review_status": status,
-                     "reviewer_identity": decision["reviewer_identity"],
-                     "review_timestamp": decision["review_timestamp"],
-                     "reviewer_notes": decision.get("reviewer_notes", ""),
-                     "original_query_text": source["text"],
-                     "reviewed_query_text": reviewed if status == "REWRITE" else source["text"],
-                     "relevant_representation_ids": relevant, "hard_negative_ids": negatives,
-                     "source_item_digest": source["item_digest"]})
-    digest = _digest(__import__("json").dumps(rows, sort_keys=True, separators=(",", ":")))
-    return {"schema_version": 1, "review_source": "DECLARED_HUMAN_REVIEW", "labels_sha256": digest,
-            "decisions": rows}
-
-
 @dataclass(frozen=True)
 class TelemetrySample:
     phase: str
@@ -245,3 +186,139 @@ HARD_NEGATIVE_CATEGORIES = (
     "current_obsolete", "production_non_production", "same_error_wrong_service",
     "visually_similar_wrong_evidence",
 )
+
+
+class FeasibilityStage(StrEnum):
+    METADATA = "METADATA"
+    CPU_FORWARD = "CPU_FORWARD"
+    CUDA_LOAD = "CUDA_LOAD"
+    CUDA_FORWARD = "CUDA_FORWARD"
+    RESTART = "RESTART"
+    THROUGHPUT = "THROUGHPUT"
+
+
+@dataclass(frozen=True)
+class ArtifactFile:
+    path: str
+    bytes: int
+    sha256: str | None
+    required: bool = True
+
+    def __post_init__(self) -> None:
+        if not self.path or self.bytes < 0:
+            raise ValueError("invalid artifact file")
+        if self.sha256 is not None and (
+            len(self.sha256) != 64 or any(c not in "0123456789abcdef" for c in self.sha256)
+        ):
+            raise ValueError("artifact SHA-256 must be lowercase hexadecimal")
+
+
+@dataclass(frozen=True)
+class VLArtifactContract:
+    role: str
+    repository: str
+    revision: str
+    license: str | None
+    architecture: str
+    files: tuple[ArtifactFile, ...]
+    native_dimension: int | None = None
+    supported_dimensions: tuple[int, ...] = ()
+    output_normalized: bool | None = None
+    processor_revision: str | None = None
+    min_pixels: int | None = None
+    max_pixels: int | None = None
+    quantization_method: str | None = None
+    weight_bits: int | None = None
+    base_repository: str | None = None
+    base_revision: str | None = None
+    calibration_contract: str | None = None
+    custom_code: bool = False
+
+    def validate_metadata(self) -> None:
+        if len(self.revision) != 40 or any(c not in "0123456789abcdef" for c in self.revision):
+            raise ValueError("artifact revision must be a pinned commit")
+        if not self.files or not any(f.path.endswith((".safetensors", ".gguf")) for f in self.files):
+            raise ValueError("weight file is required")
+        if any(f.required and f.bytes == 0 for f in self.files):
+            raise ValueError("required file size is unknown")
+        if self.processor_revision is not None and self.processor_revision != self.revision:
+            raise ValueError("processor and weights must use the same pinned revision")
+        if self.max_pixels is not None and (
+            self.min_pixels is None or self.min_pixels <= 0 or self.max_pixels < self.min_pixels
+        ):
+            raise ValueError("invalid pixel contract")
+        if self.weight_bits is not None:
+            if self.weight_bits != 4 or not self.quantization_method:
+                raise ValueError("W4 requires an explicit weight quantization method")
+            if not self.base_repository or not self.base_revision or not self.calibration_contract:
+                raise ValueError("W4 requires pinned base identity and calibration contract")
+
+
+@dataclass(frozen=True)
+class RuntimeQualification:
+    name: str
+    version: str | None
+    installed: bool
+    exact_architecture_supported: bool
+    cuda_version: str | None
+    compute_capability: str | None
+    cuda_architecture_evidence: str | None
+    multimodal_forward_proven: bool = False
+    embedding_head_proven: bool = False
+    reranker_head_proven: bool = False
+
+    def executable_for(self, artifact: VLArtifactContract, *, cuda: bool) -> bool:
+        artifact.validate_metadata()
+        if not artifact.license or not self.installed or not self.version:
+            return False
+        if not self.exact_architecture_supported:
+            return False
+        if cuda and (not self.cuda_version or not self.compute_capability or not self.cuda_architecture_evidence):
+            return False
+        if artifact.role == "embedding" and not self.embedding_head_proven:
+            return False
+        if artifact.role == "reranker" and not self.reranker_head_proven:
+            return False
+        return self.multimodal_forward_proven
+
+
+@dataclass(frozen=True)
+class StageResult:
+    stage: FeasibilityStage
+    passed: bool
+    measured: bool
+    evidence: str
+    stop_reason: str | None = None
+
+
+def validate_feasibility_ladder(results: Iterable[StageResult]) -> None:
+    ordered = list(results)
+    expected = list(FeasibilityStage)
+    if [r.stage for r in ordered] != expected[:len(ordered)]:
+        raise ValueError("feasibility stages must be contiguous and ordered")
+    for index, result in enumerate(ordered):
+        if not result.evidence.strip():
+            raise ValueError("each stage requires evidence")
+        if not result.passed:
+            if not result.stop_reason:
+                raise ValueError("a failed stage requires a stop reason")
+            if index != len(ordered) - 1:
+                raise ValueError("no stages may run after a failed stage")
+
+
+def validate_artifact_inventory(
+    artifacts: Iterable[VLArtifactContract],
+    remote_hashes: Mapping[tuple[str, str, str], str],
+) -> None:
+    """Fail closed when pinned metadata and authoritative remote hashes diverge."""
+    seen: set[tuple[str, str, str]] = set()
+    for artifact in artifacts:
+        artifact.validate_metadata()
+        for file in artifact.files:
+            key = (artifact.repository, artifact.revision, file.path)
+            if key in seen:
+                raise ValueError("duplicate artifact file identity")
+            seen.add(key)
+            expected = remote_hashes.get(key)
+            if file.sha256 is not None and expected != file.sha256:
+                raise ValueError(f"artifact digest mismatch: {file.path}")

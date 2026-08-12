@@ -1,10 +1,14 @@
 from hashlib import sha256
+import json
+from pathlib import Path
 
 import pytest
 
 from opennicf.multimodal_evaluation import (
-    HARD_NEGATIVE_CATEGORIES, Lifecycle, MultimodalQuery, RenderLimits,
-    ReviewStatus, SanitizedCorpusBuilder, SourceRecord, TelemetrySample,
+    ArtifactFile, FeasibilityStage, HARD_NEGATIVE_CATEGORIES, Lifecycle,
+    MultimodalQuery, RenderLimits, ReviewStatus, RuntimeQualification,
+    SanitizedCorpusBuilder, SourceRecord, StageResult, TelemetrySample,
+    VLArtifactContract, validate_artifact_inventory, validate_feasibility_ladder,
     validate_review_contract,
 )
 
@@ -74,3 +78,75 @@ def test_telemetry_contract_and_no_claims():
         TelemetrySample("embed", 1, 1, 1, 1, 1, 1, 1, concurrency=3)
     assert len(HARD_NEGATIVE_CATEGORIES) == 8
 
+
+def official_embedding():
+    return VLArtifactContract(
+        role="embedding", repository="Qwen/Qwen3-VL-Embedding-2B",
+        revision="9f2f7e710d6d81056aa5c0a4f04764fec6bb7bda", license="apache-2.0",
+        architecture="Qwen3VLForConditionalGeneration",
+        files=(ArtifactFile("model.safetensors", 4_255_140_312, "c73fa9caeddeb3ff831d46c085a7a5708343248ca777e90f2d486964464509c1"),),
+        native_dimension=2048, supported_dimensions=(64, 128, 256, 512, 768, 1024, 2048),
+        output_normalized=True, processor_revision="9f2f7e710d6d81056aa5c0a4f04764fec6bb7bda",
+        min_pixels=4096, max_pixels=1_310_720,
+    )
+
+
+def test_official_artifact_metadata_and_remote_hash_are_bound():
+    artifact = official_embedding()
+    key = (artifact.repository, artifact.revision, "model.safetensors")
+    validate_artifact_inventory([artifact], {key: artifact.files[0].sha256})
+    with pytest.raises(ValueError, match="digest mismatch"):
+        validate_artifact_inventory([artifact], {key: "0" * 64})
+
+
+def test_w4_requires_weight_method_base_and_calibration():
+    with pytest.raises(ValueError, match="pinned base identity"):
+        VLArtifactContract(
+            role="embedding", repository="example/w4", revision="a" * 40,
+            license="apache-2.0", architecture="Qwen3VLForConditionalGeneration",
+            files=(ArtifactFile("model.safetensors", 1, "b" * 64),),
+            quantization_method="AWQ", weight_bits=4,
+        ).validate_metadata()
+
+
+def test_runtime_gate_distinguishes_installation_from_exact_forward_support():
+    artifact = official_embedding()
+    installed_only = RuntimeQualification(
+        "transformers", "4.57.1", True, True, None, None, None,
+        multimodal_forward_proven=False, embedding_head_proven=False,
+    )
+    assert not installed_only.executable_for(artifact, cuda=False)
+    proven_cpu = RuntimeQualification(
+        "transformers", "4.57.1", True, True, None, None, None,
+        multimodal_forward_proven=True, embedding_head_proven=True,
+    )
+    assert proven_cpu.executable_for(artifact, cuda=False)
+    assert not proven_cpu.executable_for(artifact, cuda=True)
+
+
+def test_feasibility_ladder_stops_after_first_failure():
+    validate_feasibility_ladder([
+        StageResult(FeasibilityStage.METADATA, True, True, "pinned metadata validated"),
+        StageResult(FeasibilityStage.CPU_FORWARD, False, True, "runtime absent", "RUNTIME_UNAVAILABLE"),
+    ])
+    with pytest.raises(ValueError, match="after a failed stage"):
+        validate_feasibility_ladder([
+            StageResult(FeasibilityStage.METADATA, False, True, "bad hash", "HASH_MISMATCH"),
+            StageResult(FeasibilityStage.CPU_FORWARD, True, True, "must not run"),
+        ])
+
+
+def test_published_vl_qualification_is_pinned_and_fail_closed():
+    report = json.loads((Path(__file__).parents[1] / "docs/issue90-vl-qualification.json").read_text())
+    embedding = report["official"]["embedding"]
+    reranker = report["official"]["reranker"]
+    assert embedding["revision"] == "9f2f7e710d6d81056aa5c0a4f04764fec6bb7bda"
+    assert embedding["weight"]["remote_lfs_sha256"] == "c73fa9caeddeb3ff831d46c085a7a5708343248ca777e90f2d486964464509c1"
+    assert embedding["evaluation_dimension"] == 768 and embedding["normalization_required"]
+    assert reranker["revision"] == "4bd860ac4f15ad1897a214615cccc700f8f71818"
+    assert reranker["score_contract"] == {
+        "true_token_id": 9693, "false_token_id": 2152,
+        "template": "reranker", "add_generation_prompt": True,
+    }
+    assert all(candidate["disposition"] != "EXECUTABLE" for candidate in report["w4_candidates"])
+    assert report["conclusion"] == "W4_EXECUTABLE_ON_PASCAL=BLOCKED_ON_RUNTIME_EVIDENCE"
