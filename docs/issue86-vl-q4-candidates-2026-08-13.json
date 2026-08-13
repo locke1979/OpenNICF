@@ -1,0 +1,40 @@
+{
+  "status": {
+    "QWEN3_VL_EMBEDDING_2B_Q4_CANDIDATE_FOUND": true,
+    "QWEN3_VL_RERANKER_2B_Q4_CANDIDATE_FOUND": true,
+    "QWEN3_VL_Q4_PASCAL_EXECUTABLE": "UNPROVEN",
+    "production_decision": "NOT_AUTHORIZED",
+    "production": "UNCHANGED"
+  },
+  "embedding_primary": {
+    "repository": "Rizwan313/Qwen3-VL-Embedding-2B-GGUF",
+    "commit": "228be25848459da8f09e608d8e612c2399168705",
+    "license": "apache-2.0",
+    "base_model": "Qwen/Qwen3-VL-Embedding-2B",
+    "text": {"file": "qwen3-vl-embedding-2b-Q4_K_M.gguf", "bytes": 1107410656, "sha256": "cc25f2d9a193f467a7fd2222090d7c47f9ec5f7c3e028741740141b35f4f9690"},
+    "projector": {"file": "mmproj-Q8_0.gguf", "bytes": 441907840, "sha256": "cf385412f9cc2c910221ad1077b6893a4b4b4d4b81ea0a2588000b67492df0dc"},
+    "compatibility_evidence": "Repository card states both files were converted from the exact official embedding model with the same llama.cpp recipe and that multimodal runs require matching text and mmproj files. Semantic equivalence remains unproven."
+  },
+  "reranker_primary": {
+    "repository": "mradermacher/Qwen3-VL-Reranker-2B-i1-GGUF",
+    "commit": "022d2763d456c2023ae050a55655fc1ec79e3e5d",
+    "license": "apache-2.0",
+    "base_model": "Qwen/Qwen3-VL-Reranker-2B",
+    "text": {"file": "Qwen3-VL-Reranker-2B.i1-Q4_K_M.gguf", "bytes": 1107411040, "sha256": "f19dfbceeef9f6ee1f7d0ff536d66e9b1b90424a4b8aa1d1777db43d20afdbc5"},
+    "projector_repository": "mradermacher/Qwen3-VL-Reranker-2B-GGUF",
+    "projector_commit": "ec3ea57e6fc66c4a3b12c97e3080f49291475968",
+    "projector": {"file": "Qwen3-VL-Reranker-2B.mmproj-Q8_0.gguf", "bytes": 445053600, "sha256": "528a7f4c39851c2fc5bf128d73437c1b73e86fb4df41442781c804806a687980"},
+    "compatibility_evidence": "Imatrix card identifies the exact official reranker base and directs vision users to the matching static repository for mmproj. Exact task-head behavior remains unproven."
+  },
+  "fallbacks": [
+    {"repository": "elVlad/Qwen3-VL-Embedding-2B-Q4_K_M-GGUF", "commit": "a59e47feed49fc58780b7f7763d78c805d6cc8a6", "license": "apache-2.0", "base_model": "Qwen/Qwen3-VL-Embedding-2B", "file": "qwen3-vl-embedding-2b-q4_k_m.gguf", "bytes": 1107405088, "sha256": "f3bd907b83215e28ec062676399c50fbee20d9aa56683e5842c6d976dc8e8baf", "blocker": "no matching mmproj in repository"},
+    {"repository": "mradermacher/Qwen3-VL-Reranker-2B-GGUF", "commit": "ec3ea57e6fc66c4a3b12c97e3080f49291475968", "license": "apache-2.0", "base_model": "Qwen/Qwen3-VL-Reranker-2B", "file": "Qwen3-VL-Reranker-2B.Q4_K_M.gguf", "bytes": 1107410784, "sha256": "e4c2472ca5a85b815ecbcb1f74acd7e8930951f738c4e9d501153b6b4315d642"}
+  ],
+  "runtime_candidate": {
+    "repository": "ggml-org/llama.cpp",
+    "commit": "decaf508bb9ef683c93f58d320b6d6faef507895",
+    "observed_features": ["Qwen3-VL mtmd conversion", "Qwen3 reranker detection", "RANK pooling", "server reranking endpoint", "CUDA architecture targeting"],
+    "gate": "Loading is insufficient. If exact 768-D MRL embedding/pooling or true reranker score semantics are unavailable, classify TASK_HEAD_UNSUPPORTED."
+  },
+  "warnings": ["THIRD_PARTY_UNOFFICIAL_QUANTIZATION", "NO_EXECUTION_OR_SEMANTIC_ACCEPTANCE_YET", "NEVER_LOAD_EMBEDDING_AND_RERANKER_SIMULTANEOUSLY_ON_3GB"]
+}
