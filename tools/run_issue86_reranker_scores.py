@@ -195,6 +195,7 @@ def main():
     output.parent.mkdir(parents=True, exist_ok=True)
     mode = "a" if output.exists() else "w"
     started = time.perf_counter(); written = 0; oom_count = 0; index = 0
+    next_checkpoint = args.checkpoint_every
     with output.open(mode) as stream:
         if mode == "w":
             stream.write(canonical(contract).decode() + "\n"); stream.flush(); os.fsync(stream.fileno())
@@ -226,10 +227,12 @@ def main():
                            "runtime":contract["runtime"], "artifact_hashes":contract["artifact_hashes"]}
                     stream.write(canonical(row).decode() + "\n"); written += 1
                 index += len(selection); succeeded = True
-                if written % args.checkpoint_every == 0 or index == len(pending):
+                if written >= next_checkpoint or index == len(pending):
                     stream.flush(); os.fsync(stream.fileno())
                     atomic_checkpoint(output)
                     print(json.dumps({"completed":len(completed)+index,"expected":EXPECTED_PAIRS,"oom_count":oom_count}), flush=True)
+                    while next_checkpoint <= written:
+                        next_checkpoint += args.checkpoint_every
                 break
             if not succeeded: raise RuntimeError("all batch sizes failed")
 
