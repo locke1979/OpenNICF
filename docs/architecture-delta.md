@@ -3,7 +3,7 @@
 Status: `ARCHITECTURE_EVALUATION = PHASE_0_CONTRACT_CORRECTED`
 
 This document is an evaluation design. It does not change the active model,
-embedding space, production index, service configuration, FastClaw, or QwenAgent
+embedding space, production index, service configuration, or QwenAgent
 runtime authority.
 
 ## Current main path
