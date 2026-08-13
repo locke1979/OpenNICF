@@ -17,3 +17,5 @@ See the ADR and `AGENTS.md`.
 
 The versioned retrieval evaluation workload and its provenance-backed result
 manifest are documented in [`docs/retrieval-benchmark.md`](docs/retrieval-benchmark.md).
+The OpenNICF infra inventory is tracked in
+[`docs/infrastructure.md`](docs/infrastructure.md).
