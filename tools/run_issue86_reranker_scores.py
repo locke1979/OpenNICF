@@ -12,6 +12,9 @@ import hashlib
 import json
 import math
 import os
+import shutil
+import subprocess
+import gc
 import time
 from pathlib import Path
 
@@ -20,7 +23,17 @@ MODEL = "Qwen/Qwen3-Reranker-0.6B"
 REVISION = "e61197ed45024b0ed8a2d74b80b4d909f1255473"
 WEIGHT_SHA256 = "27cd75a405b9c1b46b59abfd88aaa209e6fed2a1972cde9b70e7659537c5e65b"
 TOKENIZER_SHA256 = "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+ARTIFACT_HASHES = {
+    "model.safetensors": WEIGHT_SHA256,
+    "tokenizer.json": TOKENIZER_SHA256,
+    "config.json": "d479c427a9ca5295218063d4f9aca4f297ab4ac27487cca7af42c84643d51ef0",
+    "tokenizer_config.json": "253153d0738ceb4c668d2eff957714dd2bea0b56de772a9fdccd96cbf517e6a0",
+    "generation_config.json": "81051cd3f6e77013827148d0b8a6ead93f8ac390d5ab805f849199f0af6a08db",
+    "chat_template.jinja": "6f682162495ec5b39fd9005c01b6aa2a74669379fe967039f1e2cbbe8752369d",
+    "1_LogitScore/config.json": "73e3156450564d8a98b7e47bcf5aace0f29600828b51937da545571e84db3ff3",
+}
 EXPECTED_PAIRS = 16948
+EXPECTED_GPU_UUID = "GPU-cf150279-b259-0608-019f-8f51e0664ff4"
 INSTRUCTION = "Given a web search query, retrieve relevant passages that answer the query"
 PREFIX = '<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n'
 SUFFIX = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
@@ -76,13 +89,12 @@ def load_contract(root, model_dir):
         "ordered_chunk_ids_sha256": digest_bytes(canonical([x["chunk_id"] for x in corpus["chunks"]])),
         "ordered_query_ids_sha256": digest_bytes(canonical(list(queries))),
         "ordered_pairs_sha256": digest_bytes(canonical(pairs)), "expected_pairs": EXPECTED_PAIRS,
-        "model_weight_sha256": digest_file(model_dir / "model.safetensors"),
-        "tokenizer_sha256": digest_file(model_dir / "tokenizer.json"),
+        "artifact_hashes": {name: digest_file(model_dir / name) for name in ARTIFACT_HASHES},
         "template_sha256": digest_bytes((PREFIX + INSTRUCTION + SUFFIX).encode()),
         "candidate_depths": [10, 20, 30, 50], "rrf": {"k": 60}, "context_depths": [5, 8, 10],
         "max_length": 8192, "batch_fallback": [4, 2, 1], "precision": "float16", "cpu_offload": False,
     }
-    if contract["model_weight_sha256"] != WEIGHT_SHA256 or contract["tokenizer_sha256"] != TOKENIZER_SHA256:
+    if contract["artifact_hashes"] != ARTIFACT_HASHES:
         raise ValueError("pinned model artifact digest mismatch")
     return corpus, labels_doc, report, documents, queries, pairs, contract
 
@@ -103,8 +115,28 @@ def resume(path, contract):
                 raise ValueError(f"invalid score at line {number}")
             if row["pair_id"] != pair_id(row["query_id"], row["chunk_id"]):
                 raise ValueError(f"pair ID mismatch at line {number}")
+            for key, expected in (("ordered_input_sha256", contract["ordered_pairs_sha256"]),
+                                  ("model_revision", REVISION), ("runtime", contract["runtime"]),
+                                  ("artifact_hashes", contract["artifact_hashes"])):
+                if row.get(key) != expected:
+                    raise ValueError(f"checkpoint provenance mismatch for {key} at line {number}")
             completed[row["pair_id"]] = row
     return completed
+
+
+def atomic_checkpoint(path):
+    """Publish a complete point-in-time copy without exposing a partial file."""
+    checkpoint = path.with_suffix(path.suffix + ".checkpoint")
+    temporary = checkpoint.with_suffix(checkpoint.suffix + ".tmp")
+    shutil.copyfile(path, temporary)
+    with temporary.open("rb") as stream:
+        os.fsync(stream.fileno())
+    os.replace(temporary, checkpoint)
+    directory_fd = os.open(checkpoint.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
 
 
 def main():
@@ -112,9 +144,13 @@ def main():
     parser.add_argument("--root", type=Path, default=Path("/var/lib/opennicf/eval"))
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--checkpoint-every", type=int, default=250)
+    parser.add_argument("--max-new-pairs", type=int, default=None,
+                        help="bounded preflight only; omit for the full run")
     args = parser.parse_args()
     if not 250 <= args.checkpoint_every <= 500:
         parser.error("--checkpoint-every must be 250..500")
+    if args.max_new_pairs is not None and args.max_new_pairs < 1:
+        parser.error("--max-new-pairs must be positive")
     output = args.output or args.root / "reranker-pair-scores-v1.jsonl"
     model_dir = args.root / f"models/Qwen3-Reranker-0.6B-{REVISION}"
 
@@ -125,10 +161,16 @@ def main():
         raise RuntimeError("runtime version mismatch")
     if not torch.cuda.is_available() or torch.cuda.get_device_name(0) != "NVIDIA GeForce GTX 1060 3GB":
         raise RuntimeError("CUDA device identity mismatch")
+    gpu_uuid = subprocess.check_output(
+        ["nvidia-smi", "--query-gpu=uuid", "--format=csv,noheader"], text=True
+    ).strip()
+    if gpu_uuid != EXPECTED_GPU_UUID:
+        raise RuntimeError("CUDA UUID mismatch")
 
     _, _, _, documents, queries, pairs, contract = load_contract(args.root, model_dir)
     contract["runtime"] = {"torch": torch.__version__, "transformers": transformers.__version__, "cuda": torch.version.cuda}
-    contract["device"] = {"name": torch.cuda.get_device_name(0), "compute_capability": list(torch.cuda.get_device_capability(0))}
+    contract["device"] = {"name": torch.cuda.get_device_name(0), "uuid": gpu_uuid,
+                          "compute_capability": list(torch.cuda.get_device_capability(0))}
     completed = resume(output, contract)
     valid_ids = {x["pair_id"] for x in pairs}
     if not set(completed) <= valid_ids:
@@ -147,6 +189,8 @@ def main():
             length = len(tokenizer(text, add_special_tokens=False)["input_ids"])
             pending.append((length, item, text))
     pending.sort(key=lambda x: (x[0], x[1]["pair_id"]))
+    if args.max_new_pairs is not None:
+        pending = pending[:args.max_new_pairs]
 
     output.parent.mkdir(parents=True, exist_ok=True)
     mode = "a" if output.exists() else "w"
@@ -167,7 +211,10 @@ def main():
                     values = torch.softmax(logits.float(), dim=1)[:, 1].cpu().tolist()
                     elapsed = time.perf_counter() - batch_started
                 except torch.cuda.OutOfMemoryError:
-                    oom_count += 1; torch.cuda.empty_cache()
+                    oom_count += 1
+                    for name in ("batch", "logits", "values"):
+                        if name in locals(): del locals()[name]
+                    gc.collect(); torch.cuda.empty_cache()
                     if batch_size == 1: raise
                     continue
                 for (length, item, _), score in zip(selection, values):
@@ -176,11 +223,12 @@ def main():
                            "effective_batch_size":len(selection), "batch_elapsed_seconds":elapsed,
                            "run_elapsed_seconds":time.perf_counter()-started, "oom_count":oom_count,
                            "ordered_input_sha256":contract["ordered_pairs_sha256"], "model_revision":REVISION,
-                           "runtime":contract["runtime"], "artifact_sha256":WEIGHT_SHA256}
+                           "runtime":contract["runtime"], "artifact_hashes":contract["artifact_hashes"]}
                     stream.write(canonical(row).decode() + "\n"); written += 1
                 index += len(selection); succeeded = True
                 if written % args.checkpoint_every == 0 or index == len(pending):
                     stream.flush(); os.fsync(stream.fileno())
+                    atomic_checkpoint(output)
                     print(json.dumps({"completed":len(completed)+index,"expected":EXPECTED_PAIRS,"oom_count":oom_count}), flush=True)
                 break
             if not succeeded: raise RuntimeError("all batch sizes failed")
