@@ -8,6 +8,7 @@ No method here downloads, invokes, or persists a model artifact.
 from __future__ import annotations
 
 import json
+import math
 import re
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -677,7 +678,16 @@ class EvaluationCoordinator:
                 raise MalformedRerankerOutput("reranker returned an unknown or duplicate candidate")
             if item.candidate != by_id[item.candidate_id]:
                 raise MalformedRerankerOutput("reranker changed candidate provenance")
+            if not math.isfinite(item.score):
+                raise MalformedRerankerOutput("reranker returned a nonfinite score")
             seen.add(item.candidate_id)
+        if seen != set(by_id):
+            raise MalformedRerankerOutput("reranker omitted an eligible candidate")
+        if result.eligible_count != len(candidates) or result.scored_count != len(result.reranked):
+            raise MalformedRerankerOutput("reranker count contract mismatch")
+        expected = tuple(sorted(result.reranked, key=lambda item: (-item.score, item.original_rank, item.candidate_id)))
+        if result.reranked != expected:
+            raise MalformedRerankerOutput("reranker ordering is not canonical")
 
 
 __all__ = [

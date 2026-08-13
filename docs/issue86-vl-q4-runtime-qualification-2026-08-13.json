@@ -1,0 +1,62 @@
+{
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "decision_grade_production_validation": false,
+  "runtime": {
+    "repository": "ggml-org/llama.cpp",
+    "commit": "a4a4c51f3d40e086b59b73b631b5c43c8fbf4504",
+    "cuda_architectures": "61",
+    "ggml_cuda": true,
+    "built_targets": ["llama-embedding", "llama-mtmd-cli"],
+    "missing_target": "llama-server"
+  },
+  "embedding_cpu_text_preflight": {
+    "status": "LOAD_SUCCESS_SEMANTICS_PARTIAL_TEXT_ONLY",
+    "model": "Rizwan313/Qwen3-VL-Embedding-2B-GGUF",
+    "model_revision": "228be2588a8655bd605dfe0b58046fe22c0518d3",
+    "quant": "Q4_K_M",
+    "model_sha256": "cc25f2e617d68086be0c97432cda986458592171944175191763f8acffcc70e2",
+    "projector_sha256": "cf38541d8ebadf829bf0173b6a3c18a8971880a8d1e09c5f1f84b11072fdc523",
+    "device": "CPU",
+    "cpu_offload": true,
+    "pooling": "last",
+    "normalization": "L2",
+    "native_dimension": 2048,
+    "native_vector_finite": true,
+    "native_norm": 0.9999995495748992,
+    "mrl_prefix_dimension": 768,
+    "mrl_prefix_norm_before_renormalization": 0.6304374083626383,
+    "mrl_prefix_norm_after_renormalization": 1.0,
+    "deterministic_repeat_sha256": "21cfbc13fce9d5fd885ab77056127603c3ec19b75aea6274c061fb80c9335e7f",
+    "first_load_score_elapsed_seconds_rounded": 13,
+    "limitations": [
+      "llama-embedding does not expose a local mmproj argument",
+      "no image or mixed-input embedding tensor was obtainable",
+      "no official BF16 reference comparison was available",
+      "text-only load does not establish multimodal semantic equivalence"
+    ]
+  },
+  "embedding_multimodal": {
+    "status": "TASK_HEAD_UNSUPPORTED",
+    "reason": "llama-mtmd-cli accepts the Qwen3-VL projector and media but exposes generic generation, not pooled embedding tensors; successful chat generation would not satisfy the embedding contract"
+  },
+  "reranker": {
+    "status": "TASK_HEAD_UNSUPPORTED",
+    "model_sha256": "f19dfb0a599543df3db9f94af29c67b03518aa62aa4ce36b60b4a60314004116",
+    "projector_sha256": "528a7f0ca72cc86a40ec472e6f63d3b5fb35ec33be3bf79ec2111096651957c5",
+    "reason": "the available multimodal CLI exposes generic generation but no exact multimodal relevance-score endpoint; source-level cls_out support alone is not executable score semantics"
+  },
+  "pascal_cuda": {
+    "status": "UNPROVEN",
+    "attempted": false,
+    "reason": "CPU multimodal task-head semantics did not pass, so the gated CUDA semantic preflight was not authorized by the qualification sequence"
+  },
+  "rtx_3050": {
+    "required": false,
+    "status": "NOT_YET_REQUIRED",
+    "reason": "newer hardware cannot remedy a missing task-head API; reconsider only after exact CPU semantics pass and Pascal then fails with CUDA_ARCH_UNSUPPORTED or OOM"
+  },
+  "production_decision": "NOT_AUTHORIZED",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0
+}

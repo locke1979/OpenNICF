@@ -302,6 +302,31 @@ def test_malformed_reranker_output_preserves_provenance_and_obeys_failure_policy
     assert result.reranked_candidates[0].candidate == candidate
 
 
+@pytest.mark.parametrize("mode", ["missing", "nonfinite", "count", "order"])
+def test_malformed_reranker_outputs_fail_closed(mode):
+    class BrokenReranker(FakeReranker):
+        def score(self, query, candidates, *, limits):
+            result = super().score(query, candidates, limits=limits)
+            if mode == "missing":
+                return replace(result, reranked=result.reranked[:-1], scored_count=len(result.reranked) - 1)
+            if mode == "nonfinite":
+                return replace(result, reranked=(replace(result.reranked[0], score=float("nan")),) + result.reranked[1:])
+            if mode == "count":
+                return replace(result, eligible_count=result.eligible_count + 1)
+            return replace(result, reranked=tuple(reversed(result.reranked)))
+
+    candidates = [_candidate("a"), _candidate("b")]
+    reranker = BrokenReranker(
+        RerankerInfo(id="broken", failure_policy="FALLBACK_TO_FUSED_ORDER"), scores={"a": 2, "b": 1}
+    )
+    result = EvaluationCoordinator().run("q", {"dense": ["a", "b"]}, candidates, reranker=reranker)
+    assert result.rerank is not None
+    assert result.rerank.failure_classification == "malformed_output"
+    assert result.rerank.reranker_applied is False
+    assert result.rerank.fallback_invoked is True
+    assert [item.candidate_id for item in result.reranked_candidates] == ["a", "b"]
+
+
 def test_context_selection_deduplicates_late_and_enforces_source_page_limits():
     first = _candidate("first", source_id="src", locator="page:1")
     duplicate = RerankCandidate(**{**first.__dict__, "candidate_id": "duplicate", "representation_id": first.representation_id})
