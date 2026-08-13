@@ -5,6 +5,11 @@ relevant to the current project/stack. It records the verified Proxmox/LXC
 surface, the intended role of each asset, and the evidence source used to
 confirm it.
 
+Ownership rule:
+- Any asset whose name begins with `opennicf` is treated as an OpenNICF
+  project asset unless a later inventory entry marks it as supporting or
+  excluded.
+
 Update rule:
 - Append new infrastructure here when it is created or verified.
 - Do not rewrite historical entries unless the source evidence changes.
