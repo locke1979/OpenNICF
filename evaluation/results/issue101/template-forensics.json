@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "historical": {
+    "id": "template_4b_historical_t01",
+    "encoding": "UTF-8",
+    "instruction": "Given a web search query, retrieve relevant passages that answer the query",
+    "query_template": "Instruct: {instruction} Query: {normalized_text}",
+    "document_template": "{normalized_text}",
+    "source": "tools/run_issue86_cuda_vectors.py@192331e97427e7d7080c3a186a4ac810a494ba1b",
+    "normalization": "python_whitespace_split_join",
+    "tokenizer_binding": "PENDING_PINNED_RUNTIME_TOKEN_FORENSICS",
+    "sha256": "579d5e72b03a4559074ef79f30ca47744ea2ebe36ce21d713a7f8404ded19ddc"
+  },
+  "official": {
+    "id": "template_qwen3_official",
+    "encoding": "UTF-8",
+    "instruction": "Given a web search query, retrieve relevant passages that answer the query",
+    "query_template": "Instruct: {instruction}\\nQuery:{text}",
+    "document_template": "{text}",
+    "source": "Qwen official model contract pinned by issue #101",
+    "normalization": "none",
+    "tokenizer_binding": "PENDING_PINNED_RUNTIME_TOKEN_FORENSICS",
+    "sha256": "dffc8f23590ad610c08971e79b3bf8245e9ce3895b46f4b097a5fdbce92bfa39"
+  },
+  "sample": {
+    "historical_utf8_hex": "496e7374727563743a20476976656e206120776562207365617263682071756572792c2072657472696576652072656c6576616e74207061737361676573207468617420616e73776572207468652071756572792051756572793a2073616d706c65207175657279",
+    "official_utf8_hex": "496e7374727563743a20476976656e206120776562207365617263682071756572792c2072657472696576652072656c6576616e74207061737361676573207468617420616e73776572207468652071756572790a51756572793a73616d706c65207175657279",
+    "historical_sha256": "44e272b666b96fdcdf8e6c8c4ddcea63d86595edcbab72c75a300aa8f18d0468",
+    "official_sha256": "80824e6e7c43cac074c8399c1e6fe45997729005bb6959342f368b07a9667045",
+    "historical_bytes": 104,
+    "official_bytes": 103
+  },
+  "difference_scope": "QUERIES_AND_DOCUMENT_WHITESPACE_NORMALIZATION",
+  "token_forensics": "PENDING_EXACT_PINNED_TOKENIZER_RUNTIME",
+  "official_input_transport": "JSON_OR_DIRECT_API_REQUIRED_TO_PRESERVE_EMBEDDED_LF",
+  "reproduction_gate": "REQUIRED_BEFORE_DIMENSION_ATTRIBUTION",
+  "canonical_t00_t07": "PRESERVED"
+}
