@@ -98,7 +98,7 @@ def run_one(binary: pathlib.Path, model: pathlib.Path, text: str, gpu_layers: in
         completed = subprocess.run([
             str(binary), "-m", str(model), "--device", "CUDA0", "--gpu-layers", str(gpu_layers),
             "--fit", "off", "--parallel", "1", "--ctx-size", "1024", "--batch-size", "1",
-            "--ubatch-size", "1", "--embd-output-format", "json", "-n", "1", "-f", str(input_path),
+            "--ubatch-size", "1", "--no-escape", "--embd-output-format", "json", "-n", "1", "-f", str(input_path),
         ], capture_output=True, text=True, env={**os.environ, "LC_ALL": "C", "LANG": "C"})
         text_output = completed.stdout if "{" in completed.stdout else completed.stderr
         if "{" not in text_output:
