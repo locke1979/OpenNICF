@@ -1,0 +1,50 @@
+{
+  "transport": "-p --no-escape --embd-separator <#issue101-single-sequence#>",
+  "gpu_layers": 27,
+  "comparisons": [
+    {
+      "index": 0,
+      "id": "src-fb55e824118717f3:0",
+      "cosine": 0.9666828290566534,
+      "max_abs_error": 0.0166656
+    },
+    {
+      "index": 1,
+      "id": "src-7768109b6bb3defb:0",
+      "cosine": 0.966185658564826,
+      "max_abs_error": 0.0193252
+    },
+    {
+      "index": 2,
+      "id": "src-efd3ad966c610689:0",
+      "cosine": 0.9886555284908204,
+      "max_abs_error": 0.0119293
+    },
+    {
+      "index": 10,
+      "id": "src-287066db77ad6119:0",
+      "cosine": 0.9807261291665877,
+      "max_abs_error": 0.014544099999999997
+    },
+    {
+      "index": 20,
+      "id": "src-2c506cc756a5333f:0",
+      "cosine": 0.6845934037607513,
+      "max_abs_error": 0.0669178
+    },
+    {
+      "index": 30,
+      "id": "src-dae89ba025a3954d:9",
+      "cosine": 0.9774320896962767,
+      "max_abs_error": 0.0161709
+    }
+  ],
+  "blocking": {
+    "index": 44,
+    "id": "src-de3b0875230ea80d:10",
+    "count": 1,
+    "dimension": 2560,
+    "finite": true,
+    "vector_sha256": "027c7d59c7b15416f43f9da4a0fa6bc55b82d6f243f8e050030c7cec3bca07b8"
+  }
+}

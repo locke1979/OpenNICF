@@ -18,6 +18,7 @@ TEMPLATE_ID = "template_qwen3_official"
 TEMPLATE_DIGEST = "dffc8f23590ad610c08971e79b3bf8245e9ce3895b46f4b097a5fdbce92bfa39"
 MODEL_DIGEST = "2b0cf8f17b4c723c27303015383c27ec4bf2d8314bb677d05e920dd70bb0f16b"
 RUNTIME = "llama.cpp@a4a4c51f3d40e086b59b73b631b5c43c8fbf4504"
+EMBEDDING_SEPARATOR = "<#issue101-single-sequence#>"
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -91,24 +92,19 @@ def atomic_write(path: pathlib.Path, value: dict[str, Any]) -> None:
 
 
 def run_one(binary: pathlib.Path, model: pathlib.Path, text: str, gpu_layers: int) -> list[float]:
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=model.parent, delete=False) as handle:
-        handle.write(text + "\n")
-        input_path = pathlib.Path(handle.name)
-    try:
-        completed = subprocess.run([
+    completed = subprocess.run([
             str(binary), "-m", str(model), "--device", "CUDA0", "--gpu-layers", str(gpu_layers),
             "--fit", "off", "--parallel", "1", "--ctx-size", "1024", "--batch-size", "1",
-            "--ubatch-size", "1", "--no-escape", "--embd-output-format", "json", "-n", "1", "-f", str(input_path),
+            "--ubatch-size", "1", "--no-escape", "--embd-separator", EMBEDDING_SEPARATOR,
+            "--embd-output-format", "json", "-n", "1", "-p", text,
         ], capture_output=True, text=True, env={**os.environ, "LC_ALL": "C", "LANG": "C"})
-        text_output = completed.stdout if "{" in completed.stdout else completed.stderr
-        if "{" not in text_output:
-            text_output = completed.stdout + "\n" + completed.stderr
-        start, end = text_output.find("{"), text_output.rfind("}")
-        if completed.returncode or start < 0 or end < start:
-            raise RuntimeError(f"embedding process failed rc={completed.returncode}: {completed.stderr[-4000:]}")
-        return validate_output(json.loads(text_output[start:end + 1]))
-    finally:
-        input_path.unlink(missing_ok=True)
+    text_output = completed.stdout if "{" in completed.stdout else completed.stderr
+    if "{" not in text_output:
+        text_output = completed.stdout + "\n" + completed.stderr
+    start, end = text_output.find("{"), text_output.rfind("}")
+    if completed.returncode or start < 0 or end < start:
+        raise RuntimeError(f"embedding process failed rc={completed.returncode}: {completed.stderr[-4000:]}")
+    return validate_output(json.loads(text_output[start:end + 1]))
 
 
 def main() -> None:

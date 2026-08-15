@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-15T00:00:00Z",
+  "template_id": "template_qwen3_official",
+  "template_digest": "dffc8f23590ad610c08971e79b3bf8245e9ce3895b46f4b097a5fdbce92bfa39",
+  "records": {
+    "preceding": {
+      "sequence_index": 43,
+      "id": "src-de3b0875230ea80d:9",
+      "source": {
+        "char_count": 1260,
+        "utf8_byte_length": 1260,
+        "line_count": 32,
+        "newline_positions": [
+          37,
+          123,
+          162,
+          221,
+          298,
+          338,
+          339,
+          340,
+          364,
+          388,
+          428,
+          447,
+          469,
+          523,
+          593,
+          627,
+          664,
+          706,
+          747,
+          799
+        ],
+        "newline_types": {
+          "lf": 31,
+          "cr": 0,
+          "crlf": 0
+        },
+        "blank_line_count": 5,
+        "control_chars": [],
+        "nul_count": 0,
+        "unicode_separators": [],
+        "leading_whitespace": 0,
+        "trailing_whitespace": 0,
+        "input_sha256": "6ebcd3233d8080dfe6a88f24af622d19b094f376803f4c04d6e5695b48ea03cc",
+        "rendered_prompt_sha256": "dbb533ba2cb937518ea80afaf40d2b00c4ed1458bd2d0eabc391d7018de203fd",
+        "rendered_prompt_line_count": 1,
+        "escaped_excerpt": {
+          "head": "lines.extend([\"\", \"## Verification\"])\\n            lines.extend(f\"- {step}\" for step in self.recommen",
+          "tail": "    def analyze(self, request: AuditRequest, hits: Sequence[EvidenceHit]) -> list[AuditObservation]:"
+        }
+      }
+    },
+    "failing": {
+      "sequence_index": 44,
+      "id": "src-de3b0875230ea80d:10",
+      "source": {
+        "char_count": 1615,
+        "utf8_byte_length": 1615,
+        "line_count": 32,
+        "newline_positions": [
+          43,
+          102,
+          103,
+          104,
+          141,
+          175,
+          176,
+          277,
+          311,
+          312,
+          313,
+          342,
+          370,
+          371,
+          472,
+          493,
+          515,
+          648,
+          730,
+          810
+        ],
+        "newline_types": {
+          "lf": 31,
+          "cr": 0,
+          "crlf": 0
+        },
+        "blank_line_count": 6,
+        "control_chars": [],
+        "nul_count": 0,
+        "unicode_separators": [],
+        "leading_whitespace": 0,
+        "trailing_whitespace": 0,
+        "input_sha256": "7a165ad9a5176553051c100c1bc07a00883f7ef5b79b3e4d8907d175f0ec7b8f",
+        "rendered_prompt_sha256": "f62e8581199dd5edeb091aa7f13cdf8427a656c7a533e92f0b7966facb67764c",
+        "rendered_prompt_line_count": 1,
+        "escaped_excerpt": {
+          "head": "source_type_analyzers: tuple[str, ...] = ()\\n    metadata: dict[str, Any] = field(default_factory=dic",
+          "tail": "tuple(sorted({hit.metadata.get(\"component\", \"\") for hit in hits if hit.metadata.get(\"component\")})),"
+        }
+      }
+    },
+    "following": {
+      "sequence_index": 45,
+      "id": "src-de3b0875230ea80d:11",
+      "source": {
+        "char_count": 2108,
+        "utf8_byte_length": 2108,
+        "line_count": 32,
+        "newline_positions": [
+          17,
+          60,
+          197,
+          234,
+          347,
+          390,
+          477,
+          609,
+          661,
+          754,
+          842,
+          902,
+          963,
+          1054,
+          1072,
+          1086,
+          1114,
+          1147,
+          1181,
+          1224
+        ],
+        "newline_types": {
+          "lf": 31,
+          "cr": 0,
+          "crlf": 0
+        },
+        "blank_line_count": 0,
+        "control_chars": [],
+        "nul_count": 0,
+        "unicode_separators": [],
+        "leading_whitespace": 0,
+        "trailing_whitespace": 0,
+        "input_sha256": "cfce860dd7ec9672e21b3db3001f5f211acfa7d8c440b2467917fc1d2d76e158",
+        "rendered_prompt_sha256": "6610944faa81bb5c83d6523845d45eb7594494fe44b7893ee8c2cd1d99a5aa61",
+        "rendered_prompt_line_count": 1,
+        "escaped_excerpt": {
+          "head": "AuditObservation(\\n                    classification=\"fact\",\\n                    statement=f\"Applica",
+          "tail": "n_ids),\\n                    source_type_analyzers=self.source_types,\\n                )\\n            )"
+        }
+      }
+    },
+    "known_multiline_accepted": {
+      "sequence_index": 0,
+      "id": "src-fb55e824118717f3:0",
+      "source": {
+        "char_count": 902,
+        "utf8_byte_length": 902,
+        "line_count": 15,
+        "newline_positions": [
+          64,
+          65,
+          75,
+          76,
+          86,
+          87,
+          99,
+          100,
+          418,
+          419,
+          650,
+          651,
+          667,
+          668
+        ],
+        "newline_types": {
+          "lf": 14,
+          "cr": 0,
+          "crlf": 0
+        },
+        "blank_line_count": 7,
+        "control_chars": [],
+        "nul_count": 0,
+        "unicode_separators": [],
+        "leading_whitespace": 0,
+        "trailing_whitespace": 0,
+        "input_sha256": "2bd4e467ff625052029a221cd24d94c8b57fe76199477dd47b895f12cdb9039c",
+        "rendered_prompt_sha256": "ea6d2b57dc5da702f281297a094a88a39f707ee942567fdf0222c0e346c0282d",
+        "rendered_prompt_line_count": 1,
+        "escaped_excerpt": {
+          "head": "# ADR 0001: QwenAgent is mandatory for application orchestration\\n\\n## Status\\n\\nAccepted.\\n\\n## Decision\\n",
+          "tail": "ter -> LM Studio and LiteLLM paths, RAG provenance, diagnostic-job policy, and local-only isolation."
+        }
+      }
+    }
+  },
+  "comparison": {
+    "raw_source_newlines_are_not_present_in_documents_4b_input": true,
+    "likely_contract": "llama.cpp -f with default escape processing interprets literal backslash escape sequences in one line; --no-escape preserves them"
+  }
+}

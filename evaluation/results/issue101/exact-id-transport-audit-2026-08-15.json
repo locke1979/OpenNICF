@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "issue": 101,
+  "classification": "A_EMBEDDED_NEWLINE_INPUT_SPLITTING",
+  "runtime": "llama.cpp@a4a4c51f3d40e086b59b73b631b5c43c8fbf4504",
+  "source_evidence": "examples/embedding/embedding.cpp split_lines(params.prompt, params.embd_sep)",
+  "failing_record": {"sequence_index": 44, "id": "src-de3b0875230ea80d:10"},
+  "old_transport": "-f with default newline separator and escape processing",
+  "corrected_transport": "-p --no-escape --embd-separator <#issue101-single-sequence#>",
+  "corrected_conformance": {"one_sequence": true, "dimension": 2560, "finite": true, "blocking_record_vector_sha256": "027c7d59c7b15416f43f9da4a0fa6bc55b82d6f243f8e050030c7cec3bca07b8"},
+  "edge_cases": {"trailing_newline": 1, "blank_line": 1, "unicode_separator": 1, "literal_escape": 1},
+  "token_equivalence": {
+    "status": "FAILED_MATERIAL_DIFFERENCE",
+    "comparisons": [
+      {"index": 0, "cosine": 0.9666828290566534, "max_abs_error": 0.0166656},
+      {"index": 1, "cosine": 0.966185658564826, "max_abs_error": 0.0193252},
+      {"index": 2, "cosine": 0.9886555284908204, "max_abs_error": 0.0119293},
+      {"index": 10, "cosine": 0.9807261291665877, "max_abs_error": 0.0145441},
+      {"index": 20, "cosine": 0.6845934037607513, "max_abs_error": 0.0669178},
+      {"index": 30, "cosine": 0.9774320896962767, "max_abs_error": 0.0161709}
+    ],
+    "mixing_old_and_repaired_vectors": "PROHIBITED"
+  },
+  "next_required_action": "Full D4 regeneration under the corrected transport with a new preprocessing and embedding-space identity; the original 44 vectors remain preserved and are not recomputed or mixed.",
+  "status": "D4_NATIVE_2560_BLOCKED_NEEDS_FULL_REGENERATION",
+  "production": "UNCHANGED",
+  "ct305_touched": false,
+  "deployments": 0,
+  "merges": 0
+}
