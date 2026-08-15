@@ -45,3 +45,36 @@ def test_manifest_record_preserves_id_and_sequence():
     assert record["id"] == "q-1"
     assert record["sequence_index"] == 3
     assert record["gpu_layers"] == 29
+
+
+def test_newline_transport_preserves_bytes_and_renders_one_prompt():
+    text = "first\n\nsecond\\n\u2028third"
+    prompt = MODULE.render_prompt("documents", text)
+    assert prompt == text
+    assert MODULE.source_digest(prompt) == MODULE.source_digest(text)
+    assert MODULE.EMBEDDING_SEPARATOR not in prompt
+
+
+def test_query_template_is_explicit_and_does_not_rewrite_source():
+    text = "a\r\nb\n\nend"
+    prompt = MODULE.render_prompt("queries", text)
+    assert prompt.endswith(text)
+    assert "Query:" in prompt
+    assert MODULE.EMBEDDING_SEPARATOR not in prompt
+
+
+def test_json_stdout_requires_exactly_one_document():
+    payload = '{"data":[{"embedding":' + str(vector()).replace("'", "") + '}]} '
+    assert MODULE.parse_single_json_stdout(payload)["data"]
+    for bad in (payload + '{"extra":1}', "", "not-json"):
+        try:
+            MODULE.parse_single_json_stdout(bad)
+        except (ValueError, MODULE.json.JSONDecodeError):
+            pass
+        else:
+            raise AssertionError("ambiguous or malformed stdout must fail closed")
+
+
+def test_identity_ids_isolate_old_space():
+    assert MODULE.PREPROCESSING_ID != "historical-t01"
+    assert MODULE.EMBEDDING_SPACE_ID != "issue101-d4-official-newline-splitting"

@@ -6,6 +6,10 @@
   "execution_guest": "LXC 308 opennicf-embedding-eval",
   "required_gpu_uuid": "GPU-cf150279-b259-0608-019f-8f51e0664ff4",
   "checkpoint_root": "/var/lib/opennicf/eval/issue101",
+  "issue101_current_preprocessing_id": "issue101-qwen3-official-single-sequence-v1",
+  "issue101_current_embedding_space_id": "issue101-d4-official-single-sequence-native-2560-v1",
+  "issue101_transport": "-p --no-escape --embd-separator <#issue101-single-sequence#>",
+  "issue101_regeneration_status": "PARTIAL_16_OF_715_DOCUMENTS;_0_OF_190_QUERIES",
   "gates": [
     "template byte and token manifests complete",
     "artifact/runtime/input hashes match",
