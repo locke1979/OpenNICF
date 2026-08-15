@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "issue": 101,
+  "previous_audits": [
+    "evaluation/results/issue101/subtasks/a/raw-artifact-audit.json",
+    "evaluation/results/issue101/executor-recovery-audit-2026-08-15.json"
+  ],
+  "status": "EXECUTOR_RECOVERED_POSTPROCESSING_INCOMPLETE",
+  "endpoint": "192.168.1.116",
+  "proxmox": {"node": "hyper", "version": "8.4.11", "identity_verified": true},
+  "uvm_recovery": {
+    "command": "modprobe nvidia_uvm",
+    "result": "PASS",
+    "device_nodes": ["/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"],
+    "gpu_name": "NVIDIA GeForce GTX 1060 3GB",
+    "gpu_uuid": "GPU-cf150279-b259-0608-019f-8f51e0664ff4",
+    "nvidia_smi": "PASS",
+    "unexpected_gpu_processes": false
+  },
+  "container": {
+    "vmid": 308,
+    "hostname": "opennicf-embedding-eval",
+    "onboot": 0,
+    "start": "PASS",
+    "guest_nvidia_smi": "PASS",
+    "guest_device_nodes": "PASS",
+    "final_status": "stopped"
+  },
+  "artifact_state": {
+    "d4_issue101_documents": {"status": "PARTIAL", "count": 39, "expected": 715, "dimension": 2560},
+    "d4_issue101_queries": {"status": "ABSENT", "expected": 190},
+    "d4_issue86_documents": {"status": "REJECTED_PROVENANCE", "count": 715, "dimension": 2560, "gpu_layers": 99},
+    "d4_issue86_queries": {"status": "REJECTED_PROVENANCE", "count": 190, "dimension": 2560, "gpu_layers": 99},
+    "d06_native_1024": {"status": "COMPLETE_ACCEPTED", "documents": 715, "queries": 190, "dimension": 1024},
+    "durable_storage": "VERIFIED_UNDER_/var/lib/opennicf/eval/issue101"
+  },
+  "inference_policy": {"d4_gpu_layers": 29, "d4_batch_size": 1, "checkpoint_resume": true, "parallel_inference": false},
+  "blocked_work": ["D4 raw completion", "D4 MRL derivation", "six-arm metrics and report", "GitHub issue/PR publication"],
+  "safety": {"lxc305_touched": false, "production": "UNCHANGED", "deployments": 0, "merges": 0},
+  "supersedes_previous_audit": false,
+  "note": "The complete issue86 vectors were not accepted because their recorded runtime topology used 99 GPU layers. Multi-input llama-embedding was not used for acceptance because it segmented/rejected some inputs and produced output counts not safely alignable to source IDs."
+}
