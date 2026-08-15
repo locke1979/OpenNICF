@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "issue": 101,
+  "previous_audit": "evaluation/results/issue101/subtasks/a/raw-artifact-audit.json",
+  "status": "EXECUTOR_START_FAILED",
+  "classification": "GPU_DEVICE_NODE_UNAVAILABLE",
+  "endpoint": "192.168.1.116",
+  "proxmox": {
+    "node": "hyper",
+    "version": "8.4.11",
+    "identity_verified": true
+  },
+  "container": {
+    "vmid": 308,
+    "hostname": "opennicf-embedding-eval",
+    "onboot": 0,
+    "status_before": "stopped",
+    "status_after": "stopped",
+    "start_attempted": true,
+    "start_task_error": "Device /dev/nvidia-uvm-tools does not exist"
+  },
+  "gpu_host_preflight": {
+    "nvidia_smi": "PASS",
+    "name": "NVIDIA GeForce GTX 1060 3GB",
+    "uuid": "GPU-cf150279-b259-0608-019f-8f51e0664ff4",
+    "driver_version": "535.261.03",
+    "memory_total": "3072 MiB",
+    "unexpected_processes": false,
+    "present_device_nodes": ["/dev/nvidia0", "/dev/nvidiactl", "/dev/nvidia-modeset"],
+    "missing_device_nodes": ["/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"]
+  },
+  "artifact_state": {
+    "raw_d4_documents": "NOT_REACHED",
+    "raw_d4_queries": "NOT_REACHED",
+    "d06_native_checkpoints": "NOT_REACHED",
+    "durable_copy": "NOT_REACHED"
+  },
+  "safety": {
+    "lxc305_touched": false,
+    "production": "UNCHANGED",
+    "deployments": 0,
+    "merges": 0,
+    "configuration_modified": false
+  },
+  "supersedes_previous_audit": false,
+  "next_required_action": "Restore the host NVIDIA UVM device nodes through the authorized Proxmox/host maintenance path, then rerun CT 308 start and CUDA preflight."
+}
