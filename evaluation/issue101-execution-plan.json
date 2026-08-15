@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "issue": 101,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "canonical_t00_t07": "IMMUTABLE",
+  "execution_guest": "LXC 308 opennicf-embedding-eval",
+  "required_gpu_uuid": "GPU-cf150279-b259-0608-019f-8f51e0664ff4",
+  "checkpoint_root": "/var/lib/opennicf/eval/issue101",
+  "issue101_current_preprocessing_id": "issue101-qwen3-official-single-sequence-v1",
+  "issue101_current_embedding_space_id": "issue101-d4-official-single-sequence-native-2560-v1",
+  "issue101_transport": "-p --no-escape --embd-separator <#issue101-single-sequence#>",
+  "issue101_regeneration_status": "PARTIAL_16_OF_715_DOCUMENTS;_0_OF_190_QUERIES",
+  "gates": [
+    "template byte and token manifests complete",
+    "artifact/runtime/input hashes match",
+    "D06-768 reproduces T00",
+    "D4-768-HISTORICAL reproduces T01",
+    "D4-768-OFFICIAL template control completes",
+    "dimension arms run only after reproduction acceptance"
+  ],
+  "arms": [
+    {"id": "D06-768-REPRO", "dimension": 768, "template": "template_qwen3_official", "mode": "reproduction"},
+    {"id": "D4-768-HISTORICAL-REPRO", "dimension": 768, "template": "template_4b_historical_t01", "mode": "reproduction"},
+    {"id": "D4-768-OFFICIAL", "dimension": 768, "template": "template_qwen3_official", "mode": "template_control"},
+    {"id": "D06-NATIVE-1024", "dimension": 1024, "template": "template_qwen3_official", "mode": "dimension"},
+    {"id": "D4-1024", "dimension": 1024, "template": "template_qwen3_official", "mode": "dimension"},
+    {"id": "D4-1536", "dimension": 1536, "template": "template_qwen3_official", "mode": "dimension"},
+    {"id": "D4-NATIVE-2560", "dimension": 2560, "template": "template_qwen3_official", "mode": "dimension"}
+  ],
+  "expected_vectors_per_arm": {"documents": 715, "queries": 190},
+  "estimated_raw_float32_vector_bytes": {
+    "D06_768": 2780160,
+    "D06_1024": 3706880,
+    "D4_768": 2780160,
+    "D4_1024": 3706880,
+    "D4_1536": 5560320,
+    "D4_2560": 9267200,
+    "all_six_spaces": 27801600
+  },
+  "recommended_free_disk_bytes": 10737418240,
+  "resume": "atomic per-arm checkpoints; reject mismatched template/model/runtime/input/run digests",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0
+}

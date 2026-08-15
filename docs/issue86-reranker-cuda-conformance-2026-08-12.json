@@ -1,0 +1,47 @@
+{
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "status": "CUDA_CONFORMANCE_PASS_FULL_EVALUATION_PENDING",
+  "model": "Qwen/Qwen3-Reranker-0.6B",
+  "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+  "snapshot_bytes": 1203022391,
+  "artifact_hashes": {
+    "model.safetensors": "27cd75a405b9c1b46b59abfd88aaa209e6fed2a1972cde9b70e7659537c5e65b",
+    "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "config.json": "d479c427a9ca5295218063d4f9aca4f297ab4ac27487cca7af42c84643d51ef0",
+    "tokenizer_config.json": "253153d0738ceb4c668d2eff957714dd2bea0b56de772a9fdccd96cbf517e6a0",
+    "generation_config.json": "81051cd3f6e77013827148d0b8a6ead93f8ac390d5ab805f849199f0af6a08db",
+    "chat_template.jinja": "6f682162495ec5b39fd9005c01b6aa2a74669379fe967039f1e2cbbe8752369d",
+    "1_LogitScore/config.json": "73e3156450564d8a98b7e47bcf5aace0f29600828b51937da545571e84db3ff3"
+  },
+  "runtime": {"torch": "2.4.1+cu121", "transformers": "4.51.3", "cuda": "12.1"},
+  "device": {"gpu": "NVIDIA GeForce GTX 1060 3GB", "compute_capability": "6.1"},
+  "precision": "FP16",
+  "cpu_offload_used": false,
+  "cuda_residency": {"model": true, "input": true, "output": true},
+  "synthetic_forward": {
+    "status": "PASS",
+    "positive_score": 0.9979966,
+    "negative_score": 0.0003741,
+    "score_direction": "PASS",
+    "batch_size": 2,
+    "elapsed_seconds": 1.3666,
+    "peak_allocated_bytes": 1272598016,
+    "peak_reserved_bytes": 1298137088
+  },
+  "capacity": {
+    "unique_query_document_pairs": 16948,
+    "batch_16": "BLOCKED_CUDA_OOM",
+    "batch_4": "SMOKE_PASS_FULL_RUN_PENDING"
+  },
+  "arms": {"T02": "PENDING_FULL_SCORING", "T03": "PENDING_FULL_SCORING", "T06": "PENDING_FULL_SCORING", "T07": "PENDING_FULL_SCORING"},
+  "warnings": [
+    "AUTOMATED LABELS MAY CONTAIN SOURCE-DERIVED LEAKAGE",
+    "QUALITY RESULTS ARE COMPARATIVE EXPERIMENTAL EVIDENCE",
+    "PRODUCTION REMAINS UNCHANGED"
+  ],
+  "decision_grade_production_validation": false,
+  "production_decision": "NOT_AUTHORIZED",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0
+}

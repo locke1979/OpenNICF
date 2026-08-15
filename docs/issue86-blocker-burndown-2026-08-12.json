@@ -1,0 +1,52 @@
+{
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "decision_grade_production_validation": false,
+  "production_decision": "NOT_AUTHORIZED",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0,
+  "warnings": [
+    "AUTOMATED LABELS MAY CONTAIN SOURCE-DERIVED LEAKAGE",
+    "QUALITY RESULTS ARE COMPARATIVE EXPERIMENTAL EVIDENCE",
+    "PRODUCTION REMAINS UNCHANGED"
+  ],
+  "host": {
+    "cpu": "AMD Ryzen 5 5600H; 6 vCPU; AVX2",
+    "ram_bytes": 16106127360,
+    "swap_bytes": 8589934592,
+    "cuda": false,
+    "disk_available_before_bytes": 16169734144,
+    "disk_available_after_bytes": 23943041024,
+    "cleanup": "reproducible npm, pip, Playwright and Puppeteer caches only"
+  },
+  "resolved": [
+    "0.6B embedding is BOUND_BY_EXISTING_REPOSITORY_CONTRACT",
+    "CPU quality execution is valid; CUDA is optional for every reference model",
+    "sequential disk capacity is sufficient",
+    "existing general Qwen backend is excluded because it is unpinned and uses incorrect mean pooling",
+    "a pinned evaluation-only artifact gate, official last-token/MRL helpers and structured preflight exist"
+  ],
+  "runtime_attempt": {
+    "status": "BLOCKED_RUNTIME",
+    "python": "3.12.3",
+    "target": "torch==2.8.0+cpu; transformers==4.57.1",
+    "observed_download": "26.2 MB of 183.9 MB in approximately 8 minutes; 53.6 kB/s",
+    "disposition": "bounded provisioning attempt stopped because model acquisition at the same observed path would require many hours; no executable artifact was present"
+  },
+  "experiments": {
+    "T00": "BLOCKED_RUNTIME", "T01": "BLOCKED_ARTIFACT", "T02": "BLOCKED_RUNTIME", "T03": "BLOCKED_ARTIFACT",
+    "T04": "BLOCKED_RUNTIME", "T05": "BLOCKED_ARTIFACT", "T06": "BLOCKED_RUNTIME", "T07": "BLOCKED_ARTIFACT",
+    "M00": "BLOCKED_ARTIFACT", "M01": "BLOCKED_ARTIFACT", "M02": "BLOCKED_ARTIFACT", "M03": "BLOCKED_ARTIFACT",
+    "M04": "BLOCKED_ARTIFACT", "M05": "BLOCKED_ARTIFACT"
+  },
+  "executed_experiment_count": 0,
+  "blocked_experiment_count": 14,
+  "winner_selection": "BLOCKED",
+  "minimum_restart_actions": {
+    "T00_T04": "Provide sustained access to the pinned CPU wheels and Qwen 0.6B immutable snapshot, or stage those exact hash-bound files locally.",
+    "T02_T06": "After T00/T04, stage the exact pinned text-reranker snapshot.",
+    "T01_T03_T05_T07": "Stage the trusted 4B GGUF digest 2b0cf8...; never substitute or execute the quarantined 6fc91b... file; provide pinned llama.cpp runtime.",
+    "M00_M05": "Stage each exact BF16 snapshot sequentially and the pinned CPU runtime; qualify batch-1 synthetic forwards before corpus execution.",
+    "CUDA_OPERATIONAL": "Run on an explicitly identified CUDA host; this CPU host is INVALID_FOR_HARDWARE for GPU-only measurements."
+  }
+}

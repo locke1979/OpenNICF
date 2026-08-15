@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "status": "BLOCKED",
+  "evaluation_only": true,
+  "production_isolation": true,
+  "artifacts": {
+    "embedding_reference": {"repo": "Qwen/Qwen3-VL-Embedding-2B", "revision": "9f2f7e710d6d81056aa5c0a4f04764fec6bb7bda", "license": "apache-2.0", "file": "model.safetensors", "sha256": null},
+    "embedding_w4": {"repo": null, "revision": null, "license": null, "file": null, "sha256": null},
+    "reranker": {"repo": "Qwen/Qwen3-VL-Reranker-2B", "revision": "4bd860ac4f15ad1897a214615cccc700f8f71818", "license": "apache-2.0", "file": "model.safetensors", "sha256": null}
+  },
+  "runtime": {"name": null, "version": null, "cuda": "11.8", "compute_capability": "6.1", "validated": false},
+  "limits": {"max_pixels": 1500000, "max_pages": 32, "max_images": 8, "max_batch": 4, "concurrency": [1, 2, 4]},
+  "corpus": {"representations": 100, "queries": 50, "all_human_reviewed": false, "manifest_sha256": null},
+  "blockers": ["w4_runtime_license_contract", "human_review", "local_artifact_sha256"]
+}

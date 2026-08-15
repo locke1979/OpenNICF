@@ -1,0 +1,74 @@
+{
+  "manifest_version": 1,
+  "state": "DRAFT",
+  "evaluation_id": "issue86-architecture-v1",
+  "issue": 86,
+  "baseline_issue": 85,
+  "production": false,
+  "text_space_id": "TEXT_QWEN3_4B_Q4_K_M_768_V1",
+  "vl_space_id": "VL_QWEN3_2B_W4_768_V1",
+  "representation_types": ["text", "page_image", "region_image", "mixed"],
+  "fusion": {"method": "rrf", "k_rrf": 60, "raw_score_fusion": false},
+  "spaces": [
+    {
+      "id": "TEXT_QWEN3_4B_Q4_K_M_768_V1",
+      "model": "Qwen/Qwen3-Embedding-4B",
+      "model_revision": "DRAFT_TEXT_REVISION",
+      "artifact_sha256": "DRAFT_TEXT_ARTIFACT_SHA256",
+      "runtime": "DRAFT_TEXT_RUNTIME",
+      "quantization": "Q4_K_M",
+      "native_dimensions": 2560,
+      "dimensions": 768,
+      "normalized": true,
+      "preprocessing": "qwen3-query-instruction-v1",
+      "modality": "text"
+    },
+    {
+      "id": "VL_QWEN3_2B_W4_768_V1",
+      "model": "DRAFT_QWEN3_VL_EMBEDDING_2B",
+      "model_revision": "DRAFT_VL_REVISION",
+      "artifact_sha256": "DRAFT_VL_ARTIFACT_SHA256",
+      "runtime": "DRAFT_VL_RUNTIME",
+      "quantization": "W4",
+      "native_dimensions": 2048,
+      "dimensions": 768,
+      "normalized": true,
+      "preprocessing": "DRAFT_VL_PREPROCESSING",
+      "modality": "multimodal"
+    }
+  ],
+  "rerankers": [
+    {
+      "id": "TEXT_RERANKER_V1",
+      "model": "DRAFT_TEXT_RERANKER",
+      "model_revision": "DRAFT_TEXT_RERANKER_REVISION",
+      "artifact_sha256": "DRAFT_TEXT_RERANKER_SHA256",
+      "runtime": "DRAFT_TEXT_RERANKER_RUNTIME",
+      "quantization": "DRAFT",
+      "capabilities": ["text"],
+      "failure_policy": "FAIL_QUERY"
+    },
+    {
+      "id": "VL_RERANKER_V1",
+      "model": "DRAFT_VL_RERANKER",
+      "model_revision": "DRAFT_VL_RERANKER_REVISION",
+      "artifact_sha256": "DRAFT_VL_RERANKER_SHA256",
+      "runtime": "DRAFT_VL_RERANKER_RUNTIME",
+      "quantization": "DRAFT",
+      "capabilities": ["text", "page_image", "region_image", "mixed"],
+      "failure_policy": "FAIL_QUERY"
+    }
+  ],
+  "arms": [
+    {"id": "T0", "spaces": ["TEXT_QWEN3_4B_Q4_K_M_768_V1"], "reranker": null, "candidate_depths": [10, 20, 30, 50]},
+    {"id": "T1", "spaces": ["TEXT_QWEN3_4B_Q4_K_M_768_V1"], "reranker": "TEXT_RERANKER_V1", "candidate_depths": [10, 20, 30, 50]},
+    {"id": "M3", "spaces": ["TEXT_QWEN3_4B_Q4_K_M_768_V1", "VL_QWEN3_2B_W4_768_V1"], "reranker": "VL_RERANKER_V1", "candidate_depths": [10, 20, 30, 50]}
+  ],
+  "candidate_depths": [10, 20, 30, 50],
+  "top_k": [1, 3, 5, 10, 20, 30, 50],
+  "production_migration_authorized": false,
+  "artifact_hashes_required": true,
+  "reviewed_labels_required": true,
+  "candidate_recall_before_rerank_required": true,
+  "paired_bootstrap": {"iterations": 2000, "confidence": 0.95}
+}

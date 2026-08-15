@@ -1,0 +1,5 @@
+c868233e07768e0ccc3027109dc4f1f1df06466aa109b5c35383279c6b4372fe  /tmp/vectors-06.json
+be55b267406f2633d5fdff76925f1aa4f9191faf76a6661bbd1c7bfcbbf08d8d  /tmp/vectors-4b.json
+b9ccb70398204f97fb743d8d690bb6341dd0fb1b5c97fb0b8a433820236e320e  evaluation/results/issue86-cuda-2026-08-12/text-report.json
+bc414c67128502194b5604b4cf6e460e8a5b61238ec3ed2c18e22ebd46d0834b  evaluation/results/issue86-cuda-2026-08-12/text-report-t00-t07.json
+7ee35f829bd0f6ee1545cb96f891123da78afb1aeb91ff80661ac7e596e04e04  evaluation/results/issue86-cuda-2026-08-12/retrieval-rag-prechecks-t00-t07.json

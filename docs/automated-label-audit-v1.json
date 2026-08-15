@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "AUTOMATED_LABEL_AUDIT",
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "human_review_required_for_this_run": false,
+  "decision_grade_production_validation": false,
+  "production_migration_authorized": false,
+  "recommendation_scope": "EXPERIMENTAL_ARCHITECTURE_ONLY",
+  "automated_decisions_are_human_review": false,
+  "production_decision": "NOT_AUTHORIZED",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0,
+  "warnings": [
+    "AUTOMATED LABELS MAY CONTAIN SOURCE-DERIVED LEAKAGE",
+    "QUALITY RESULTS ARE COMPARATIVE EXPERIMENTAL EVIDENCE",
+    "PRODUCTION REMAINS UNCHANGED"
+  ],
+  "source_manifest_sha256": "76b3da0f1553b0f549e89832dbdb5013df6eeaac4787bcf0c38f21d27a889211",
+  "valid": true,
+  "errors": [],
+  "text": {
+    "labels_sha256": "33a06db96ef787b146ba72361aa0c32b31089eed35c21787a8212a01d99900f2",
+    "counts": {
+      "total": 190,
+      "by_status": {
+        "AUTO_ACCEPT": 10,
+        "AUTO_HARD_NEGATIVE": 34,
+        "AUTO_REWRITE": 146
+      },
+      "by_leakage_stratum": {
+        "EXACT_IDENTIFIER": 20,
+        "HIGH_LEAKAGE": 160,
+        "LOW_LEAKAGE": 9,
+        "MEDIUM_LEAKAGE": 1
+      },
+      "explicit_hard_negative_queries": 190
+    }
+  },
+  "multimodal": {
+    "labels_sha256": "3066702a7533176595930a586abb550a69e38855c6c48f10e59cfa1fd14ee017",
+    "counts": {
+      "total": 50,
+      "by_status": {
+        "AUTO_HARD_NEGATIVE": 50
+      },
+      "by_leakage_stratum": {
+        "MEDIUM_LEAKAGE": 50
+      },
+      "explicit_hard_negative_queries": 50
+    }
+  },
+  "human_reviewer_identity": null,
+  "human_review_claimed": false,
+  "determinism": "canonical sorted JSON, stable query ordering, fixed rule version",
+  "audit_sha256": "5cccc5544a5cf6fd31467e739c6a8abe70199edf996e3a9795e2ee2cd6fe920c"
+}

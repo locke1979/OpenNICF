@@ -1,0 +1,68 @@
+{
+  "arm_id": "T0",
+  "candidate_recall": 1.0,
+  "context": {
+    "image_count": 0,
+    "pixel_count": 0,
+    "selected_ids": ["safe"],
+    "suppressions": [],
+    "token_count": 4
+  },
+  "experiment_manifest_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "fused_candidates": [
+    {
+      "artifact_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidate_id": "safe",
+      "chunk_id": null,
+      "component_id": "unknown-component",
+      "domain_id": "evaluation",
+      "environment": "",
+      "evidence_type": "",
+      "locator": "chunk:1",
+      "parent_chunk_id": null,
+      "representation_id": "rep-safe",
+      "representation_type": "text",
+      "source_id": "src",
+      "source_version_id": "sv-1",
+      "system_id": "synthetic"
+    }
+  ],
+  "lane_orders": {"dense": ["safe"]},
+  "phase_order": [
+    "filter",
+    "independent_ranked_lists",
+    "rrf",
+    "candidate_recall",
+    "rerank",
+    "late_deduplication",
+    "context_selection"
+  ],
+  "production": false,
+  "production_route_changed": false,
+  "query_id": "query-synthetic-001",
+  "relevant_candidate_count": 1,
+  "relevant_candidates_found": 1,
+  "rerank": null,
+  "reranked_candidates": [
+    {
+      "artifact_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "candidate_id": "safe",
+      "chunk_id": null,
+      "component_id": "unknown-component",
+      "domain_id": "evaluation",
+      "environment": "",
+      "evidence_type": "",
+      "locator": "chunk:1",
+      "original_rank": 1,
+      "parent_chunk_id": null,
+      "representation_id": "rep-safe",
+      "representation_type": "text",
+      "score": 0.0,
+      "source_id": "src",
+      "source_version_id": "sv-1",
+      "system_id": "synthetic"
+    }
+  ],
+  "result_manifest_version": 1,
+  "run_id": "synthetic-run-001"
+}

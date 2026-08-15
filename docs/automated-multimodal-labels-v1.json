@@ -1,0 +1,1683 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "AUTOMATED_MULTIMODAL_LABELS",
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "human_review_required_for_this_run": false,
+  "decision_grade_production_validation": false,
+  "production_migration_authorized": false,
+  "recommendation_scope": "EXPERIMENTAL_ARCHITECTURE_ONLY",
+  "automated_decisions_are_human_review": false,
+  "production_decision": "NOT_AUTHORIZED",
+  "production": "UNCHANGED",
+  "deployments": 0,
+  "merges": 0,
+  "warnings": [
+    "AUTOMATED LABELS MAY CONTAIN SOURCE-DERIVED LEAKAGE",
+    "QUALITY RESULTS ARE COMPARATIVE EXPERIMENTAL EVIDENCE",
+    "PRODUCTION REMAINS UNCHANGED"
+  ],
+  "source_manifest_sha256": "8e1ec2f29e8ecdf8c82a5ac3af84192e955c149b50239a7310551ef0d9e73971",
+  "labels": [
+    {
+      "query_id": "mmq-000",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 000.",
+      "automated_query_text": "Locate the page image evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-5120aa2c4a204eb7041a47df"
+      ],
+      "final_relevant_ids": [
+        "rep-5120aa2c4a204eb7041a47df"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-f0c4788565f7bfe173baa7b8",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "f9f67eab31a26ccdf57df9fddd1ac5686f5d110ed4d76afa29a539a9664cfdef"
+    },
+    {
+      "query_id": "mmq-001",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 002.",
+      "automated_query_text": "Locate the diagram evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-eb0cace17bd8762f7a9a1136"
+      ],
+      "final_relevant_ids": [
+        "rep-eb0cace17bd8762f7a9a1136"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-77dde301306e568312331af4",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "c8e7685bf9b822bf8f5fa5a1e6ad05145206f710e5b97b2de8ab52870d4589ca"
+    },
+    {
+      "query_id": "mmq-002",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 004.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-c6f0e8a3c5774736d4863a1f"
+      ],
+      "final_relevant_ids": [
+        "rep-c6f0e8a3c5774736d4863a1f"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-c3158b62f94936947e7c1a8d",
+          "category": "same_diagram_labels_wrong_flow",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "267300d780e6106d6938649d8c603a677e2b646d84cb86e874cb2019dd15508d"
+    },
+    {
+      "query_id": "mmq-003",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 006.",
+      "automated_query_text": "Locate the page image evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-c2cc887d8d85247e9e21418a"
+      ],
+      "final_relevant_ids": [
+        "rep-c2cc887d8d85247e9e21418a"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-aa84041a162a5f726f93f69c",
+          "category": "same_table_wrong_operation",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "5e0fa163bbe0576fd4f09ecdbefe812eb3e3422cedea0c538b83b5be6a30ca36"
+    },
+    {
+      "query_id": "mmq-004",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 008.",
+      "automated_query_text": "Locate the diagram evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-f6d7089088c721fc6764a74a"
+      ],
+      "final_relevant_ids": [
+        "rep-f6d7089088c721fc6764a74a"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-197caada3a72845d44438e00",
+          "category": "current_obsolete",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "2120de26d434edd3a8fa1f0106d18aa6289402c84a9202bef0393e070a691bc0"
+    },
+    {
+      "query_id": "mmq-005",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 010.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-154f66780f2a5fd1f346afd5"
+      ],
+      "final_relevant_ids": [
+        "rep-154f66780f2a5fd1f346afd5"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-71054b35c32828a27bca4a68",
+          "category": "production_non_production",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "3a7b7d5055e2cb136b46c16b03255ace4765ed160c3d8a4cc0afcb61e33f2626"
+    },
+    {
+      "query_id": "mmq-006",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 012.",
+      "automated_query_text": "Locate the page image evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-1c709119d239832ec9d4e949"
+      ],
+      "final_relevant_ids": [
+        "rep-1c709119d239832ec9d4e949"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-e24651c365be6502a612cde6",
+          "category": "same_error_wrong_service",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "06edc73dfd145d9d9d748028e6f9778db029ef42fb33229625de21b8a7a6ebb9"
+    },
+    {
+      "query_id": "mmq-007",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 014.",
+      "automated_query_text": "Locate the diagram evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-d7bf3789bda6ab0b8b6981e2"
+      ],
+      "final_relevant_ids": [
+        "rep-d7bf3789bda6ab0b8b6981e2"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-9878d4fc7a86171b09c434aa",
+          "category": "visually_similar_wrong_evidence",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "698ff0b1eea0b0b4ceb95d0735b68914eee044fc75d53400d06aad715e6a54cf"
+    },
+    {
+      "query_id": "mmq-008",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 016.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-af4b4e5e0f4641c284baf151"
+      ],
+      "final_relevant_ids": [
+        "rep-af4b4e5e0f4641c284baf151"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-f13c26f6e4859d62c6f02306",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "76271b9c54136bd12414f24568f479f3007e980beb9f9de5fa1318adb0e977ee"
+    },
+    {
+      "query_id": "mmq-009",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 018.",
+      "automated_query_text": "Locate the page image evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-1c921342fd788a5fe955a10c"
+      ],
+      "final_relevant_ids": [
+        "rep-1c921342fd788a5fe955a10c"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-6a4e59ffaeda008747c08840",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "d6512c41d3bc6ae6743aa38bf9782687e101f5b103f09e9a4d5bbad281282680"
+    },
+    {
+      "query_id": "mmq-010",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 020.",
+      "automated_query_text": "Locate the diagram evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-e216b2b12816570ce81fa42b"
+      ],
+      "final_relevant_ids": [
+        "rep-e216b2b12816570ce81fa42b"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-925f980608ea697b7d95c650",
+          "category": "same_diagram_labels_wrong_flow",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "73054bafdd8a50160dcc614ae26bdcd990053c424b6aadd28f159bb56522dbbb"
+    },
+    {
+      "query_id": "mmq-011",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 022.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-0f5acd50262236ba84aebd8a"
+      ],
+      "final_relevant_ids": [
+        "rep-0f5acd50262236ba84aebd8a"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-3d16c4a9683811c46f1d1455",
+          "category": "same_table_wrong_operation",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "2fb2de07cf049e2ffb222917e08670d3a437f1702f8e347a39a8d6c03a76bc3a"
+    },
+    {
+      "query_id": "mmq-012",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 024.",
+      "automated_query_text": "Locate the page image evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-541ad5b583cdf2f6090f79a6"
+      ],
+      "final_relevant_ids": [
+        "rep-541ad5b583cdf2f6090f79a6"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-5ce7309c859221f1eeed6a93",
+          "category": "current_obsolete",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "fe1389678efd028f9d6b0a1290d49df45100d1c33e64d8b9d24cd34cbda1984f"
+    },
+    {
+      "query_id": "mmq-013",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 026.",
+      "automated_query_text": "Locate the diagram evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-94c5c0f2aabbfdee95e07230"
+      ],
+      "final_relevant_ids": [
+        "rep-94c5c0f2aabbfdee95e07230"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-5309bb8959841dc869efc1f5",
+          "category": "production_non_production",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "7181cd6e59cff506216a6d4233bd92b14275286184fe81199ab69c198de6fae9"
+    },
+    {
+      "query_id": "mmq-014",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 028.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-b9bcbaccfd1690a6cc76af0f"
+      ],
+      "final_relevant_ids": [
+        "rep-b9bcbaccfd1690a6cc76af0f"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-d822be9b8fc018134de46f58",
+          "category": "same_error_wrong_service",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "42b741cff4da26bf0f3496ae0047a5c39eb5c3104b74fe14eef3e38569e64a25"
+    },
+    {
+      "query_id": "mmq-015",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 030.",
+      "automated_query_text": "Locate the page image evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-5c4b664bd597754367adb7ae"
+      ],
+      "final_relevant_ids": [
+        "rep-5c4b664bd597754367adb7ae"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-5ba3bfaa40078469f3f36c79",
+          "category": "visually_similar_wrong_evidence",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "90176df3b48925f8a3111b907c10df5bf460d5e0fc66c0be8077049ca19b287f"
+    },
+    {
+      "query_id": "mmq-016",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 032.",
+      "automated_query_text": "Locate the diagram evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-d65bfd4457a0d18509d55a7f"
+      ],
+      "final_relevant_ids": [
+        "rep-d65bfd4457a0d18509d55a7f"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-233b5dbebee4d9a636a3d04a",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "274edaeafc82b9c50f5bdcfe2656dc566ea4c97a252af15efb19679615e31927"
+    },
+    {
+      "query_id": "mmq-017",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 034.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-925be42502f86682a9f608b4"
+      ],
+      "final_relevant_ids": [
+        "rep-925be42502f86682a9f608b4"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-49bf303f27c7d3c1ea17dc41",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "0b6c6fa4ba606ec7cb97ac3685f2ace074a31f0544e371c46c3ff2c981ab064d"
+    },
+    {
+      "query_id": "mmq-018",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 036.",
+      "automated_query_text": "Locate the page image evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-587c428be5ca30344b06e972"
+      ],
+      "final_relevant_ids": [
+        "rep-587c428be5ca30344b06e972"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-c59f49582b184f408fe58e75",
+          "category": "same_diagram_labels_wrong_flow",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "a26eb073dd04f947095b2ee1ff32c33c1d7f9a5322275b1c49e73f0809e7b1da"
+    },
+    {
+      "query_id": "mmq-019",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 038.",
+      "automated_query_text": "Locate the diagram evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-8997192d982112f968994191"
+      ],
+      "final_relevant_ids": [
+        "rep-8997192d982112f968994191"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-97eb1984a796c848ff430462",
+          "category": "same_table_wrong_operation",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "705523a0c621289af96b73e9a3c0bb8acefc29f82ab6393aec9d3d79ae40956e"
+    },
+    {
+      "query_id": "mmq-020",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 040.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-67d02fa482ff05c6251dbbf0"
+      ],
+      "final_relevant_ids": [
+        "rep-67d02fa482ff05c6251dbbf0"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-9a64f492f95150630fab92cf",
+          "category": "current_obsolete",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "377d1160b65b4c7e347b8142bb82d17e124d7026c8de24ae7f6bf27a1daa4cdd"
+    },
+    {
+      "query_id": "mmq-021",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 042.",
+      "automated_query_text": "Locate the page image evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-ec17a34cb55a860ec1ff6a9c"
+      ],
+      "final_relevant_ids": [
+        "rep-ec17a34cb55a860ec1ff6a9c"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-03897ee72bdf061fc65f6879",
+          "category": "production_non_production",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "1ee10f6cdb5820733f64682b5b959ab317530916955da2c23ac19c065c26872a"
+    },
+    {
+      "query_id": "mmq-022",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 044.",
+      "automated_query_text": "Locate the diagram evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-5929f9a4317e33334045608c"
+      ],
+      "final_relevant_ids": [
+        "rep-5929f9a4317e33334045608c"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-806ac3a984d5b102f5ecf1f9",
+          "category": "same_error_wrong_service",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "7805ef496017c3c916b911658108834f215b3f59c2cc64c633facc12664f8b9b"
+    },
+    {
+      "query_id": "mmq-023",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 046.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-e495a2bf1fcbf249b1c722df"
+      ],
+      "final_relevant_ids": [
+        "rep-e495a2bf1fcbf249b1c722df"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-e8bf4ddba1ba3f2c6c03f806",
+          "category": "visually_similar_wrong_evidence",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "d87ed5a16adf080c7e138a0177152e0758d957d5e6ba6575da7f68a8101b2bdb"
+    },
+    {
+      "query_id": "mmq-024",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 048.",
+      "automated_query_text": "Locate the page image evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-406d738fac5c2058b67d4026"
+      ],
+      "final_relevant_ids": [
+        "rep-406d738fac5c2058b67d4026"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-6388dcf566e398d1dd27314d",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "efb2202e46c9264ca3bee2de93dc090c4cbd46b15a8428dff434c95362e5d902"
+    },
+    {
+      "query_id": "mmq-025",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 050.",
+      "automated_query_text": "Locate the diagram evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-ff66226e6c521b5db6080c07"
+      ],
+      "final_relevant_ids": [
+        "rep-ff66226e6c521b5db6080c07"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-ee7cf8a13d391d1319dd953c",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "257159a060d8594db6314ebf2a33cfb73cbe146cfe430f9f6d0e4e2026206f05"
+    },
+    {
+      "query_id": "mmq-026",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 052.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-0ca0f91d372a4d10544a60bc"
+      ],
+      "final_relevant_ids": [
+        "rep-0ca0f91d372a4d10544a60bc"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-ab23bf22b1cbd70734703d7e",
+          "category": "same_diagram_labels_wrong_flow",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "0fa03286539a80dd5f522efa8ab8915ea11985e51536da9ce60045ec4135931c"
+    },
+    {
+      "query_id": "mmq-027",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 054.",
+      "automated_query_text": "Locate the page image evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-84f702a1d68d24659e2265fe"
+      ],
+      "final_relevant_ids": [
+        "rep-84f702a1d68d24659e2265fe"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-97513e07755b9bddb50f6f50",
+          "category": "same_table_wrong_operation",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "712d4f0122890945db84add6b2f58d30b70f14c49dfcb83d12a445472d51b93e"
+    },
+    {
+      "query_id": "mmq-028",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 056.",
+      "automated_query_text": "Locate the diagram evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-51064b0fb356bbc2a47af3f2"
+      ],
+      "final_relevant_ids": [
+        "rep-51064b0fb356bbc2a47af3f2"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-55b4d2ef21ff70295f609724",
+          "category": "current_obsolete",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "f2e4ea8d26d1fd7b8e636a8dc3d66150cb7725421fa88ac491a0c224a3659453"
+    },
+    {
+      "query_id": "mmq-029",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 058.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-5d3e595f6dc605b785b4dc95"
+      ],
+      "final_relevant_ids": [
+        "rep-5d3e595f6dc605b785b4dc95"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-b1971524c121dbba602ab957",
+          "category": "production_non_production",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "20e0a882a43484570b8ad5bf6473849dba23a16fe02ef0f1fe8f7848d0a24aab"
+    },
+    {
+      "query_id": "mmq-030",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 060.",
+      "automated_query_text": "Locate the page image evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-f0636ca6d132d9206d64995c"
+      ],
+      "final_relevant_ids": [
+        "rep-f0636ca6d132d9206d64995c"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-0df1ab7a2e07cc5a96bdcf2e",
+          "category": "same_error_wrong_service",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "55f54e49d5d95f41388120988e230c39e14a9382ed82ff0d46898da6cff6b289"
+    },
+    {
+      "query_id": "mmq-031",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 062.",
+      "automated_query_text": "Locate the diagram evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-ba1222ae4e49681d32763314"
+      ],
+      "final_relevant_ids": [
+        "rep-ba1222ae4e49681d32763314"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-b0e93e5c948e370ce172b193",
+          "category": "visually_similar_wrong_evidence",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "89be582cea55744825df0b434753ea94b5b39a64dde1031ec469d33d1f933b57"
+    },
+    {
+      "query_id": "mmq-032",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 064.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-114f4c7f17efb9a353327a7f"
+      ],
+      "final_relevant_ids": [
+        "rep-114f4c7f17efb9a353327a7f"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-1114f7d8e5fcd5a0ca954e7a",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "be0d24096f5554b1884ba372a9b8dbfe042b106a9d42d5b6f999beb80bdede3d"
+    },
+    {
+      "query_id": "mmq-033",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 066.",
+      "automated_query_text": "Locate the page image evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-0c4cd9125f2b5d7ef5a52e83"
+      ],
+      "final_relevant_ids": [
+        "rep-0c4cd9125f2b5d7ef5a52e83"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-0591ea5020752520854d0df5",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "161f672cba899c758bb1ecf9716ee44ba2832d0e064668187f71ee1818143dec"
+    },
+    {
+      "query_id": "mmq-034",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 068.",
+      "automated_query_text": "Locate the diagram evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-200f7317abc44d23a4f0d6b4"
+      ],
+      "final_relevant_ids": [
+        "rep-200f7317abc44d23a4f0d6b4"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-9e17753f0cacb47d7206ad0f",
+          "category": "same_diagram_labels_wrong_flow",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "c0f84c0da675a77ec394fc821b1f0b05e841616925439e89953da826b22c29c4"
+    },
+    {
+      "query_id": "mmq-035",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 070.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-b18c4b71431d9676ea6c652c"
+      ],
+      "final_relevant_ids": [
+        "rep-b18c4b71431d9676ea6c652c"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-82304f07b95bd1314adf75b6",
+          "category": "same_table_wrong_operation",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "19424d7ce04de0c06ffc02b17519a93d332833d3bb10d8bcb2490bab3079ef3c"
+    },
+    {
+      "query_id": "mmq-036",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 072.",
+      "automated_query_text": "Locate the page image evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-24bc2bca6bde5c45504b6a97"
+      ],
+      "final_relevant_ids": [
+        "rep-24bc2bca6bde5c45504b6a97"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-46c0af91169959a9c15df05c",
+          "category": "current_obsolete",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "bfcbea930a9146035d9f0f01e832bf63283a2b9da4bf843311c7d90b555cf0b2"
+    },
+    {
+      "query_id": "mmq-037",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 074.",
+      "automated_query_text": "Locate the diagram evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-773eaa6609024a6559c14920"
+      ],
+      "final_relevant_ids": [
+        "rep-773eaa6609024a6559c14920"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-1ca11616ead66b4fabe2daed",
+          "category": "production_non_production",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "3ec58fda445fc6f845a5d9ecb41af81f4f37305f22a545bdacc20310f5e9fa9c"
+    },
+    {
+      "query_id": "mmq-038",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 076.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-1317e8a874c45634a0e24a5e"
+      ],
+      "final_relevant_ids": [
+        "rep-1317e8a874c45634a0e24a5e"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-fb5a6d21725543f0218ce43e",
+          "category": "same_error_wrong_service",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "d38d7527ffb9e6491b034baa9d7ac5cbd561b8462904caab1f37b2101232277f"
+    },
+    {
+      "query_id": "mmq-039",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 078.",
+      "automated_query_text": "Locate the page image evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-f7cb989cb7443121a5b7b869"
+      ],
+      "final_relevant_ids": [
+        "rep-f7cb989cb7443121a5b7b869"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-4388fb42198b6a5a586b5d52",
+          "category": "visually_similar_wrong_evidence",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "14f83d3f7ab4f37ed15c1c217c588521566129be38ee53fce8a86d88ce53c681"
+    },
+    {
+      "query_id": "mmq-040",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 080.",
+      "automated_query_text": "Locate the diagram evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-d5417eb4cc14fe5e29abd5bb"
+      ],
+      "final_relevant_ids": [
+        "rep-d5417eb4cc14fe5e29abd5bb"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-a8853d2a4b04796f2946082c",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "5ba266d788da459a2478208be41ca074caeb113c1ce841e045b4c1c9424d7a4d"
+    },
+    {
+      "query_id": "mmq-041",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 082.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-bee569eb815fac5e606c87d8"
+      ],
+      "final_relevant_ids": [
+        "rep-bee569eb815fac5e606c87d8"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-28ccb2c301bc09331a777c27",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "671f524f4f922cbc6aa919bc2e2c40527c8730cefee9884c8b5261ea2729339d"
+    },
+    {
+      "query_id": "mmq-042",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 084.",
+      "automated_query_text": "Locate the page image evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-93afcae8b9582e0cdfd50e09"
+      ],
+      "final_relevant_ids": [
+        "rep-93afcae8b9582e0cdfd50e09"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-35a28af8b5d673a37cd699c5",
+          "category": "same_diagram_labels_wrong_flow",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "c6d30c685a0b1bad91c476b679823d241348be6d14058ace75c1e8bb27cda0b5"
+    },
+    {
+      "query_id": "mmq-043",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 086.",
+      "automated_query_text": "Locate the diagram evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-745ee955792d9f8b5c9b630a"
+      ],
+      "final_relevant_ids": [
+        "rep-745ee955792d9f8b5c9b630a"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-72af848d64fede94a7805da8",
+          "category": "same_table_wrong_operation",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "229caadac0c311b078f85a6e3f8fafc32ca7c5a75bd1ba6c885381817a98cc74"
+    },
+    {
+      "query_id": "mmq-044",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 088.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-8e33662824659d2b01786e42"
+      ],
+      "final_relevant_ids": [
+        "rep-8e33662824659d2b01786e42"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-6b24d2f3b7be33f1ae307fe8",
+          "category": "current_obsolete",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "6000a37c7724dfa1b5579635b7070dcbe7e09c570c2842076cc14e87c5cd037c"
+    },
+    {
+      "query_id": "mmq-045",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 090.",
+      "automated_query_text": "Locate the page image evidence for domain-0.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-65b694dab9cad64ba3d7f424"
+      ],
+      "final_relevant_ids": [
+        "rep-65b694dab9cad64ba3d7f424"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-7990f921f8d37131a2a05260",
+          "category": "production_non_production",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-0",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "48fe3840f967698c3318b9460d6aab9d284dc5ce14566fd95e2f6e36002a20ba"
+    },
+    {
+      "query_id": "mmq-046",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 092.",
+      "automated_query_text": "Locate the diagram evidence for domain-2.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-ecf0770447794b7782f4327c"
+      ],
+      "final_relevant_ids": [
+        "rep-ecf0770447794b7782f4327c"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-d523659ff31f017f86820681",
+          "category": "same_error_wrong_service",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-2",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "d38a695a6ab890abeab1ec6bb0ba5a95e6f35d68f3927911410d76d6bcf573eb"
+    },
+    {
+      "query_id": "mmq-047",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 094.",
+      "automated_query_text": "Locate the ocr poor evidence for domain-4.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-234505c928baca4524a0c7df"
+      ],
+      "final_relevant_ids": [
+        "rep-234505c928baca4524a0c7df"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-eb46af1ef083f5594f2d303a",
+          "category": "visually_similar_wrong_evidence",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-4",
+            "modality": "mixed",
+            "category": "ocr_poor"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "ocr_poor",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "f36802dc46257f5d90ab7607f91465f66ed6d7288a0f5ebf8567df4ba61e3ace"
+    },
+    {
+      "query_id": "mmq-048",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 096.",
+      "automated_query_text": "Locate the page image evidence for domain-1.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-a9d3a4a5de6a60d7a31e1ecd"
+      ],
+      "final_relevant_ids": [
+        "rep-a9d3a4a5de6a60d7a31e1ecd"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-b6b592f1a1babb59b4ac44ca",
+          "category": "same_application_wrong_screen",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-1",
+            "modality": "mixed",
+            "category": "page_image"
+          }
+        }
+      ],
+      "language": "en",
+      "modality": "mixed",
+      "category": "page_image",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "a881336be2afcb8ac03f9fef6fea088c3fc1f5d64c28ef419614ebe8692bef93"
+    },
+    {
+      "query_id": "mmq-049",
+      "automated_status": "AUTO_HARD_NEGATIVE",
+      "leakage_stratum": "MEDIUM_LEAKAGE",
+      "original_query_text": "Find the sanitized synthetic evidence number 098.",
+      "automated_query_text": "Locate the diagram evidence for domain-3.",
+      "rewrite_reason": "removed synthetic/source-derived identifying phrasing",
+      "original_relevant_ids": [
+        "rep-37bb9d142ded00377c6048a1"
+      ],
+      "final_relevant_ids": [
+        "rep-37bb9d142ded00377c6048a1"
+      ],
+      "label_identity_changed": false,
+      "hard_negatives": [
+        {
+          "representation_id": "rep-4406d687f760e6ad1b9b7515",
+          "category": "same_document_wrong_page",
+          "selection_method": "explicit queue pairing validated against representation manifest",
+          "metadata_similarity": {
+            "domain": "domain-3",
+            "modality": "mixed",
+            "category": "diagram"
+          }
+        }
+      ],
+      "language": "pt",
+      "modality": "mixed",
+      "category": "diagram",
+      "text_only_evidence_sufficient": false,
+      "decision_rule_version": "issue86-auto-v1",
+      "automated_decision_digest": "4036a58908be519eb753e710b545dfc2372564f1483724e83f74db70f64ff7ee"
+    }
+  ],
+  "counts": {
+    "total": 50,
+    "by_status": {
+      "AUTO_HARD_NEGATIVE": 50
+    },
+    "by_leakage_stratum": {
+      "MEDIUM_LEAKAGE": 50
+    },
+    "explicit_hard_negative_queries": 50
+  },
+  "labels_sha256": "3066702a7533176595930a586abb550a69e38855c6c48f10e59cfa1fd14ee017"
+}

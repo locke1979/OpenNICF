@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-12",
+  "evidence_scope": "repository metadata and local host inspection; no weights downloaded or executed",
+  "official": {
+    "embedding": {
+      "repository": "Qwen/Qwen3-VL-Embedding-2B",
+      "revision": "9f2f7e710d6d81056aa5c0a4f04764fec6bb7bda",
+      "license": "apache-2.0",
+      "architecture": "Qwen3VLForConditionalGeneration",
+      "weight": {"path": "model.safetensors", "bytes": 4255140312, "remote_lfs_sha256": "c73fa9caeddeb3ff831d46c085a7a5708343248ca777e90f2d486964464509c1"},
+      "tokenizer": {"path": "tokenizer.json", "bytes": 11423705, "remote_lfs_sha256": "def76fb086971c7867b829c23a26261e38d9d74e02139253b38aeb9df8b4b50a"},
+      "required_files": ["config.json", "1_Pooling/config.json", "modules.json", "sentence_bert_config.json", "chat_template.jinja", "preprocessor_config.json", "video_preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "added_tokens.json", "special_tokens_map.json", "merges.txt", "vocab.json", "scripts/qwen3_vl_embedding.py"],
+      "pooling": "lasttoken",
+      "native_dimension": 2048,
+      "supported_mrl_dimensions": [64, 128, 256, 512, 768, 1024, 2048],
+      "evaluation_dimension": 768,
+      "normalization_required": true,
+      "processor": {"class": "Qwen3VLProcessor", "image_processor": "Qwen2VLImageProcessorFast", "min_pixels": 4096, "max_pixels": 1310720, "patch_size": 16, "merge_size": 2, "do_resize": true, "do_convert_rgb": true, "do_normalize": true},
+      "template": "pinned chat_template.jinja with add_generation_prompt=true and exact task instruction"
+    },
+    "reranker": {
+      "repository": "Qwen/Qwen3-VL-Reranker-2B",
+      "revision": "4bd860ac4f15ad1897a214615cccc700f8f71818",
+      "license": "apache-2.0",
+      "architecture": "Qwen3VLForConditionalGeneration",
+      "weight": {"path": "model.safetensors", "bytes": 4255140312, "remote_lfs_sha256": "466ec01961061e9d7f804b4fb1625fb6f406106cd1567e026096d4736fa9d5b9"},
+      "tokenizer": {"path": "tokenizer.json", "bytes": 11422654, "remote_lfs_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"},
+      "required_files": ["config.json", "1_LogitScore/config.json", "modules.json", "sentence_bert_config.json", "chat_template.jinja", "additional_chat_templates/reranker.jinja", "preprocessor_config.json", "video_preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "added_tokens.json", "special_tokens_map.json", "merges.txt", "vocab.json", "scripts/qwen3_vl_reranker.py"],
+      "score_contract": {"true_token_id": 9693, "false_token_id": 2152, "template": "reranker", "add_generation_prompt": true},
+      "processor": {"class": "Qwen3VLProcessor", "image_processor": "Qwen2VLImageProcessorFast", "min_pixels": 4095, "max_pixels": 1310720, "patch_size": 16, "merge_size": 2}
+    }
+  },
+  "w4_candidates": [
+    {
+      "repository": "LifetimeMistake/Qwen3-VL-Embedding-2B-AWQ-4bit",
+      "revision": "c6c8b89efbd4ceef35da5369da9f8902a4369aeb",
+      "license": "apache-2.0",
+      "weight": {"path": "model.safetensors", "bytes": 2791145616, "remote_lfs_sha256": "2e1b04df208947055a5fd46db833460c02108fdf1859535de84e1bb8802a6e77"},
+      "weight_quantization": {"method": "AWQ via llmcompressor compressed-tensors 0.12.2", "scheme": "W4A16_ASYM", "bits": 4, "group_size": 128, "symmetric": false, "calibration_samples": 876, "vision_weights_quantized": false, "vision_calibration_rows_skipped": 124},
+      "base": {"repository": "Qwen/Qwen3-VL-Embedding-2B", "revision": "unrecorded_by_candidate"},
+      "runtime": "vLLM compressed-tensors",
+      "disposition": "BLOCKED",
+      "blockers": ["base revision not pinned", "third-party custom code not reviewed", "exact embedding pooling/MRL forward unproven", "vLLM requires NVIDIA compute capability >=7.0 and excludes sm_61", "no multimodal reranker artifact"]
+    },
+    {
+      "repository": "Forturne/Qwen3-VL-Embedding-2B-W4A16",
+      "revision": "dd2c68f8eaad4866d99fcdfe2b8d3659aa45e32f",
+      "license": null,
+      "weight": {"path": "model.safetensors", "bytes": 1565621536, "remote_lfs_sha256": "f00f88f33b11e7e50be11768d019c46719bdfac1b8fd0413357c71a4d502f350"},
+      "weight_quantization": {"method": "compressed-tensors", "scheme": "W4A16", "bits": 4},
+      "disposition": "REJECTED_LICENSE_GATE"
+    }
+  ],
+  "reranker_w4_search": {"credible_cuda_candidate_found": false, "mlx_candidates": ["arthurcollet/Qwen3-VL-Reranker-2B-mlx-4bit@adea566fa8d913bf78bbded001f9419e21c62cf8", "mlx-community/Qwen3-VL-Reranker-2B-4bit@374a7dc08e7c3b553c8b2730a425e53c7a926510"], "disposition": "Apple MLX is not a CUDA/Pascal runtime; repositories expose no license metadata"},
+  "host": {"python": "3.12.3", "nvidia_smi_present": false, "torch_installed": false, "transformers_installed": false, "sentence_transformers_installed": false, "vllm_installed": false, "qwen_vl_utils_installed": false, "autoawq_installed": false, "compressed_tensors_installed": false},
+  "feasibility": {
+    "official_embedding_bf16": {"stage_1_metadata": "PASS", "stage_2_cpu_forward": "BLOCKED_RUNTIME_AND_LOCAL_ARTIFACT_ABSENT", "stage_3_cuda_load": "NOT_RUN_AFTER_STAGE_2_BLOCK", "stage_4_cuda_forward": "NOT_RUN", "stage_5_restart": "NOT_RUN", "stage_6_throughput": "NOT_RUN"},
+    "official_reranker_bf16": {"stage_1_metadata": "PASS", "stage_2_cpu_forward": "BLOCKED_RUNTIME_AND_LOCAL_ARTIFACT_ABSENT", "stage_3_cuda_load": "NOT_RUN_AFTER_STAGE_2_BLOCK", "stage_4_cuda_forward": "NOT_RUN", "stage_5_restart": "NOT_RUN", "stage_6_throughput": "NOT_RUN"},
+    "embedding_w4": {"stage_1_metadata": "FAIL_BASE_REVISION_AND_RUNTIME_CONTRACT", "later_stages": "NOT_RUN"},
+    "reranker_w4": {"stage_1_metadata": "FAIL_NO_CREDIBLE_LICENSED_CUDA_CANDIDATE", "later_stages": "NOT_RUN"}
+  },
+  "conclusion": "W4_EXECUTABLE_ON_PASCAL=BLOCKED_ON_RUNTIME_EVIDENCE"
+}

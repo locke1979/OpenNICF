@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "issue": 101,
+  "wrapper": "tools/issue101_exact_id_inference.py",
+  "wrapper_contract": {
+    "one_input_per_invocation": true,
+    "exactly_one_output_required": true,
+    "batch_size": 1,
+    "gpu_layers_attempted": [29, 28, 27],
+    "escape_processing": "disabled",
+    "atomic_checkpoint": true
+  },
+  "checkpoint": {
+    "documents_accepted": 44,
+    "documents_expected": 715,
+    "queries_accepted": 0,
+    "queries_expected": 190,
+    "original_39_retained": true,
+    "durable_root": "/var/lib/opennicf/eval/issue101"
+  },
+  "failure": {
+    "class": "LLAMA_CPP_OUTPUT_CONTRACT_FAILURE",
+    "record_sequence_index": 44,
+    "record_id": "src-de3b0875230ea80d:10",
+    "evidence": "wrapper rejected an invocation returning two embeddings; direct rerun did not yield an acceptably parseable JSON payload",
+    "accepted_record_written": false
+  },
+  "controls": {
+    "multi_input_alignment": "PROHIBITED",
+    "ct308_final": "stopped",
+    "ct305_touched": false,
+    "production": "UNCHANGED",
+    "deployments": 0,
+    "merges": 0
+  },
+  "status": "D4_INFERENCE_PARTIAL_EXPLICITLY_BLOCKED"
+}

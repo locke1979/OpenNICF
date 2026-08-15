@@ -1,0 +1,367 @@
+{
+  "arms": {
+    "T00": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.09947368421052631,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 767.3894736842105,
+          "context_token_utilization_vs_8192_estimate": 0.09367547286184211,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.08421052631578947,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6568421052631588
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.19894736842105262,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 336.2421052631579,
+          "context_token_utilization_vs_8192_estimate": 0.04104517886513158,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.08421052631578947,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6831578947368402
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.12434210526315789,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 590.5315789473684,
+          "context_token_utilization_vs_8192_estimate": 0.07208637438322368,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.08421052631578947,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6796052631578947
+        },
+        "query_count": 190
+      }
+    },
+    "T01": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 0.9105263157894737,
+          "context_precision": 0.09105263157894725,
+          "context_recall": 0.9105263157894737,
+          "context_token_estimate": 735.8789473684211,
+          "context_token_utilization_vs_8192_estimate": 0.08982897306743422,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.08947368421052632,
+          "relevant_evidence_retained": 0.9105263157894737,
+          "source_diversity": 0.6963157894736846
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 0.9052631578947369,
+          "context_precision": 0.1810526315789471,
+          "context_recall": 0.9052631578947369,
+          "context_token_estimate": 312.9157894736842,
+          "context_token_utilization_vs_8192_estimate": 0.03819772820723684,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.08947368421052632,
+          "relevant_evidence_retained": 0.9052631578947369,
+          "source_diversity": 0.6989473684210508
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 0.9052631578947369,
+          "context_precision": 0.11315789473684211,
+          "context_recall": 0.9052631578947369,
+          "context_token_estimate": 562.5947368421052,
+          "context_token_utilization_vs_8192_estimate": 0.06867611533717105,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.08947368421052632,
+          "relevant_evidence_retained": 0.9052631578947369,
+          "source_diversity": 0.6947368421052632
+        },
+        "query_count": 190
+      }
+    },
+    "T02": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 1.0,
+          "context_precision": 0.1,
+          "context_recall": 1.0,
+          "context_token_estimate": 877.1631578947369,
+          "context_token_utilization_vs_8192_estimate": 0.10707558079769737,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.12631578947368421,
+          "relevant_evidence_retained": 1.0,
+          "source_diversity": 0.6152631578947366
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 1.0,
+          "context_precision": 0.2,
+          "context_recall": 1.0,
+          "context_token_estimate": 352.5842105263158,
+          "context_token_utilization_vs_8192_estimate": 0.04304006476151316,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.10526315789473684,
+          "relevant_evidence_retained": 1.0,
+          "source_diversity": 0.6473684210526294
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 1.0,
+          "context_precision": 0.125,
+          "context_recall": 1.0,
+          "context_token_estimate": 664.5052631578948,
+          "context_token_utilization_vs_8192_estimate": 0.08111636513157895,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.12631578947368421,
+          "relevant_evidence_retained": 1.0,
+          "source_diversity": 0.6171052631578947
+        },
+        "query_count": 190
+      }
+    },
+    "T03": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.09947368421052631,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 804.5736842105263,
+          "context_token_utilization_vs_8192_estimate": 0.09821456106085526,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.12631578947368421,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.633157894736843
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.19894736842105262,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 341.7631578947368,
+          "context_token_utilization_vs_8192_estimate": 0.041719135485197366,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.10526315789473684,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6568421052631561
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.12434210526315789,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 628.3789473684211,
+          "context_token_utilization_vs_8192_estimate": 0.07670641447368422,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.12631578947368421,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6519736842105263
+        },
+        "query_count": 190
+      }
+    },
+    "T04": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 0.9894736842105263,
+          "context_precision": 0.09894736842105262,
+          "context_recall": 0.9894736842105263,
+          "context_token_estimate": 1114.0,
+          "context_token_utilization_vs_8192_estimate": 0.135986328125,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.25263157894736843,
+          "relevant_evidence_retained": 0.9894736842105263,
+          "source_diversity": 0.6810526315789472
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 0.9157894736842105,
+          "context_precision": 0.18315789473684185,
+          "context_recall": 0.9157894736842105,
+          "context_token_estimate": 462.67894736842106,
+          "context_token_utilization_vs_8192_estimate": 0.05647936369243421,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.14210526315789473,
+          "relevant_evidence_retained": 0.9157894736842105,
+          "source_diversity": 0.6631578947368404
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 0.9631578947368421,
+          "context_precision": 0.12039473684210526,
+          "context_recall": 0.9631578947368421,
+          "context_token_estimate": 834.1789473684211,
+          "context_token_utilization_vs_8192_estimate": 0.10182848478618421,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.16842105263157894,
+          "relevant_evidence_retained": 0.9631578947368421,
+          "source_diversity": 0.6967105263157894
+        },
+        "query_count": 190
+      }
+    },
+    "T05": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 0.9421052631578948,
+          "context_precision": 0.0942105263157894,
+          "context_recall": 0.9421052631578948,
+          "context_token_estimate": 1099.6631578947367,
+          "context_token_utilization_vs_8192_estimate": 0.13423622532894736,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.21578947368421053,
+          "relevant_evidence_retained": 0.9421052631578948,
+          "source_diversity": 0.7347368421052616
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 0.8947368421052632,
+          "context_precision": 0.17894736842105233,
+          "context_recall": 0.8947368421052632,
+          "context_token_estimate": 447.60526315789474,
+          "context_token_utilization_vs_8192_estimate": 0.05463931435032895,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.1368421052631579,
+          "relevant_evidence_retained": 0.8947368421052632,
+          "source_diversity": 0.6684210526315773
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 0.9421052631578948,
+          "context_precision": 0.11776315789473685,
+          "context_recall": 0.9421052631578948,
+          "context_token_estimate": 814.8789473684211,
+          "context_token_utilization_vs_8192_estimate": 0.09947252775493422,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.1368421052631579,
+          "relevant_evidence_retained": 0.9421052631578948,
+          "source_diversity": 0.718421052631579
+        },
+        "query_count": 190
+      }
+    },
+    "T06": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 1.0,
+          "context_precision": 0.1,
+          "context_recall": 1.0,
+          "context_token_estimate": 1029.8315789473684,
+          "context_token_utilization_vs_8192_estimate": 0.12571186266447368,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.5210526315789473,
+          "relevant_evidence_retained": 1.0,
+          "source_diversity": 0.6494736842105263
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 1.0,
+          "context_precision": 0.2,
+          "context_recall": 1.0,
+          "context_token_estimate": 474.15263157894736,
+          "context_token_utilization_vs_8192_estimate": 0.05787995990953947,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.4368421052631579,
+          "relevant_evidence_retained": 1.0,
+          "source_diversity": 0.6831578947368402
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 1.0,
+          "context_precision": 0.125,
+          "context_recall": 1.0,
+          "context_token_estimate": 792.9684210526316,
+          "context_token_utilization_vs_8192_estimate": 0.09679790296052632,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.5210526315789473,
+          "relevant_evidence_retained": 1.0,
+          "source_diversity": 0.6578947368421053
+        },
+        "query_count": 190
+      }
+    },
+    "T07": {
+      "10": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.09947368421052631,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 1025.6736842105263,
+          "context_token_utilization_vs_8192_estimate": 0.12520430715460526,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.5210526315789473,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6705263157894732
+        },
+        "query_count": 190
+      },
+      "5": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.19894736842105262,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 482.63157894736844,
+          "context_token_utilization_vs_8192_estimate": 0.058914987664473686,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.4368421052631579,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6978947368421035
+        },
+        "query_count": 190
+      },
+      "8": {
+        "metrics": {
+          "answerable_with_context": 0.9947368421052631,
+          "context_precision": 0.12434210526315789,
+          "context_recall": 0.9947368421052631,
+          "context_token_estimate": 807.3421052631579,
+          "context_token_utilization_vs_8192_estimate": 0.09855250308388158,
+          "duplicate_evidence_rate": 0.0,
+          "explicit_hard_negative_present": 0.5210526315789473,
+          "relevant_evidence_retained": 0.9947368421052631,
+          "source_diversity": 0.6894736842105263
+        },
+        "query_count": 190
+      }
+    }
+  },
+  "decision_grade_production_validation": false,
+  "deployments": 0,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "generated_answer_metrics": "NOT_EXECUTED_NO_PINNED_GENERATOR_JUDGE_CONTRACT",
+  "generator_used": false,
+  "judge_used": false,
+  "merges": 0,
+  "production": "UNCHANGED",
+  "production_decision": "NOT_AUTHORIZED",
+  "result_kind": "RETRIEVAL_ONLY_RAG_PRECHECK_NOT_GENERATED_ANSWERS",
+  "source_text_report_sha256": "bc414c67128502194b5604b4cf6e460e8a5b61238ec3ed2c18e22ebd46d0834b"
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "issue": 101,
+  "status": "D4_NATIVE_2560_PARTIAL",
+  "preprocessing_id": "issue101-qwen3-official-single-sequence-v1",
+  "embedding_space_id": "issue101-d4-official-single-sequence-native-2560-v1",
+  "transport": "-p --no-escape --embd-separator <#issue101-single-sequence#>",
+  "separator_sha256": "fbe64b042fbefb329d3e1e495898b798e17f30aa79ef4592cf8224cfdd9829c8",
+  "runtime": "llama.cpp@a4a4c51f3d40e086b59b73b631b5c43c8fbf4504",
+  "model_sha256": "2b0cf8f17b4c723c27303015383c27ec4bf2d8314bb677d05e920dd70bb0f16b",
+  "gpu_uuid": "GPU-cf150279-b259-0608-019f-8f51e0664ff4",
+  "gpu_layers": 27,
+  "batch_size": 1,
+  "source_manifest": {
+    "path": "/var/lib/opennicf/eval/issue101/manifests/issue101-single-sequence-inputs.json",
+    "sha256": "9cc19532713c2195d71e7ede34e7b1205f7e58d4b992e2db12e1217e46d9f9b2",
+    "manifest_sha256": "5112755cf60340e7eab167f72143496dbf33ddf4a072edd2a537e51fdbf3c2fa",
+    "documents": 715,
+    "queries": 190,
+    "separator_collisions": 0
+  },
+  "old_incompatible_artifact": {
+    "path": "/var/lib/opennicf/eval/issue101/forensics/incompatible-newline-space/D4-OFFICIAL-documents-raw.json",
+    "sha256": "cfd2dfd5a9f2d710299b058bda0439938e422de446fcdfec6d1043f011e30234",
+    "records": 48,
+    "disposition": "REJECTED_FOR_NEW_SPACE=TRANSPORT_TOKENIZATION_INCOMPATIBLE",
+    "reused_records": 0
+  },
+  "new_artifact": {
+    "path": "/var/lib/opennicf/eval/issue101/artifacts/d4-official-single-sequence/documents-native-2560.json",
+    "sha256": "1eb8bd7fc1f1ec795f7b0727da79f07173d649fb74166157fd80355b900c54ea",
+    "accepted_documents": 16,
+    "accepted_queries": 0,
+    "native_dimension": 2560
+  },
+  "preflight": {
+    "normal_and_multiline": "PASS",
+    "one_sequence": "PASS",
+    "finite_native_2560": "PASS",
+    "normalized_norm_approximately_one": "PASS",
+    "blocking_record": "previously proven under repaired transport; not mixed with old vectors"
+  },
+  "executor": {
+    "ct": 308,
+    "hostname": "opennicf-embedding-eval",
+    "uvm_recovery": "modprobe nvidia_uvm",
+    "ct305_touched": false,
+    "production": "UNCHANGED",
+    "deployments": 0,
+    "merges": 0,
+    "worker_stopped": true
+  },
+  "blocked_work": ["complete native documents", "complete queries", "MRL derivation", "metrics", "publication report"]
+}
