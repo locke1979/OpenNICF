@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "issue": 102,
+  "status": "BLOCKED_CORPUS_RECOVERY",
+  "required": {
+    "documents": 715,
+    "queries": 190,
+    "authoritative_corpus_sha256": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1"
+  },
+  "recovered": {
+    "documents": 0,
+    "queries": 0,
+    "ordered_source_inputs": false,
+    "native_http_checkpoints": false
+  },
+  "smoke_fixture": {
+    "path": "tests/fixtures/retrieval_benchmark/v1/manifest.json",
+    "sha256": "4e764b6a8fe18b92f92cc18e568c42087e5cd44402fdf5d2e9313bc59f3809be",
+    "documents": 10,
+    "queries": 10,
+    "substitution_allowed": false
+  },
+  "search_scope": [
+    "current Issue 102 repository and tracked Git history",
+    "main-agent workspace and preserved OpenNICF worktrees",
+    "Issue 86/101/102 manifests, checkpoints, reports, and result bundles",
+    "Git reflogs and unreachable Git objects",
+    "GitHub branches, commits, PR #87, PR #103, and issue evidence",
+    "/var/lib/opennicf/eval/issue101",
+    "/var/lib/opennicf/eval/issue102",
+    "/tmp/issue101_d4_resume"
+  ],
+  "candidates_rejected": [
+    "10/10 sanitized smoke fixture: incomplete",
+    "retained 0.6B/4B vectors: partial and insufficient provenance",
+    "Issue 101 D4/2560: partial and transport/tokenization-incompatible",
+    "historical 4B GGUF: SHA-256 mismatch",
+    "Issue 86 complete vector counts: incompatible runtime provenance",
+    "D06-native-1024/reported completion: no materialized inputs or checkpoint"
+  ],
+  "benchmark": {
+    "ran": false,
+    "reason": "authoritative ordered source inputs unavailable"
+  },
+  "safety": {
+    "vl_scope": "OUT_OF_SCOPE",
+    "vl_enabled": false,
+    "ct308_http_evaluation": "OUT_OF_SCOPE",
+    "ct305_touched": false,
+    "remote_embedding_enabled": false,
+    "production_unchanged": true,
+    "reembedding": false,
+    "index_mutation": false,
+    "deployments": 0,
+    "merges": 0
+  }
+}
