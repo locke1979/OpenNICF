@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "issue": 305,
+  "audit_type": "READ_ONLY_BACKUP_CORPUS_RECOVERY",
+  "archive": {
+    "path": "/mnt/raid0store/backups/local/dump/vzdump-lxc-305-2026_08_22-20_31_25.tar.zst",
+    "size_bytes": 5850507957,
+    "mtime_utc": "2026-08-22T20:36:27Z",
+    "type": "zstd-compressed vzdump direct root-filesystem tar",
+    "tar_rc": 0,
+    "matching_member_count": 28403,
+    "sha256": null,
+    "sha256_status": "UNAVAILABLE_HASH_PROCESS_DISAPPEARED_WITHOUT_OUTPUT",
+    "hash_restarted": false,
+    "restored": false,
+    "mounted": false,
+    "extracted": false
+  },
+  "expected_corpus": {
+    "documents": 715,
+    "queries": 190,
+    "authoritative_digest": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1"
+  },
+  "result": {
+    "corpus_in_backup": "NOT_FOUND",
+    "corpus_recovery": "BLOCKED",
+    "benchmark_executed": false,
+    "candidate_valid": false,
+    "source_text_present": false,
+    "provenance_complete": false,
+    "digest_compatible": false
+  },
+  "candidate_categories": {
+    "corpus_manifests": {"status": "NOT_FOUND"},
+    "queries_labels": {"status": "NOT_FOUND"},
+    "vectors_checkpoints": {"status": "NO_VALIDATED_INPUT_ARTIFACT"},
+    "unrelated_production_content": {"status": "FOUND", "description": "runtime, model-cache, Python/library, and configuration members"}
+  },
+  "safety": {
+    "ct305_started": false,
+    "ct305_modified": false,
+    "production_storage_mutated": false,
+    "backup_restored": false,
+    "corpus_copied": false,
+    "ct308_touched": false,
+    "benchmark_executed": false,
+    "production_unchanged": true,
+    "human_review": "OUT_OF_SCOPE"
+  },
+  "next_action": "Obtain an authoritative 715-document/190-query corpus export through a separately authorized controlled path; do not restore or mount this backup"
+}
