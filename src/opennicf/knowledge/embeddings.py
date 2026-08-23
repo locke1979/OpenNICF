@@ -480,18 +480,50 @@ class HttpEmbeddingBackend:
     ) -> EmbeddingResult:
         payload = self._request(
             "/v1/embeddings",
-            {"input": list(texts), "purpose": purpose, "dimension": self.dimension},
+            {
+                "model": self._info.model,
+                "input": list(texts),
+                "purpose": purpose,
+                "dimension": self.dimension,
+            },
         )
-        vectors = tuple(
-            _normalize(item["embedding"] if isinstance(item, dict) else item)
-            for item in payload.get("data", [])
-        )
-        if len(vectors) != len(texts) or any(
-            len(vector) != self.dimension for vector in vectors
+        response_model = payload.get("model")
+        if response_model is not None and response_model != self._info.model:
+            raise EmbeddingError("local embedding service returned the wrong model")
+        if payload.get("fallback", False):
+            raise EmbeddingError(
+                "local embedding service returned a CPU fallback for the configured space"
+            )
+        for response_dimension in (
+            payload.get("dimension"),
+            payload.get("dimensions"),
         ):
+            if response_dimension is not None and response_dimension != self.dimension:
+                raise EmbeddingError(
+                    "local embedding service returned the wrong embedding dimension"
+                )
+        data = payload.get("data")
+        if not isinstance(data, list) or len(data) != len(texts):
             raise EmbeddingError(
                 "local embedding service returned the wrong result shape"
             )
+        vectors: list[tuple[float, ...]] = []
+        for index, item in enumerate(data):
+            if not isinstance(item, dict) or item.get("index") != index:
+                raise EmbeddingError(
+                    "local embedding service returned the wrong result shape"
+                )
+            values = item.get("embedding")
+            if not isinstance(values, (list, tuple)) or len(values) != self.dimension:
+                raise EmbeddingError(
+                    "local embedding service returned the wrong embedding dimension"
+                )
+            try:
+                vectors.append(_normalize(values))
+            except (TypeError, ValueError):
+                raise EmbeddingError(
+                    "local embedding service returned the wrong result shape"
+                ) from None
         return EmbeddingResult(
             model=self._info.model,
             dimensions=self.dimension,

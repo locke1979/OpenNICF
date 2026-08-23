@@ -9,6 +9,7 @@ from opennicf.knowledge import (
     EmbeddingMigration,
     GeminiEmbeddingBackend,
     HashingEmbeddingBackend,
+    HttpEmbeddingBackend,
     LocalFirstEmbeddingService,
     PrivacyBoundaryError,
     QwenEmbeddingBackend,
@@ -19,6 +20,78 @@ from opennicf.knowledge.store import _build_search_sql, _upsert_embedding
 
 def norm(vector):
     return math.sqrt(sum(value * value for value in vector))
+
+
+class _HttpResponse:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def read(self):
+        import json
+
+        return json.dumps(self.payload).encode()
+
+
+def test_http_embedding_backend_selects_model_and_preserves_space(monkeypatch):
+    requests = []
+
+    def urlopen(request, timeout):
+        import json
+
+        requests.append((json.loads(request.data), timeout))
+        return _HttpResponse({
+            "model": "Qwen/Qwen3-Embedding-0.6B",
+            "data": [{"object": "embedding", "index": 0, "embedding": [3.0, 4.0]}],
+        })
+
+    monkeypatch.setattr("opennicf.knowledge.embeddings.urlopen", urlopen)
+    backend = HttpEmbeddingBackend("http://embedding", dimension=2)
+    result = backend.embed(["evidence"])
+    assert requests[0][0]["model"] == backend.info.model
+    assert result.model == backend.info.model
+    assert result.embedding_space_id == backend.info.embedding_space_id
+    assert result.dimensions == 2
+
+
+@pytest.mark.parametrize(
+    "response, message",
+    [
+        ({"model": "other", "data": []}, "wrong model"),
+        ({"model": "Qwen/Qwen3-Embedding-0.6B", "dimension": 3, "data": []}, "dimension"),
+        ({"model": "Qwen/Qwen3-Embedding-0.6B", "dimensions": 3, "data": []}, "dimension"),
+        ({"model": "Qwen/Qwen3-Embedding-0.6B", "data": []}, "shape"),
+        ({"model": "Qwen/Qwen3-Embedding-0.6B", "data": [{"index": 1, "embedding": [1.0, 2.0]}]}, "shape"),
+    ],
+)
+def test_http_embedding_backend_fails_closed_on_response_mismatch(monkeypatch, response, message):
+    monkeypatch.setattr(
+        "opennicf.knowledge.embeddings.urlopen",
+        lambda _request, timeout: _HttpResponse(response),
+    )
+    backend = HttpEmbeddingBackend("http://embedding", dimension=2)
+    with pytest.raises(EmbeddingError, match=message):
+        backend.embed(["evidence"])
+
+
+def test_production_style_service_does_not_cpu_fallback(monkeypatch):
+    preferred = HttpEmbeddingBackend("http://embedding", dimension=8)
+    def unavailable(_request, **_kwargs):
+        raise EmbeddingError("synthetic unavailable worker")
+
+    monkeypatch.setattr("opennicf.knowledge.embeddings.urlopen", unavailable)
+    service = LocalFirstEmbeddingService(
+        preferred_backend=preferred,
+        cpu_backend=HashingEmbeddingBackend(dimensions=8),
+        allow_cpu_fallback=False,
+    )
+    with pytest.raises(EmbeddingError):
+        service.embed(["evidence"])
 
 
 def test_qwen_query_document_contract_and_normalized_768_output():
