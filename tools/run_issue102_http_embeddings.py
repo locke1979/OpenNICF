@@ -35,12 +35,15 @@ def normalize_prefix(values: list[Any], dimension: int) -> list[float]:
     return [value / norm for value in prefix]
 
 
-def request_embedding(base_url: str, model: str, text: str, timeout: float) -> tuple[list[float], dict[str, Any]]:
-    payload = json.dumps({"model": model, "input": text}).encode("utf-8")
+def request_embedding(base_url: str, model: str, text: str, timeout: float, service_token: str | None) -> tuple[list[float], dict[str, Any]]:
+    payload = json.dumps({"model": model, "input": [text]}).encode("utf-8")
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    if service_token:
+        headers["Authorization"] = f"Bearer {service_token}"
     request = urllib.request.Request(
         base_url.rstrip("/") + "/v1/embeddings",
         data=payload,
-        headers={"Accept": "application/json", "Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     try:
@@ -55,7 +58,7 @@ def request_embedding(base_url: str, model: str, text: str, timeout: float) -> t
     if not isinstance(result, dict) or result.get("fallback"):
         raise RuntimeError("embedding response indicates fallback or invalid payload")
     response_model = result.get("model")
-    if response_model is not None and response_model != model:
+    if response_model != model:
         raise RuntimeError("embedding response model mismatch")
     data = result.get("data")
     if not isinstance(data, list) or len(data) != 1 or not isinstance(data[0], dict):
@@ -111,8 +114,9 @@ def run_group(args: argparse.Namespace, config: dict[str, Any], model: str, grou
             continue
         text = item["text"]
         prompt = text if group == "documents" else preprocessing["query_template"].format(text=text)
-        vector, telemetry = request_embedding(args.base_url, model, prompt, args.timeout)
-        if len(vector) != model_config["native_dimension"]:
+        vector, telemetry = request_embedding(args.base_url, model, prompt, args.timeout, args.service_token)
+        expected_native_dimension = model_config.get("native_dimension")
+        if expected_native_dimension is not None and len(vector) != expected_native_dimension:
             raise RuntimeError(f"{model} returned dimension {len(vector)}, expected {model_config['native_dimension']}")
         projected = normalize_prefix(vector, model_config["evaluation_dimension"])
         accepted[item["id"]] = {
@@ -140,6 +144,7 @@ def main() -> None:
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--model", action="append", required=True)
     parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--service-token", default=os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN"))
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8"))
     for model in args.model:

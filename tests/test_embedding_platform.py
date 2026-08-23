@@ -63,6 +63,7 @@ def test_http_embedding_backend_selects_model_and_preserves_space(monkeypatch):
     "response, message",
     [
         ({"model": "other", "data": []}, "wrong model"),
+        ({"data": []}, "wrong model"),
         ({"model": "Qwen/Qwen3-Embedding-0.6B", "dimension": 3, "data": []}, "dimension"),
         ({"model": "Qwen/Qwen3-Embedding-0.6B", "dimensions": 3, "data": []}, "dimension"),
         ({"model": "Qwen/Qwen3-Embedding-0.6B", "data": []}, "shape"),
@@ -92,6 +93,61 @@ def test_production_style_service_does_not_cpu_fallback(monkeypatch):
     )
     with pytest.raises(EmbeddingError):
         service.embed(["evidence"])
+
+
+def test_http_embedding_backend_projects_verified_native_dimension(monkeypatch):
+    def urlopen(_request, timeout):
+        return _HttpResponse({
+            "model": "text-embedding-qwen3-embedding-4b",
+            "data": [{"index": 0, "embedding": [3.0, 4.0, 99.0, 100.0]}],
+        })
+
+    monkeypatch.setattr("opennicf.knowledge.embeddings.urlopen", urlopen)
+    backend = HttpEmbeddingBackend(
+        "http://embedding",
+        model="text-embedding-qwen3-embedding-4b",
+        dimension=2,
+        native_dimension=4,
+    )
+    result = backend.embed(["evidence"])
+    assert result.dimensions == 2
+    assert result.vectors[0] == pytest.approx((0.6, 0.8))
+    assert result.metadata["native_dimension"] == 4
+
+
+def test_http_embedding_backend_rejects_alias_model(monkeypatch):
+    monkeypatch.setattr(
+        "opennicf.knowledge.embeddings.urlopen",
+        lambda _request, timeout: _HttpResponse({
+            "model": "text-embedding-qwen3-embedding-4b",
+            "data": [{"index": 0, "embedding": [1.0, 2.0]}],
+        }),
+    )
+    backend = HttpEmbeddingBackend(
+        "http://embedding",
+        model="qwen.qwen3-vl-embedding-2b",
+        dimension=2,
+    )
+    with pytest.raises(EmbeddingError, match="wrong model"):
+        backend.embed(["evidence"])
+
+
+@pytest.mark.parametrize("values", ([float("nan"), 1.0], [0.0, 0.0]))
+def test_http_embedding_backend_rejects_nonfinite_or_zero_projection(monkeypatch, values):
+    monkeypatch.setattr(
+        "opennicf.knowledge.embeddings.urlopen",
+        lambda _request, timeout: _HttpResponse({
+            "model": "text-embedding-qwen3-embedding-4b",
+            "data": [{"index": 0, "embedding": values}],
+        }),
+    )
+    backend = HttpEmbeddingBackend(
+        "http://embedding",
+        model="text-embedding-qwen3-embedding-4b",
+        dimension=2,
+    )
+    with pytest.raises(EmbeddingError, match="non-finite or zero"):
+        backend.embed(["evidence"])
 
 
 def test_qwen_query_document_contract_and_normalized_768_output():

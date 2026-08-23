@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         config.validate()
         if config.production and not config.embedding_base_url:
             raise RuntimeError("Qwen embedding worker URL is required in production")
-        preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.embedding_model, dimension=config.embedding_dimension) if config.embedding_base_url else None
+        preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.embedding_model, dimension=config.embedding_dimension, native_dimension=config.embedding_native_dimension) if config.embedding_base_url else None
         embeddings = LocalFirstEmbeddingService(
             preferred_backend=preferred,
             cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension),

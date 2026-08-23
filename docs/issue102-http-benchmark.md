@@ -22,11 +22,13 @@ python3 tools/run_issue102_http_embeddings.py \
   --model qwen.qwen3-vl-embedding-2b
 ```
 
-The endpoint currently returns 2,560-dimensional vectors for both IDs and
-omits optional top-level model metadata. The text model can therefore be
-tested against its expected 2,560 native dimension. The VL ID must remain
-blocked until its serving identity and expected native dimension are proven;
-an alias returning the text model is not accepted as a VL benchmark result.
+The endpoint currently returns 2,560-dimensional vectors for both IDs. The
+text model response identifies itself as `text-embedding-qwen3-embedding-4b`.
+The VL ID response also identifies itself as the text model and is byte-for-byte
+identical for the probe input; it is therefore rejected as an alias, not
+accepted as a VL benchmark result. The text worker projects the verified native
+2,560-vector to the configured 768-dimensional space by taking the first 768
+values and L2-normalizing them.
 
 All results are `AUTOMATED_NON_HUMAN_REVIEWED` evidence. Existing T00/T01
 spaces and canonical Issue #101 artifacts remain immutable.

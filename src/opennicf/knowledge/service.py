@@ -37,6 +37,7 @@ class KnowledgeServiceConfig:
     embedding_token: str = ""
     embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
     embedding_dimension: int = 768
+    embedding_native_dimension: int = 768
     embedding_timeout: float = 30.0
     environment: str = "development"
 
@@ -61,6 +62,7 @@ class KnowledgeServiceConfig:
             embedding_token=os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN", ""),
             embedding_model=os.environ.get("OPENNICF_EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B"),
             embedding_dimension=integer("OPENNICF_EMBEDDING_DIMENSION", 768),
+            embedding_native_dimension=integer("OPENNICF_EMBEDDING_NATIVE_DIMENSION", 768),
             embedding_timeout=float(os.environ.get("OPENNICF_EMBEDDING_TIMEOUT", "30")),
             environment=os.environ.get("OPENNICF_ENVIRONMENT", "development").lower(),
         )
@@ -125,7 +127,7 @@ class KnowledgeService:
         config.validate()
         embedding = None
         if config.embedding_base_url:
-            preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.embedding_model, dimension=config.embedding_dimension)
+            preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.embedding_model, dimension=config.embedding_dimension, native_dimension=config.embedding_native_dimension)
             embedding = LocalFirstEmbeddingService(preferred_backend=preferred, cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension), allow_cpu_fallback=not config.production)
         else:
             if config.production:

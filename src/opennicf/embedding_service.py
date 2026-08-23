@@ -61,20 +61,21 @@ class Handler(BaseHTTPRequestHandler):
             self._json(401, {"error": "unauthorized"})
             return
         if self.path == "/health":
-            info = SERVICE.info()
-            self._json(
-                200,
-                {
-                    "status": "ok",
+            try:
+                probe = SERVICE.embed(["opennicf-health-probe"], purpose="retrieval_document", prefer_gpu=True)
+                info = SERVICE.info()
+                self._json(200, {
+                    "status": "ok" if not probe.fallback else "degraded",
                     "provider": "qwen",
                     "model": info.model,
                     "dimension": info.dimensions,
                     "device": info.device,
-                    "normalized": True,
-                    "fallback": info.fallback,
-                    "embedding_space_id": info.embedding_space_id,
-                },
-            )
+                    "normalized": probe.normalized,
+                    "fallback": probe.fallback,
+                    "embedding_space_id": probe.embedding_space_id,
+                })
+            except Exception as exc:  # noqa: BLE001 - health must be safe to expose
+                self._json(503, {"status": "not_ready", "provider": "qwen", "error": type(exc).__name__})
         elif self.path == "/v1/models":
             info = SERVICE.info()
             self._json(
@@ -103,6 +104,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             size = int(self.headers.get("Content-Length", "0"))
             request = json.loads(self.rfile.read(size))
+            if request.get("model") != MODEL:
+                raise ValueError("requested model is not the configured worker model")
             texts = request.get("input")
             purpose = request.get("purpose", "retrieval_document")
             dimension = int(request.get("dimension", DIMENSION))

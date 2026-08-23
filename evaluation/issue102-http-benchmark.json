@@ -13,9 +13,10 @@
       "modality": "text"
     },
     "qwen.qwen3-vl-embedding-2b": {
-      "native_dimension": 2048,
+      "native_dimension": null,
       "evaluation_dimension": 768,
-      "modality": "text_and_vision"
+      "modality": "text_and_vision",
+      "status": "blocked_until_serving_identity_is_verified"
     }
   },
   "preprocessing": {
