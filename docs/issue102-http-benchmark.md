@@ -54,5 +54,14 @@ The current observed status is `TEXT_ENDPOINT_USABLE=true` and
 model identity and a 2,560-dimensional vector. Endpoint-host RAM and queue
 capacity remain `UNVERIFIED`.
 
+The native LM Studio audit confirms the VL key is loaded as a `qwen3vl` GGUF
+generation/VLM instance (`Q5_K_S`, 2B, 2,049,980,576 bytes), not as an
+embedding instance. With the text embedding instance unloaded, the OpenAI
+embedding route reported no embedding model loaded; the native v0 embedding
+route likewise reported no embedding model, while chat completion succeeded.
+Image-only and text-plus-image embedding inputs were rejected by the endpoint.
+The final endpoint state was restored to the text embedding instance only.
+See `evaluation/results/issue102-lmstudio-native-audit-2026-08-23.json`.
+
 All results are `AUTOMATED_NON_HUMAN_REVIEWED` evidence. Existing T00/T01
 spaces and canonical Issue #101 artifacts remain immutable.
