@@ -35,11 +35,19 @@ class KnowledgeServiceConfig:
     queue_state_path: str = "/var/lib/opennicf/knowledge-queue.json"
     embedding_base_url: str = ""
     embedding_token: str = ""
-    embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
+    text_embedding_model: str = "text-embedding-qwen3-embedding-4b"
+    vl_embedding_model: str = "qwen.qwen3-vl-embedding-2b"
     embedding_dimension: int = 768
-    embedding_native_dimension: int = 768
+    embedding_native_dimension: int = 2560
     embedding_timeout: float = 30.0
+    embedding_remote_enabled: bool = False
+    embedding_space_revision: str = "production-http-v1"
     environment: str = "development"
+
+    @property
+    def embedding_model(self) -> str:
+        """Compatibility view for callers that only support text embeddings."""
+        return self.text_embedding_model
 
     @classmethod
     def from_env(cls) -> "KnowledgeServiceConfig":
@@ -60,10 +68,13 @@ class KnowledgeServiceConfig:
             queue_state_path=os.environ.get("OPENNICF_KNOWLEDGE_QUEUE_STATE", "/var/lib/opennicf/knowledge-queue.json"),
             embedding_base_url=os.environ.get("OPENNICF_EMBEDDING_BASE_URL", "").strip(),
             embedding_token=os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN", ""),
-            embedding_model=os.environ.get("OPENNICF_EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B"),
+            text_embedding_model=os.environ.get("OPENNICF_TEXT_EMBEDDING_MODEL", "text-embedding-qwen3-embedding-4b"),
+            vl_embedding_model=os.environ.get("OPENNICF_VL_EMBEDDING_MODEL", "qwen.qwen3-vl-embedding-2b"),
             embedding_dimension=integer("OPENNICF_EMBEDDING_DIMENSION", 768),
-            embedding_native_dimension=integer("OPENNICF_EMBEDDING_NATIVE_DIMENSION", 768),
+            embedding_native_dimension=integer("OPENNICF_EMBEDDING_NATIVE_DIMENSION", 2560),
             embedding_timeout=float(os.environ.get("OPENNICF_EMBEDDING_TIMEOUT", "30")),
+            embedding_remote_enabled=os.environ.get("OPENNICF_EMBEDDING_REMOTE_ENABLED", "false").lower() == "true",
+            embedding_space_revision=os.environ.get("OPENNICF_EMBEDDING_SPACE_REVISION", "production-http-v1"),
             environment=os.environ.get("OPENNICF_ENVIRONMENT", "development").lower(),
         )
 
@@ -80,6 +91,12 @@ class KnowledgeServiceConfig:
             raise KnowledgeServiceError("knowledge service requires a PostgreSQL DSN")
         if not self.object_store_root:
             raise KnowledgeServiceError("knowledge service requires an object-store root")
+        if self.embedding_remote_enabled and not self.embedding_base_url:
+            raise KnowledgeServiceError("enabled embedding endpoint URL is required")
+        if self.production and not self.embedding_remote_enabled:
+            raise KnowledgeServiceError("production embedding endpoint is disabled")
+        if self.embedding_dimension != 768 or self.embedding_native_dimension != 2560:
+            raise KnowledgeServiceError("the shared Qwen endpoint contract requires 2560 native and 768 output dimensions")
 
 
 _TEXT_BYTE_FIELDS = frozenset({
@@ -126,9 +143,9 @@ class KnowledgeService:
         config = config or KnowledgeServiceConfig.from_env()
         config.validate()
         embedding = None
-        if config.embedding_base_url:
-            preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.embedding_model, dimension=config.embedding_dimension, native_dimension=config.embedding_native_dimension)
-            embedding = LocalFirstEmbeddingService(preferred_backend=preferred, cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension), allow_cpu_fallback=not config.production)
+        if config.embedding_remote_enabled:
+            preferred = HttpEmbeddingBackend(config.embedding_base_url, service_token=config.embedding_token, timeout=config.embedding_timeout, model=config.text_embedding_model, dimension=config.embedding_dimension, native_dimension=config.embedding_native_dimension, model_revision=config.embedding_space_revision)
+            embedding = LocalFirstEmbeddingService(preferred_backend=preferred, cpu_backend=HashingEmbeddingBackend(dimensions=config.embedding_dimension), allow_cpu_fallback=False)
         else:
             if config.production:
                 raise KnowledgeServiceError("Qwen embedding worker URL is required in production")
@@ -155,7 +172,7 @@ class KnowledgeService:
                 )
             except Exception as exc:  # noqa: BLE001 - readiness must fail closed
                 raise KnowledgeServiceError("Qwen embedding dependency is not ready") from exc
-            expected_space = f"{self.config.embedding_model}:{self.config.embedding_dimension}:v1"
+            expected_space = f"{self.config.text_embedding_model}:{self.config.embedding_dimension}:{self.config.embedding_space_revision}"
             if (
                 probe.fallback
                 or probe.provider != "LOCAL"

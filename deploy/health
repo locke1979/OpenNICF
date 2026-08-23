@@ -21,28 +21,44 @@ def _flag(name: str, default: str = "ok") -> bool:
 
 
 def _embedding_report() -> dict:
+    if os.environ.get("OPENNICF_EMBEDDING_REMOTE_ENABLED", "false").lower() != "true":
+        return {
+            "reachable": False,
+            "provider_healthy": False,
+            "remote_enabled": False,
+            "detail": "embedding_endpoint_disabled",
+        }
     base_url = os.environ.get("OPENNICF_EMBEDDING_BASE_URL", "").rstrip("/")
     if not base_url:
         return {
             "reachable": _flag("EMBEDDING_HEALTH"),
             "provider_healthy": _flag("EMBEDDING_PROVIDER_HEALTH"),
+            "remote_enabled": True,
         }
     headers = {"Accept": "application/json"}
     token = os.environ.get("OPENNICF_EMBEDDING_SERVICE_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
     try:
-        request = Request(base_url + "/health", headers=headers)
+        request = Request(base_url + "/v1/models", headers=headers)
         with urlopen(request, timeout=5) as response:
             payload = json.loads(response.read().decode())
+        advertised = {
+            item.get("id") for item in payload.get("data", [])
+            if isinstance(item, dict)
+        }
+        text_model = os.environ.get(
+            "OPENNICF_TEXT_EMBEDDING_MODEL",
+            "text-embedding-qwen3-embedding-4b",
+        )
         return {
-            "reachable": payload.get("status") == "ok",
-            "provider_healthy": payload.get("status") == "ok"
-            and not payload.get("fallback", False),
-            "cpu_fallback": bool(payload.get("fallback", False)),
+            "reachable": True,
+            "provider_healthy": text_model in advertised,
+            "text_model_advertised": text_model in advertised,
+            "remote_enabled": True,
         }
     except Exception:  # noqa: BLE001 - dependency probes become aggregate health state
-        return {"reachable": False, "provider_healthy": False, "cpu_fallback": False}
+        return {"reachable": False, "provider_healthy": False, "remote_enabled": True}
 
 
 def main() -> int:

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "endpoint": "http://192.168.1.137:1234",
+  "service_token_used": false,
+  "endpoint_ram": "UNVERIFIED",
+  "models": {
+    "text_exact": true,
+    "vl_exact": true
+  },
+  "text": {
+    "response_model": "text-embedding-qwen3-embedding-4b",
+    "native_dimension": 2560,
+    "finite": true,
+    "deterministic": true,
+    "batch_ordered": true,
+    "invalid_model_rejected": true,
+    "probe_vector_sha256": "986a223075b4cbdaa020c1aa77c35af5a67d1f3155fa30ca783b72f880b546ed"
+  },
+  "vl": {
+    "requested_model": "qwen.qwen3-vl-embedding-2b",
+    "response_model": "text-embedding-qwen3-embedding-4b",
+    "status": "VL_ALIASED_OR_UNSUPPORTED",
+    "multimodal_probe": "NOT_RUN",
+    "production_enabled": false,
+    "evaluation_enabled": false
+  },
+  "production_index_mutated": false,
+  "deployment": false
+}

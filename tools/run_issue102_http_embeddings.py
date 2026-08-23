@@ -1,8 +1,8 @@
 """Run isolated, checkpointed HTTP embedding probes for issue #102.
 
 This runner never writes canonical issue #101 artifacts. It sends one UTF-8
-input per request, records the raw vector digest, and stores only the requested
-evaluation prefix after L2 normalization.
+input per request, checkpoints the native vector and its digest, and stores the
+requested evaluation prefix after L2 normalization.
 """
 
 from __future__ import annotations
@@ -103,6 +103,7 @@ def run_group(args: argparse.Namespace, config: dict[str, Any], model: str, grou
         "model": model,
         "native_dimension_expected": model_config["native_dimension"],
         "evaluation_dimension": model_config["evaluation_dimension"],
+        "embedding_space_id": model_config.get("embedding_space_id"),
         "group": group,
         "endpoint": args.base_url,
         "preprocessing": preprocessing,
@@ -125,7 +126,10 @@ def run_group(args: argparse.Namespace, config: dict[str, Any], model: str, grou
             "source_sha256": digest(text.encode("utf-8")),
             "prompt_sha256": digest(prompt.encode("utf-8")),
             "raw_vector_sha256": telemetry["raw_vector_sha256"],
+            "native_dimension": len(vector),
+            "native_embedding": vector,
             "dimension": model_config["evaluation_dimension"],
+            "embedding_space_id": model_config.get("embedding_space_id"),
             "embedding": projected,
         }
         state["data"] = [accepted[row["id"]] for row in inputs if row["id"] in accepted]

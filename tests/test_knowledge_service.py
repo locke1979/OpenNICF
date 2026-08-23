@@ -59,6 +59,28 @@ def test_production_configuration_requires_durable_dependencies():
         KnowledgeServiceConfig(environment="production", postgres_dsn="postgresql://db").validate()
 
 
+def test_shared_embedding_endpoint_is_explicitly_gated_and_has_two_model_contracts():
+    config = KnowledgeServiceConfig(
+        postgres_dsn="postgresql://db",
+        object_store_root="/tmp/objects",
+        environment="production",
+    )
+    with pytest.raises(RuntimeError, match="disabled"):
+        config.validate()
+
+    enabled = KnowledgeServiceConfig(
+        postgres_dsn="postgresql://db",
+        object_store_root="/tmp/objects",
+        environment="production",
+        embedding_base_url="http://192.168.1.137:1234",
+        embedding_remote_enabled=True,
+    )
+    enabled.validate()
+    assert enabled.text_embedding_model == "text-embedding-qwen3-embedding-4b"
+    assert enabled.vl_embedding_model == "qwen.qwen3-vl-embedding-2b"
+    assert enabled.embedding_native_dimension == 2560
+
+
 def test_jsonable_preserves_identifiers_but_does_not_expose_raw_bytes():
     assert _jsonable({"source_id": b"source-1", "content": b"synthetic evidence"}) == {
         "source_id": "source-1",
