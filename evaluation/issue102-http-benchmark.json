@@ -21,7 +21,8 @@
       "modality": "text_and_vision",
       "embedding_space_id": "ISSUE102_HTTP_VL_QWEN3_2B_768_V1",
       "projection": "blocked_until_native_dimension_and_pooling_are_verified",
-      "status": "VL_UNVERIFIED"
+      "status": "OUT_OF_SCOPE",
+      "benchmark_required": false
     }
   },
   "preprocessing": {

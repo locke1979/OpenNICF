@@ -91,6 +91,8 @@ def load_inputs(path: pathlib.Path, group: str) -> list[dict[str, str]]:
 
 def run_group(args: argparse.Namespace, config: dict[str, Any], model: str, group: str) -> pathlib.Path:
     model_config = config["models"][model]
+    if model_config.get("status") == "OUT_OF_SCOPE":
+        raise ValueError(f"model is permanently out of scope: {model}")
     inputs = load_inputs(pathlib.Path(args.input_root) / config["input_manifest"], group)
     expected = config["expected_counts"].get(group)
     if expected is not None and expected != len(inputs):

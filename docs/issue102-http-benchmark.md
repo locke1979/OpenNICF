@@ -31,7 +31,6 @@ python3 tools/run_issue102_http_embeddings.py \
   --output-root /var/lib/opennicf/eval/issue102 \
   --base-url http://192.168.1.137:1234 \
   --model text-embedding-qwen3-embedding-4b \
-  --model qwen.qwen3-vl-embedding-2b \
   --service-token "$OPENNICF_EMBEDDING_SERVICE_TOKEN"
 ```
 
@@ -49,10 +48,10 @@ response identifies itself as the text model and is rejected as an alias. The
 VL model remains blocked until its serving identity and native dimension are
 proven.
 
-The current observed status is `TEXT_ENDPOINT_USABLE=true` and
-`VL_ENDPOINT_STATUS=ALIASED_OR_UNSUPPORTED`: the VL request returns the text
-model identity and a 2,560-dimensional vector. Endpoint-host RAM and queue
-capacity remain `UNVERIFIED`.
+VL is now permanently out of scope for this workstream. Its audit disposition
+is preserved as `VL_SCOPE=OUT_OF_SCOPE`, `VL_ENABLED=false`, and
+`VL_BENCHMARK=NOT_REQUIRED`. The text endpoint remains independently usable.
+Endpoint-host RAM and queue capacity remain `UNVERIFIED`.
 
 The native LM Studio audit confirms the VL key is loaded as a `qwen3vl` GGUF
 generation/VLM instance (`Q5_K_S`, 2B, 2,049,980,576 bytes), not as an
