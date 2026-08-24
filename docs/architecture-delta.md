@@ -6,6 +6,22 @@ This document is an evaluation design. It does not change the active model,
 embedding space, production index, service configuration, or QwenAgent
 runtime authority.
 
+## Issue #102 shared endpoint migration
+
+Production and evaluation consumers now have one explicit endpoint contract:
+`http://192.168.1.137:1234`. Text requests select
+`text-embedding-qwen3-embedding-4b` and require a finite native 2,560-D vector;
+storage derives a separate endpoint-bound 768-D space by prefix truncation and
+L2 renormalization. The VL model is configured separately as
+`qwen.qwen3-vl-embedding-2b`, but remains `VL_UNVERIFIED` and disabled because
+the endpoint currently returns the text model identity for that request.
+
+`OPENNICF_EMBEDDING_REMOTE_ENABLED` defaults to false. Enabling it is an
+operational gate requiring preflight, provenance, capacity evidence, backup,
+rollback, and deployment approval. No production index or canonical T00-T07
+space is mutated by this migration. CT305 remains untouched and CT308 local
+inference is out of scope for the HTTP benchmark.
+
 ## Current main path
 
 ```text

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "issue": 305,
+  "audit_type": "READ_ONLY_CORPUS_RECOVERY",
+  "status": "CORPUS_IN_CT305_NOT_FOUND",
+  "corpus_recovery": "BLOCKED",
+  "expected": {
+    "documents": 715,
+    "queries": 190,
+    "authoritative_digest_prefix": "cb6f30f5",
+    "authoritative_digest": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1"
+  },
+  "proxmox": {
+    "host": "hyper",
+    "address": "192.168.1.116",
+    "identity_verified": true,
+    "version": "8.4.11",
+    "kernel": "6.8.12-41-pve"
+  },
+  "ct305": {
+    "status": "stopped",
+    "started": false,
+    "config_mutated": false,
+    "rootfs_config": "ssdpool:subvol-305-disk-0,size=16G",
+    "rootfs_host_path": "/ssdpool/subvol-305-disk-0",
+    "bind_mounts_in_config": [],
+    "relevant_live_candidates": [],
+    "model_cache_only": "Qwen3-Embedding-0.6B metadata was present; not a corpus candidate"
+  },
+  "paths_inspected": [
+    "/ssdpool/subvol-305-disk-0/var/lib/opennicf",
+    "/ssdpool/subvol-305-disk-0/opt/opennicf",
+    "/ssdpool/subvol-305-disk-0/etc/systemd/system",
+    "/ssdpool/subvol-305-disk-0/etc/opennicf",
+    "/ssdpool/subvol-305-disk-0/etc/cron.d",
+    "/ssdpool/backups",
+    "/mnt/raid0store/backups/local"
+  ],
+  "service_configuration": {
+    "unit": "/ssdpool/subvol-305-disk-0/etc/systemd/system/opennicf-embedding-worker.service",
+    "environment_file": "/ssdpool/subvol-305-disk-0/etc/opennicf/embedding-worker.env",
+    "environment_values_printed": false,
+    "service_tokens_printed": false,
+    "writable_path": "/var/lib/opennicf"
+  },
+  "candidates": [
+    {
+      "path": "/mnt/raid0store/backups/local/dump/vzdump-lxc-305-2026_08_22-20_31_25.tar.zst",
+      "type": "zstd-compressed vzdump archive",
+      "size_bytes": 5850507957,
+      "mtime_utc": "2026-08-22T20:36:27Z",
+      "sha256": null,
+      "sha256_status": "NOT_OBTAINED_READ_ONLY_SESSION_ENDED",
+      "source_text_inspected": false,
+      "restored_or_mounted": false,
+      "validation": "UNVALIDATED_BACKUP_CANDIDATE",
+      "rejection_reason": "No controlled restore/export authorized; cannot establish ordered corpus identity"
+    }
+  ],
+  "safety": {
+    "read_only_inspection": true,
+    "ct305_touched": false,
+    "ct305_started": false,
+    "ct308_touched": false,
+    "models_loaded": false,
+    "embeddings_run": false,
+    "production_unchanged": true,
+    "configuration_changed": false,
+    "indexes_changed": false,
+    "databases_changed": false,
+    "mounts_changed": false,
+    "permissions_changed": false,
+    "data_copied": false,
+    "data_deleted": false,
+    "data_reembedded": false
+  },
+  "next_operator_action": "Separately authorize controlled non-destructive inspection/export of the identified CT305 backup or restore the original sanitized corpus from its owner"
+}

@@ -1,0 +1,7 @@
+{
+  "algorithm":"ordered tracked source files; UTF-8 replacement decoding; 300-line non-overlapping chunks; empty chunks discarded",
+  "corpus_id":"issue102-http-newcorpus-v1-326x190",
+  "input_inventory_sha256":"d49fb8116ae3b040ad51069500d4f6302311768deb3cce5f89796ed0ed254dc7",
+  "preprocessing_id":"issue102-deterministic-chunker-v1",
+  "seed":10220260824
+}

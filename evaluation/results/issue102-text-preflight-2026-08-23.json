@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "endpoint": "http://192.168.1.137:1234",
+  "model": "text-embedding-qwen3-embedding-4b",
+  "service_token_used": false,
+  "runtime_api_version": "UNVERIFIED",
+  "serving_fingerprint": "UNVERIFIED",
+  "artifact_digest": "UNVERIFIED",
+  "native_model_inventory": {
+    "api_v1_models": "PASS",
+    "api_v0_models": "PASS",
+    "model_advertised_exactly": true,
+    "loaded_instance_id": "text-embedding-qwen3-embedding-4b",
+    "type": "embedding",
+    "quantization": "Q4_K_M",
+    "params": "4B",
+    "size_bytes": 2496703776,
+    "context_length": 4098
+  },
+  "contract": {
+    "native_dimension": 2560,
+    "derived_dimension": 768,
+    "projection": "first_n_values_then_l2_normalize",
+    "normalization": "L2"
+  },
+  "probes": {
+    "simple": "PASS",
+    "multiline_unicode": "PASS",
+    "long_input_16000_chars": "PASS",
+    "repeated_identical": "PASS",
+    "list_ordering_3": "PASS",
+    "malformed_input": "PASS_REJECTED_HTTP_400",
+    "unknown_model": "FAIL_OPEN_ENDPOINT_RETURNED_TEXT_IDENTITY; CLIENT_FAILS_CLOSED_ON_IDENTITY_MISMATCH"
+  },
+  "runner_capacity": {
+    "available_ram_bytes": 10233880576,
+    "swap_total_bytes": 8589930496,
+    "swap_free_bytes": 8589930496,
+    "runner_process_rss_bytes": 3804,
+    "workspace_free_bytes": 14576300032,
+    "status": "VERIFIED_FOR_SERIAL_BOUNDED_REQUESTS"
+  },
+  "endpoint_capacity": "UNVERIFIED",
+  "corpus": {
+    "required_documents": 715,
+    "required_queries": 190,
+    "available_repository_documents": 10,
+    "available_repository_queries": 190,
+    "document_status": "BLOCKED_CORPUS_RECOVERY",
+    "query_status": "AVAILABLE_BUT_NOT_EXECUTED_WITHOUT_DOCUMENT_CORPUS",
+    "authoritative_corpus_sha256": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1",
+    "current_fixture_manifest_sha256": "4e764b6a8fe18b92f92cc18e568c42087e5cd44402fdf5d2e9313bc59f3809be"
+  },
+  "benchmark": "BLOCKED_CORPUS_RECOVERY",
+  "vl_scope": "OUT_OF_SCOPE",
+  "vl_enabled": false,
+  "production": "UNCHANGED",
+  "reembedding": false,
+  "index_mutation": false,
+  "deployments": 0,
+  "merges": 0
+}

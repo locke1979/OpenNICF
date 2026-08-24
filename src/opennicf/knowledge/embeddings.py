@@ -13,7 +13,7 @@ import os
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from hashlib import blake2b
-from math import sqrt
+from math import isfinite, sqrt
 from re import findall
 from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
@@ -429,6 +429,7 @@ class HttpEmbeddingBackend:
         timeout: float = 30.0,
         model: str = "Qwen/Qwen3-Embedding-0.6B",
         dimension: int = CANONICAL_DIMENSION,
+        native_dimension: int | None = None,
         model_revision: str = "v1",
     ):
         self.base_url = (
@@ -439,6 +440,9 @@ class HttpEmbeddingBackend:
         )
         self.timeout = timeout
         self.dimension = dimension
+        self.native_dimension = native_dimension or dimension
+        if self.dimension <= 0 or self.native_dimension < self.dimension:
+            raise ValueError("native embedding dimension must be >= output dimension")
         self._info = EmbeddingModelInfo(
             model=model,
             dimensions=dimension,
@@ -480,25 +484,74 @@ class HttpEmbeddingBackend:
     ) -> EmbeddingResult:
         payload = self._request(
             "/v1/embeddings",
-            {"input": list(texts), "purpose": purpose, "dimension": self.dimension},
+            {
+                "model": self._info.model,
+                "input": list(texts),
+                "purpose": purpose,
+                "dimension": self.dimension,
+            },
         )
-        vectors = tuple(
-            _normalize(item["embedding"] if isinstance(item, dict) else item)
-            for item in payload.get("data", [])
-        )
-        if len(vectors) != len(texts) or any(
-            len(vector) != self.dimension for vector in vectors
+        response_model = payload.get("model")
+        if response_model != self._info.model:
+            raise EmbeddingError("local embedding service returned the wrong model")
+        if payload.get("fallback", False):
+            raise EmbeddingError(
+                "local embedding service returned a CPU fallback for the configured space"
+            )
+        for response_dimension in (
+            payload.get("dimension"),
+            payload.get("dimensions"),
         ):
+            if response_dimension is not None and response_dimension not in {
+                self.dimension,
+                self.native_dimension,
+            }:
+                raise EmbeddingError(
+                    "local embedding service returned the wrong embedding dimension"
+                )
+        data = payload.get("data")
+        if not isinstance(data, list) or len(data) != len(texts):
             raise EmbeddingError(
                 "local embedding service returned the wrong result shape"
             )
+        vectors: list[tuple[float, ...]] = []
+        for index, item in enumerate(data):
+            if not isinstance(item, dict) or item.get("index") != index:
+                raise EmbeddingError(
+                    "local embedding service returned the wrong result shape"
+                )
+            values = item.get("embedding")
+            if not isinstance(values, (list, tuple)) or len(values) != self.native_dimension:
+                raise EmbeddingError(
+                    "local embedding service returned the wrong native embedding dimension"
+                )
+            try:
+                # Keep the storage contract bounded at the configured output
+                # dimension while retaining a distinct, versioned space ID.
+                projected = tuple(float(value) for value in values[: self.dimension])
+                if not all(isfinite(value) for value in projected):
+                    raise ValueError("non-finite embedding value")
+                norm = sqrt(sum(value * value for value in projected))
+                if norm == 0:
+                    raise ValueError("zero-norm embedding")
+                vectors.append(tuple(value / norm for value in projected))
+            except (TypeError, ValueError):
+                raise EmbeddingError(
+                    "local embedding service returned a non-finite or zero embedding"
+                ) from None
         return EmbeddingResult(
             model=self._info.model,
             dimensions=self.dimension,
             device="remote-local",
             vectors=vectors,
             fallback=bool(payload.get("fallback", False)),
-            metadata={"service": "opennicf-embedding-worker"},
+            metadata={
+                "service": "opennicf-embedding-worker",
+                "native_dimension": self.native_dimension,
+                "projection": "first_n_values_then_l2_normalize"
+                if self.native_dimension != self.dimension
+                else "none",
+            },
             embedding_space_id=self._info.embedding_space_id,
             provider="LOCAL",
             model_revision=self._info.model_revision,

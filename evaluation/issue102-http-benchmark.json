@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "issue": 102,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "endpoint": "http://192.168.1.137:1234",
+  "input_manifest": "inputs/ordered-inputs.json",
+  "groups": ["documents", "queries"],
+  "expected_counts": {"documents": 715, "queries": 190},
+  "models": {
+    "text-embedding-qwen3-embedding-4b": {
+      "native_dimension": 2560,
+      "evaluation_dimension": 768,
+      "modality": "text",
+      "embedding_space_id": "ISSUE102_HTTP_TEXT_QWEN3_4B_2560_PREFIX768_V1",
+      "projection": "first_n_values_then_l2_normalize",
+      "status": "TEXT_ENDPOINT_PREFLIGHT_REQUIRED"
+    },
+    "qwen.qwen3-vl-embedding-2b": {
+      "native_dimension": null,
+      "evaluation_dimension": 768,
+      "modality": "text_and_vision",
+      "embedding_space_id": "ISSUE102_HTTP_VL_QWEN3_2B_768_V1",
+      "projection": "blocked_until_native_dimension_and_pooling_are_verified",
+      "status": "OUT_OF_SCOPE",
+      "benchmark_required": false
+    }
+  },
+  "preprocessing": {
+    "query_template": "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:{text}",
+    "document_template": "{text}",
+    "prefix_projection": "first_n_values_then_l2_normalize",
+    "batch_size": 1
+  },
+  "output_namespace": "evaluation/results/issue102"
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "issue": 105,
+  "issue_endpoint_implementation": 102,
+  "status": "BLOCKED_CORPUS_RECOVERY",
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "decision_grade_production_validation": false,
+  "production_decision": "NOT_AUTHORIZED",
+  "human_review": "OUT_OF_SCOPE",
+  "required": {
+    "documents": 715,
+    "queries": 190,
+    "authoritative_corpus_sha256": "cb6f30f5f69ff14f1bb75278c2e72ce312c570152651cee30bc2f70bc5071ee1"
+  },
+  "recovered": {
+    "documents": 0,
+    "queries": 0,
+    "ordered_source_inputs": false,
+    "native_http_checkpoints": false
+  },
+  "search_scope": [
+    "/home/claw/.openclaw/workspace-opennicf",
+    "Issue 102 repository and preserved Issue 86 material",
+    "tracked paths, refs, reflogs, and unreachable Git objects",
+    "Issue 85/86/101/102 checked-in evidence",
+    "/var/lib/opennicf/eval/issue101",
+    "/var/lib/opennicf/eval/issue102",
+    "/tmp/issue101_d4_resume"
+  ],
+  "candidates_rejected": [
+    "10/10 smoke fixture: incomplete and different digest",
+    "190 labels: no missing source text",
+    "retained 0.6B/4B vectors: partial and cannot reconstruct text",
+    "Issue 101 D4/2560: partial and incompatible provenance",
+    "Issue 86/D06 reports: no admissible source artifact or HTTP checkpoint",
+    "Git refs/reflogs/unreachable objects: no additional source artifact"
+  ],
+  "benchmark": {
+    "text_http_benchmark": "NOT_EXECUTED",
+    "reason": "authoritative ordered source inputs unavailable"
+  },
+  "safety": {
+    "vl_scope": "OUT_OF_SCOPE",
+    "vl_enabled": false,
+    "ct308_http_evaluation": "OUT_OF_SCOPE",
+    "ct305_touched": false,
+    "remote_embedding_enabled": false,
+    "production_unchanged": true,
+    "reembedding": false,
+    "index_mutation": false,
+    "deployments": 0,
+    "merges": 0,
+    "pr_103": "DRAFT"
+  }
+}

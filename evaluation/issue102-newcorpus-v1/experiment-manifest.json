@@ -1,0 +1,12 @@
+{
+  "comparability":"NON_COMPARABLE_TO_T00_T01",
+  "corpus_id":"issue102-http-newcorpus-v1-326x190",
+  "embedding_space_id":"issue102-qwen3-4b-http-2560-v1",
+  "evaluation_mode":"AUTOMATED_NON_HUMAN_REVIEWED",
+  "experiment_id":"issue102-qwen3-4b-http-326x190-v1",
+  "label_space_id":"issue102-auto-labels-v1",
+  "preprocessing_id":"issue102-deterministic-chunker-v1",
+  "production_validation":false,
+  "seed":10220260824,
+  "status":"COMPLETE_NEW_CORPUS"
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "endpoint": "http://192.168.1.137:1234",
+  "native_inventory": {
+    "api_v1_models": "PASS",
+    "api_v0_models": "PASS",
+    "initial_loaded_instances": [
+      {
+        "key": "text-embedding-qwen3-embedding-4b",
+        "instance_id": "text-embedding-qwen3-embedding-4b",
+        "type": "embedding",
+        "architecture": null,
+        "quantization": "Q4_K_M",
+        "size_bytes": 2496703776,
+        "params": "4B",
+        "context_length": 4098,
+        "max_context_length": 40960,
+        "state": "loaded"
+      },
+      {
+        "key": "qwen.qwen3-vl-embedding-2b",
+        "instance_id": "qwen.qwen3-vl-embedding-2b",
+        "type_v1": "llm",
+        "type_v0": "vlm",
+        "architecture": "qwen3vl",
+        "quantization": "Q5_K_S",
+        "size_bytes": 2049980576,
+        "params": "2B",
+        "context_length": 8192,
+        "max_context_length": 262144,
+        "vision_capability_v1": true,
+        "state": "loaded"
+      }
+    ],
+    "multiple_instances_observed": true,
+    "ram_status": "UNVERIFIED"
+  },
+  "text_preflight": {
+    "identity": "VERIFIED",
+    "response_model": "text-embedding-qwen3-embedding-4b",
+    "native_dimension": 2560,
+    "finite_values": 2560,
+    "deterministic_repeat": true
+  },
+  "vl_preflight": {
+    "identity": "WRONG_TASK_HEAD",
+    "requested_model": "qwen.qwen3-vl-embedding-2b",
+    "openai_embedding_response": "No models loaded after text instance unload",
+    "native_embedding_api": {
+      "/api/v1/embeddings": "NOT_FOUND",
+      "/api/v0/embeddings": "NO_EMBEDDING_MODEL_LOADED"
+    },
+    "image_only_embedding": "REJECTED_INPUT_MUST_BE_STRING_OR_ARRAY_OF_STRINGS",
+    "text_plus_image_embedding": "REJECTED_INPUT_MUST_BE_STRING_OR_ARRAY_OF_STRINGS",
+    "chat_completion": "SUCCEEDED",
+    "multimodal_embedding": "UNSUPPORTED",
+    "status": "ALIASED_OR_WRONG_INSTANCE",
+    "enabled": false
+  },
+  "final_loaded_instances": [
+    "text-embedding-qwen3-embedding-4b"
+  ],
+  "production": "UNCHANGED",
+  "reembedding": false,
+  "index_mutation": false,
+  "benchmark_run": false
+}

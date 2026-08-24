@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "issue": 102,
+  "evaluation_mode": "AUTOMATED_NON_HUMAN_REVIEWED",
+  "endpoint": "http://192.168.1.137:1234",
+  "model": "text-embedding-qwen3-embedding-4b",
+  "native_dimension": 2560,
+  "evaluation_dimension": 768,
+  "projection": "first_n_values_then_l2_normalize",
+  "fallback": false,
+  "embedding_space_id": "text-embedding-qwen3-embedding-4b:768:v1",
+  "workload": "tests/fixtures/retrieval_benchmark/v1/manifest.json",
+  "knowledge_path": "KnowledgePlatform.in_memory",
+  "summaries": {
+    "lexical": {"query_count": 10, "recall_at_k": 1.0, "mrr": 0.95},
+    "vector": {"query_count": 10, "recall_at_k": 0.9, "mrr": 0.9},
+    "hybrid": {"query_count": 10, "recall_at_k": 1.0, "mrr": 0.95},
+    "symbol_aware": {"query_count": 3, "recall_at_k": 1.0, "mrr": 1.0}
+  },
+  "validation": {
+    "full_pytest": "255 passed",
+    "vl_model_status": "BLOCKED_ALIAS_RESPONSE",
+    "vl_response_model": "text-embedding-qwen3-embedding-4b",
+    "vl_response_native_dimension": 2560
+  }
+}

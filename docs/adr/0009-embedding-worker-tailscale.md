@@ -1,23 +1,29 @@
-# ADR 0009: Local embedding worker over Tailscale
+# ADR 0009: Shared OpenAI-compatible embedding endpoint
 
-The local Qwen3 embedding provider runs behind the OpenNICF provider-neutral
-HTTP contract (`/health`, `/v1/models`, `/v1/embeddings`). Consumers use the
-runtime-only `OPENNICF_EMBEDDING_BASE_URL` and optional service token; provider
-logic does not know about Tailscale.
+The shared Qwen3 endpoint runs behind the OpenAI-compatible contract
+(`/v1/models`, `/v1/embeddings`). Consumers use
+`OPENNICF_EMBEDDING_BASE_URL`, `OPENNICF_TEXT_EMBEDDING_MODEL`, and
+`OPENNICF_VL_EMBEDDING_MODEL`, plus an optional service token; provider logic
+does not depend on the transport.
 
-The worker binds to its Tailscale interface only. Tailscale is the transport
-and network authorization boundary; the application token is defense in depth.
-MagicDNS is preferred for the runtime URL. The public repository contains only
-safe examples and no tailnet address, identity, or credentials.
+The current migration endpoint is `http://192.168.1.137:1234`. Its URL is
+configuration, not a production activation claim. The explicit
+`OPENNICF_EMBEDDING_REMOTE_ENABLED` gate defaults to false and production
+startup fails closed while it is disabled.
 
-`local_only` requests select the local Qwen space or a local CPU fallback and
-fail closed if no local provider is available. They never select Gemini.
-Gemini-001 and Gemini-2 remain cloud adapters and separate embedding spaces;
-they are not proxied through Tailscale. Tailscale transport identity is
-independent from `embedding_space_id`.
+Text uses the exact model ID
+`text-embedding-qwen3-embedding-4b`, validates a native 2,560-dimensional
+response, and derives the storage vector by prefix truncation to 768 followed
+by L2 renormalization. A response model mismatch, fallback, malformed,
+nonfinite, zero, duplicate, or wrong-dimension result is rejected.
 
-The service detects CUDA at runtime, uses FP16 when CUDA is available, limits
-batch/input sizes for a constrained worker, retries smaller batches on OOM,
-and falls back to the local CPU backend. Health metadata distinguishes the
-provider, model, device, dimension, normalization, and fallback state without
-exposing secrets or evidence.
+The VL model ID is configured independently as
+`qwen.qwen3-vl-embedding-2b`, but remains `VL_UNVERIFIED` until `/v1/models`
+and a multimodal embedding probe prove the task identity and output contract.
+The current endpoint returns the text model identity for that request, so VL is
+not enabled.
+
+The legacy CT305 worker and isolated CT308 local inference remain separate
+assets. This migration does not restart, mutate, deploy, or re-embed either
+path. Evaluation HTTP vectors use a new endpoint-bound space and never mix
+with local llama.cpp vectors.

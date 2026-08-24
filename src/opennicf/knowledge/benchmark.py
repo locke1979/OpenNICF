@@ -285,7 +285,9 @@ class RetrievalBenchmark:
     def _rank(self, mode: str, query: BenchmarkQuery) -> tuple[EvidenceHit, ...]:
         candidates = self._candidates(query)
         space_id = self.platform.embeddings.active_space_id
-        info = self.platform.embeddings.info(prefer_gpu=False)
+        # Report the active benchmark space, not the optional CPU backend used
+        # only when fallback is explicitly allowed.
+        info = self.platform.embeddings.info(prefer_gpu=True)
         query_vector: tuple[float, ...] = ()
         if mode in {"vector", "hybrid"}:
             query_vector = self._vector(query, space_id=space_id)
@@ -373,7 +375,7 @@ class RetrievalBenchmark:
                 "mean_returned_chunks": round(mean(row["returned_chunks"] for row in metric_rows), 3) if metric_rows else 0.0,
                 "mean_context_tokens_after_compaction": round(mean(row["context_tokens_after_compaction"] for row in metric_rows), 3) if metric_rows else 0.0,
             }
-        info = self.platform.embeddings.info(prefer_gpu=False)
+        info = self.platform.embeddings.info(prefer_gpu=True)
         return {
             "benchmark_version": MANIFEST_VERSION,
             "fixture_manifest": self.manifest_path.name,

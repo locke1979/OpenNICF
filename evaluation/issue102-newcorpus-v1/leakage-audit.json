@@ -1,0 +1,9 @@
+{
+  "disagreement_count":60,
+  "human_review":"OUT_OF_SCOPE",
+  "label_origin":"AUTO_GENERATED",
+  "metrics_sha256":"5d18b873a849a669ebd9be7522dd203f3864ea8f969dcc89ea57ba14e12be284",
+  "query_count":190,
+  "query_text_is_source_prefix":true,
+  "status":"PASS_AUTOMATED_RULES"
+}
