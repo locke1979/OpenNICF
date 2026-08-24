@@ -1,0 +1,11 @@
+{
+  "comparability":"NON_COMPARABLE_TO_T00_T01",
+  "corpus_id":"issue102-http-newcorpus-v1-326x190",
+  "experiment_id":"issue102-qwen3-4b-http-326x190-v1",
+  "hard_negative_count":190,
+  "human_review":"OUT_OF_SCOPE",
+  "label_count":190,
+  "label_origin":"AUTO_GENERATED",
+  "query_count":190,
+  "status":"AUTOMATED_ONLY"
+}

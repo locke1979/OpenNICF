@@ -1,0 +1,10 @@
+{
+  "derivation":"first 768 native values then L2 normalization",
+  "derived_dimensions":768,
+  "embedding_space_id":"issue102-qwen3-4b-http-2560-v1",
+  "endpoint":"http://192.168.1.137:1234",
+  "endpoint_digest":"b2e8a0966974d62d48da4142f52660e2ca792591f62a8bf25b8d4f6b9d4f1929",
+  "model":"text-embedding-qwen3-embedding-4b",
+  "native_dimensions":2560,
+  "vl_enabled":false
+}

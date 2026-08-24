@@ -1,0 +1,15 @@
+{
+  "artifact_sha256":{
+    "documents.jsonl":"8a2311147c10aff086d400773c4e7142b73adf17757e314cdb00d5ceb719c3fa",
+    "hard-negatives.json":"1bce821a3d0262c6cb9724233460a7e0aba80ec64f0729c3c4436a79b6a8a762",
+    "labels.jsonl":"66b92607785538af620a6b198d101829ea5540b43f791b380853182925fc27a1",
+    "queries.jsonl":"798eca05f5b3ad48a6bac13f2f3f678ccf6f3c6b98ec0de246e06746cad606a7"
+  },
+  "comparability":"NON_COMPARABLE_TO_T00_T01",
+  "corpus_id":"issue102-http-newcorpus-v1-326x190",
+  "documents":326,
+  "documents_sha256":"8a2311147c10aff086d400773c4e7142b73adf17757e314cdb00d5ceb719c3fa",
+  "queries":190,
+  "source_inventory_sha256":"d49fb8116ae3b040ad51069500d4f6302311768deb3cce5f89796ed0ed254dc7",
+  "status":"COMPLETE_NEW_CORPUS"
+}

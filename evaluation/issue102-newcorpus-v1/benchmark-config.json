@@ -1,0 +1,11 @@
+{
+  "batch_size":4,
+  "benchmark_execution_allowed":true,
+  "checkpoint_policy":"accepted_id_only; never overwrite",
+  "comparability":"NON_COMPARABLE_TO_T00_T01",
+  "concurrency":1,
+  "corpus_id":"issue102-http-newcorpus-v1-326x190",
+  "experiment_id":"issue102-qwen3-4b-http-326x190-v1",
+  "remote_enabled":false,
+  "timeout_seconds":30
+}
